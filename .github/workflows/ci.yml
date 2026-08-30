@@ -22,6 +22,9 @@ jobs:
           node --check src/render.js
           node --check src/upgrades.js
           node --check src/weapons.js
+          node --check src/world.js
+          node --check src/bosses.js
+          node --check src/meta.js
           node --check src/game.js
       - name: Validate required files
         run: |
@@ -31,4 +34,7 @@ jobs:
           test -f src/input.js
           test -f src/render.js
           test -f src/weapons.js
+          test -f src/world.js
+          test -f src/bosses.js
+          test -f src/meta.js
           test -f .github/workflows/pages.yml
