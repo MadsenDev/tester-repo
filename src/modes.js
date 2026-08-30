@@ -14,7 +14,12 @@ function activeBossArena(){const a=globalThis.__orbitalBossArena;return a&&perfo
 export function spawnPressure(id,time){
   if(id==="bossrush")return 0;
   const arena=activeBossArena();
-  if(arena?.suppressRegulars)return .00001;
+  if(arena?.suppressRegulars){
+    const ratio=arena.hpRatio??1;
+    if(ratio>.35)return .05;
+    if(ratio>.12)return .16;
+    return .45
+  }
   if(arena?.summoner)return arena.burst?2.15:.055;
   if(id==="endless")return 1+Math.max(0,time-600)/420;
   return 1
