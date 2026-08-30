@@ -17,6 +17,9 @@ jobs:
         run: |
           node --check src/audio.js
           node --check src/entities.js
+          node --check src/enemy-ai.js
+          node --check src/input.js
+          node --check src/render.js
           node --check src/upgrades.js
           node --check src/weapons.js
           node --check src/game.js
@@ -24,5 +27,8 @@ jobs:
         run: |
           test -f index.html
           test -f styles.css
+          test -f src/enemy-ai.js
+          test -f src/input.js
+          test -f src/render.js
           test -f src/weapons.js
           test -f .github/workflows/pages.yml
