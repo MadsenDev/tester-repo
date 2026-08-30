@@ -1,4 +1,4 @@
-const nearest=(origin,enemies,exclude=new Set())=>{let best=null,bd=Infinity;for(const e of enemies){if(e.hp<=0||exclude.has(e))continue;const dx=e.x-origin.x,dy=e.y-origin.y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=e}}return best};
+const nearest=(origin,enemies,exclude=new Set())=>{let best=null,bd=Infinity;for(const e of enemies){if(e.hp<=0||e.targetable===false||exclude.has(e))continue;const dx=e.x-origin.x,dy=e.y-origin.y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=e}}return best};
 const distToSegment=(p,a,b)=>{const vx=b.x-a.x,vy=b.y-a.y,wx=p.x-a.x,wy=p.y-a.y,c1=vx*wx+vy*wy,c2=vx*vx+vy*vy,t=c2?Math.max(0,Math.min(1,c1/c2)):0,dx=p.x-(a.x+t*vx),dy=p.y-(a.y+t*vy);return Math.hypot(dx,dy)};
 
 export function initWeapons(player){
@@ -31,12 +31,12 @@ export function updateWeapons(player,dt,enemies,bullets,particles,time){
   if(arc>0&&player.weaponCd.arc<=0&&enemies.length){
     const hit=[],used=new Set();let origin=player;const chains=Math.min(evoArc?9:6,1+arc+(evoArc?3:0)),damage=(28+arc*15)*(evoArc?1.35:1);
     for(let i=0;i<chains;i++){const t=nearest(origin,enemies,used);if(!t)break;const dx=t.x-origin.x,dy=t.y-origin.y;if(Math.hypot(dx,dy)>(i?(evoArc?245:190):(evoArc?390:330)))break;used.add(t);hit.push({x:t.x,y:t.y});t.hp-=damage;t.flash=.09;origin=t}
-    if(hit.length){if(evoArc&&hit[0]){const first=[...enemies].find(e=>Math.abs(e.x-hit[0].x)<1&&Math.abs(e.y-hit[0].y)<1);if(first)first.hp-=damage*.45}player.weaponFx.push({kind:"arc",evolved:evoArc,points:[{x:player.x,y:player.y},...hit],life:evoArc?.22:.16,max:evoArc?.22:.16});player.weaponCd.arc=Math.max(evoArc?.52:.7,2.35-arc*.22-(evoArc?.12:0))}
+    if(hit.length){if(evoArc&&hit[0]){const first=[...enemies].find(e=>e.targetable!==false&&Math.abs(e.x-hit[0].x)<1&&Math.abs(e.y-hit[0].y)<1);if(first)first.hp-=damage*.45}player.weaponFx.push({kind:"arc",evolved:evoArc,points:[{x:player.x,y:player.y},...hit],life:evoArc?.22:.16,max:evoArc?.22:.16});player.weaponCd.arc=Math.max(evoArc?.52:.7,2.35-arc*.22-(evoArc?.12:0))}
   }
 
   const nova=player.weapons.nova,evoNova=player.weaponEvolved?.nova;
   if(nova>0&&player.weaponCd.nova<=0){
-    const radius=110+nova*28,damage=34+nova*22;for(const e of enemies){const d=Math.hypot(e.x-player.x,e.y-player.y);if(d<radius){e.hp-=damage*(1-d/radius*.45);e.flash=.1}if(evoNova&&d<radius*.62){e.hp-=damage*.72;e.flash=.13}}
+    const radius=110+nova*28,damage=34+nova*22;for(const e of enemies){if(e.targetable===false)continue;const d=Math.hypot(e.x-player.x,e.y-player.y);if(d<radius){e.hp-=damage*(1-d/radius*.45);e.flash=.1}if(evoNova&&d<radius*.62){e.hp-=damage*.72;e.flash=.13}}
     for(let i=0;i<18+nova*3+(evoNova?14:0);i++){const a=Math.random()*Math.PI*2,s=radius*(.5+Math.random()*.5);particles.push({x:player.x,y:player.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.35,max:.35,kind:"nova",size:2+Math.random()*2})}
     player.weaponFx.push({kind:"nova",evolved:evoNova,x:player.x,y:player.y,radius,life:evoNova?.42:.32,max:evoNova?.42:.32});player.weaponCd.nova=Math.max(evoNova?1.45:1.8,5.2-nova*.48-(evoNova?.25:0))
   }
@@ -48,7 +48,7 @@ export function updateWeapons(player,dt,enemies,bullets,particles,time){
 
   const beam=player.weapons.beam,evoBeam=player.weaponEvolved?.beam;
   if(beam>0&&player.weaponCd.beam<=0&&enemies.length){
-    const t=nearest(player,enemies);if(t){const dx=t.x-player.x,dy=t.y-player.y,l=Math.max(1,Math.hypot(dx,dy)),base=Math.atan2(dy,dx),range=500+beam*45,width=12+beam*4,damage=(52+beam*28)*(evoBeam?.72:1),count=evoBeam?3:1;for(let i=0;i<count;i++){const a=base+(i-(count-1)/2)*(evoBeam?.11:0),end={x:player.x+Math.cos(a)*range,y:player.y+Math.sin(a)*range};for(const e of enemies){if(distToSegment(e,player,end)<e.r+width)e.hp-=damage}player.weaponFx.push({kind:"beam",evolved:evoBeam,a:{x:player.x,y:player.y},b:end,width:evoBeam?width*.85:width,life:evoBeam?.25:.2,max:evoBeam?.25:.2})}player.weaponCd.beam=Math.max(evoBeam?.82:1.1,4.1-beam*.38-(evoBeam?.22:0))}
+    const t=nearest(player,enemies);if(t){const dx=t.x-player.x,dy=t.y-player.y,l=Math.max(1,Math.hypot(dx,dy)),base=Math.atan2(dy,dx),range=500+beam*45,width=12+beam*4,damage=(52+beam*28)*(evoBeam?.72:1),count=evoBeam?3:1;for(let i=0;i<count;i++){const a=base+(i-(count-1)/2)*(evoBeam?.11:0),end={x:player.x+Math.cos(a)*range,y:player.y+Math.sin(a)*range};for(const e of enemies){if(e.targetable!==false&&distToSegment(e,player,end)<e.r+width)e.hp-=damage}player.weaponFx.push({kind:"beam",evolved:evoBeam,a:{x:player.x,y:player.y},b:end,width:evoBeam?width*.85:width,life:evoBeam?.25:.2,max:evoBeam?.25:.2})}player.weaponCd.beam=Math.max(evoBeam?.82:1.1,4.1-beam*.38-(evoBeam?.22:0))}
   }
 }
 
