@@ -6,13 +6,13 @@
   <meta name="theme-color" content="#050914" />
   <title>Orbital Last Stand</title>
   <link rel="stylesheet" href="./styles.css?v=13" />
-  <link rel="stylesheet" href="./gameplay-overlays.css?v=3" />
+  <link rel="stylesheet" href="./gameplay-overlays.css?v=4" />
 </head>
 <body>
   <canvas id="game" aria-label="Orbital Last Stand game canvas"></canvas>
 
   <div id="hud">
-    <button id="returnToMenu" class="run-menu-button" type="button" aria-label="Return to main menu" title="Main menu">☰</button>
+    <button id="returnToMenu" class="run-menu-button" type="button" aria-label="Open pause menu" title="Pause menu">☰</button>
     <div class="hud-primary">
       <div><strong>HP</strong><span id="hp">100</span></div>
       <div class="hud-time"><span id="time">00:00</span><small id="sector">OUTER DRIFT</small></div>
@@ -57,8 +57,9 @@
   <script type="module" src="./src/dev-mode.js?v=1"></script>
   <script type="module" src="./src/game.js?v=17"></script>
   <script type="module" src="./src/core-ui.js?v=2"></script>
-  <script type="module" src="./src/shell-ui.js?v=2"></script>
-  <script type="module" src="./src/menu-exit.js?v=2"></script>
+  <script type="module" src="./src/run-ui.js?v=1"></script>
+  <script type="module" src="./src/shell-ui.js?v=3"></script>
+  <script type="module" src="./src/menu-exit.js?v=3"></script>
   <script type="module" src="./src/selector-feedback.js?v=2"></script>
 </body>
 </html>
