@@ -1,0 +1,26 @@
+name: CI
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: |
+          node --check src/audio.js
+          node --check src/entities.js
+          node --check src/upgrades.js
+          node --check src/game.js
+      - name: Validate required files
+        run: |
+          test -f index.html
+          test -f styles.css
+          test -f .github/workflows/pages.yml
