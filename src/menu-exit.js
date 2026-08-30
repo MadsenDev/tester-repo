@@ -5,14 +5,14 @@ const victoryButton=document.querySelector("#victoryMenu");
 
 function inGameplayModal(){return overlay?.classList.contains("gameplay-modal")}
 function atCommandDeck(){return overlay?.classList.contains("show")&&!inGameplayModal()}
-function goHome(confirmAbandon=false){
-  if(confirmAbandon&&!confirm("Abandon this run and return to the command deck?"))return;
-  location.reload();
-}
+function goHome(){location.reload()}
 
-liveButton?.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();goHome(true)});
-gameoverButton?.addEventListener("click",()=>goHome(false));
-victoryButton?.addEventListener("click",()=>goHome(false));
+liveButton?.addEventListener("click",event=>{
+  event.preventDefault();event.stopPropagation();
+  window.dispatchEvent(new CustomEvent("orbital:pause-request"));
+});
+gameoverButton?.addEventListener("click",goHome);
+victoryButton?.addEventListener("click",goHome);
 
 function sync(){if(liveButton)liveButton.hidden=atCommandDeck()||inGameplayModal()}
 const observer=new MutationObserver(sync);
