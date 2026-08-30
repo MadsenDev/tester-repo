@@ -1,0 +1,1 @@
+Ship and mode selectors cycle only through unlocked options. When only one option is unlocked, the menu shows the next unlock requirement so the selector does not appear broken.
