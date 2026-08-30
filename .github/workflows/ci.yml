@@ -31,6 +31,7 @@ jobs:
           node --check src/modes.js
           node --check src/core.js
           node --check src/core-ui.js
+          node --check src/run-ui.js
           node --check src/shell-ui.js
           node --check src/menu-exit.js
           node --check src/selector-feedback.js
@@ -54,6 +55,7 @@ jobs:
           test -f src/modes.js
           test -f src/core.js
           test -f src/core-ui.js
+          test -f src/run-ui.js
           test -f src/shell-ui.js
           test -f src/menu-exit.js
           test -f src/selector-feedback.js

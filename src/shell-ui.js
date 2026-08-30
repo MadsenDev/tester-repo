@@ -17,7 +17,7 @@ const coreHome=document.querySelector("#homeCoreShards");
 const coreLevel=document.querySelector("#homeCoreLevel");
 const bestHome=document.querySelector("#homeBest");
 const hangarTrack=document.querySelector("#hangarTrack");
-const gameplayPanels=new Set(["levelup","gameover","victory","fatal"]);
+const gameplayPanels=new Set(["pause","levelup","gameover","victory","fatal"]);
 let settings=loadSettings();
 
 function syncOverlayMode(){
