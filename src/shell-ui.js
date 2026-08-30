@@ -17,12 +17,18 @@ const coreHome=document.querySelector("#homeCoreShards");
 const coreLevel=document.querySelector("#homeCoreLevel");
 const bestHome=document.querySelector("#homeBest");
 const hangarTrack=document.querySelector("#hangarTrack");
+const gameplayPanels=new Set(["levelup","gameover","victory","fatal"]);
 let settings=loadSettings();
 
+function syncOverlayMode(){
+  const active=panels.find(p=>!p.classList.contains("hidden"));
+  overlay.classList.toggle("gameplay-modal",!!active&&gameplayPanels.has(active.id));
+}
 function show(id){
   panels.forEach(p=>p.classList.toggle("hidden",p.id!==id));
   overlay.classList.add("show");
   nav.forEach(b=>b.classList.toggle("active",b.dataset.nav===id));
+  syncOverlayMode();
   if(id==="hangar")renderHangar();
   if(id==="menu")renderHome();
 }
@@ -60,5 +66,7 @@ shipButton?.addEventListener("click",()=>show("hangar"));
 modeButton?.addEventListener("click",()=>setTimeout(renderHome,0));
 difficulty?.addEventListener("click",()=>setTimeout(renderHome,0));
 document.querySelectorAll(".back,.core-back").forEach(b=>b.addEventListener("click",()=>show("menu")));
+for(const panel of panels)new MutationObserver(syncOverlayMode).observe(panel,{attributes:true,attributeFilter:["class"]});
 window.addEventListener("storage",renderHome);
+syncOverlayMode();
 renderHome();
