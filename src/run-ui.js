@@ -39,21 +39,20 @@ function showPause(toggleState=true){
   pause.classList.remove("hidden");
   overlay?.classList.add("show","gameplay-modal");
 }
-function resume(){
-  dispatchPause();
+function hidePause(toggleState=true){
+  if(toggleState)dispatchPause();
   pause.classList.add("hidden");
   overlay?.classList.remove("show","gameplay-modal");
 }
 window.addEventListener("orbital:pause-request",()=>showPause(true));
 window.addEventListener("keydown",event=>{
   if(suppressPauseKey||event.key?.toLowerCase()!=="p")return;
-  if(!pause.classList.contains("hidden")){event.preventDefault();resume();return}
+  if(!pause.classList.contains("hidden")){event.preventDefault();hidePause(false);return}
   if(!overlay?.classList.contains("show"))showPause(false);
 });
-document.querySelector("#resumeRun")?.addEventListener("click",resume);
+document.querySelector("#resumeRun")?.addEventListener("click",()=>hidePause(true));
 document.querySelector("#restartRun")?.addEventListener("click",()=>{
-  pause.classList.add("hidden");overlay?.classList.remove("show","gameplay-modal");
-  document.querySelector("#restart")?.click();
+  hidePause(false);document.querySelector("#restart")?.click();
 });
 document.querySelector("#pauseMainMenu")?.addEventListener("click",()=>{
   if(confirm("Abandon this run and return to the command deck?"))location.reload();
