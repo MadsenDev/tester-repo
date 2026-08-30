@@ -1,3 +1,4 @@
+import {applyCore} from "./core.js";
 export const SHIPS=[
   {id:"strider",name:"STRIDER",unlock:"Always available",desc:"Balanced interceptor. Reliable in every sector.",apply:p=>p},
   {id:"bulwark",name:"BULWARK",unlock:"Win 1 run",desc:"Heavy hull: +45 HP, +18% armor, -14% speed.",apply:p=>{p.maxHp+=45;p.hp+=45;p.armor+=.18;p.speed*=.86;p.shipSides=4;p.shipColor="#8fffc3"}},
@@ -6,4 +7,4 @@ export const SHIPS=[
 ];
 export function unlockedShips(stats){return SHIPS.filter(s=>s.id==="strider"||(s.id==="bulwark"&&stats.wins>=1)||(s.id==="volt"&&stats.kills>=2500)||(s.id==="harvester"&&stats.wins>=3))}
 export function shipById(id){return SHIPS.find(s=>s.id===id)||SHIPS[0]}
-export function applyShip(player,id){const ship=shipById(id);player.shipId=ship.id;player.shipName=ship.name;player.shipSides??=3;player.shipColor??="#78ebff";ship.apply(player);return player}
+export function applyShip(player,id){const ship=shipById(id);player.shipId=ship.id;player.shipName=ship.name;player.shipSides??=3;player.shipColor??="#78ebff";applyCore(player);ship.apply(player);return player}
