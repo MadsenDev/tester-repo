@@ -34,6 +34,7 @@ jobs:
           node --check src/run-ui.js
           node --check src/shell-ui.js
           node --check src/menu-exit.js
+          node --check src/evolution-guide.js
           node --check src/selector-feedback.js
           node --check src/dev-mode.js
           node --check src/game.js
@@ -42,6 +43,7 @@ jobs:
           test -f index.html
           test -f styles.css
           test -f gameplay-overlays.css
+          test -f evolution-guide.css
           test -f src/enemy-ai.js
           test -f src/input.js
           test -f src/render.js
@@ -58,6 +60,7 @@ jobs:
           test -f src/run-ui.js
           test -f src/shell-ui.js
           test -f src/menu-exit.js
+          test -f src/evolution-guide.js
           test -f src/selector-feedback.js
           test -f src/dev-mode.js
           test -f .github/workflows/pages.yml
