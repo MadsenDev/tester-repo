@@ -25,6 +25,8 @@ jobs:
           node --check src/world.js
           node --check src/bosses.js
           node --check src/meta.js
+          node --check src/hazards.js
+          node --check src/events.js
           node --check src/game.js
       - name: Validate required files
         run: |
@@ -37,4 +39,6 @@ jobs:
           test -f src/world.js
           test -f src/bosses.js
           test -f src/meta.js
+          test -f src/hazards.js
+          test -f src/events.js
           test -f .github/workflows/pages.yml
