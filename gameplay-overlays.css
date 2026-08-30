@@ -4,6 +4,11 @@
 #overlay.gameplay-modal .app-shell{justify-content:center}
 #overlay.gameplay-modal .panel{min-height:0!important;max-height:calc(100dvh - 36px);width:min(560px,calc(100vw - 20px));overflow:auto;border-radius:22px;background:linear-gradient(180deg,rgba(8,24,36,.97),rgba(4,11,18,.99));box-shadow:0 26px 80px rgba(0,0,0,.62),0 0 0 1px rgba(120,235,255,.04) inset}
 
+.run-menu-button{position:fixed;z-index:30;top:max(10px,env(safe-area-inset-top));left:10px;padding:7px 10px;border:1px solid rgba(126,229,255,.18);border-radius:999px;background:rgba(4,13,22,.62);color:#8bdff0;box-shadow:none;font-size:8px;font-weight:900;letter-spacing:.13em;backdrop-filter:blur(8px)}
+.run-menu-button[hidden]{display:none!important}
+.result-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.result-actions button{margin-top:0!important}
+
 #overlay.gameplay-modal #levelup{padding:18px 16px 16px}
 #overlay.gameplay-modal #levelup .eyebrow{margin:0 0 5px;font-size:9px;letter-spacing:.18em;color:#79eaff}
 #overlay.gameplay-modal #levelup h2{margin:0 0 14px;font-size:clamp(25px,7vw,34px);line-height:1.02;letter-spacing:-.035em}
@@ -17,9 +22,10 @@
 
 #overlay.gameplay-modal #gameover,#overlay.gameplay-modal #victory,#overlay.gameplay-modal #fatal{width:min(460px,calc(100vw - 24px));text-align:center;padding:24px 20px}
 #overlay.gameplay-modal #gameover h2,#overlay.gameplay-modal #victory h2,#overlay.gameplay-modal #fatal h2{font-size:34px}
-#overlay.gameplay-modal #gameover button,#overlay.gameplay-modal #victory button,#overlay.gameplay-modal #fatal button{width:100%;margin-top:12px}
+#overlay.gameplay-modal #gameover>button,#overlay.gameplay-modal #victory>button,#overlay.gameplay-modal #fatal>button{width:100%;margin-top:12px}
 
 @media (max-width:680px),(pointer:coarse){
+  .run-menu-button{top:max(9px,env(safe-area-inset-top));left:8px;padding:6px 9px}
   #overlay.gameplay-modal .screen-stack{padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom))!important}
   #overlay.gameplay-modal .panel{width:100%;max-height:calc(100dvh - max(20px,env(safe-area-inset-top) + env(safe-area-inset-bottom)))}
   #overlay.gameplay-modal #levelup{padding:16px 14px 14px}
@@ -27,6 +33,7 @@
   #overlay.gameplay-modal .choice{padding:13px 14px 12px}
   #overlay.gameplay-modal .choice b{font-size:15px}
   #overlay.gameplay-modal .choice small{font-size:10.5px}
+  .result-actions{grid-template-columns:1fr}
 }
 
 @media (max-height:720px){
