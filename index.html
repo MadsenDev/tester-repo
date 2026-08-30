@@ -5,51 +5,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#07111f" />
   <title>Orbital Last Stand</title>
-  <link rel="stylesheet" href="./styles.css?v=9" />
+  <link rel="stylesheet" href="./styles.css?v=10" />
 </head>
 <body>
   <canvas id="game" aria-label="Orbital Last Stand game canvas"></canvas>
   <div id="hud">
-    <div class="topbar">
-      <div><strong>HP</strong><span id="hp">100</span></div>
-      <div><strong>LVL</strong><span id="level">1</span></div>
-      <div><strong>TIME</strong><span id="time">00:00</span></div>
-      <div><strong>SCORE</strong><span id="score">0</span></div>
-    </div>
+    <div class="topbar"><div><strong>HP</strong><span id="hp">100</span></div><div><strong>LVL</strong><span id="level">1</span></div><div><strong>TIME</strong><span id="time">00:00</span></div><div><strong>SCORE</strong><span id="score">0</span></div></div>
     <div class="bars"><div class="bar"><i id="hpBar"></i></div><div class="bar xp"><i id="xpBar"></i></div></div>
     <div class="runmeta"><span id="combo" class="combo">COMBO x1.00</span><span id="sector" class="sector">OUTER DRIFT</span><span class="objective">SURVIVE TO 10:00</span></div>
-    <div id="bossName" class="boss-name"></div>
-    <div id="arsenal" class="arsenal">BLASTER ONLY</div>
+    <div id="bossName" class="boss-name"></div><div id="arsenal" class="arsenal">BLASTER ONLY</div>
   </div>
   <div id="overlay" class="show">
-    <section id="menu" class="panel">
-      <p class="eyebrow">ZERO-ASSET ARCADE SURVIVAL</p>
-      <h1>ORBITAL<br>LAST STAND</h1>
-      <p class="lede">Build an arsenal, cross five hostile sectors and survive a rotating cast of bosses.</p>
-      <div class="menu-actions"><button id="start">START RUN</button><button id="openSettings" class="secondary">SETTINGS</button><button id="openStats" class="secondary">STATS</button></div>
-      <p class="controls">WASD / Arrows · touch-drag on mobile · P pause · M mute</p>
-      <p class="best">Best score: <span id="best">0</span></p>
-    </section>
-    <section id="settings" class="panel hidden">
-      <p class="eyebrow">PERSISTENT OPTIONS</p><h2>Settings</h2>
-      <div class="setting-list">
-        <button id="difficultySetting" class="setting-row"><span>Difficulty</span><b>NORMAL</b></button>
-        <button id="shakeSetting" class="setting-row"><span>Screen shake</span><b>ON</b></button>
-        <button id="soundSetting" class="setting-row"><span>Sound</span><b>ON</b></button>
-      </div>
-      <button class="back secondary">BACK</button>
-    </section>
-    <section id="stats" class="panel hidden">
-      <p class="eyebrow">FLIGHT RECORD</p><h2>Stats</h2>
-      <div class="stats-grid"><div><b id="statRuns">0</b><span>RUNS</span></div><div><b id="statWins">0</b><span>WINS</span></div><div><b id="statKills">0</b><span>KILLS</span></div><div><b id="statBest">0</b><span>BEST</span></div></div>
-      <div class="menu-actions"><button class="back secondary">BACK</button><button id="resetStats" class="danger">RESET STATS</button></div>
-    </section>
+    <section id="menu" class="panel"><p class="eyebrow">ZERO-ASSET ARCADE SURVIVAL</p><h1>ORBITAL<br>LAST STAND</h1><p class="lede">Build an arsenal, cross five hostile sectors and survive a rotating cast of bosses.</p><button id="shipSelect" class="ship-select"><span>SHIP</span><b>STRIDER</b><small id="shipDesc">Balanced interceptor.</small></button><div class="menu-actions"><button id="start">START RUN</button><button id="openSettings" class="secondary">SETTINGS</button><button id="openStats" class="secondary">STATS</button></div><p class="controls">WASD / Arrows · touch-drag on mobile · P pause · M mute</p><p class="best">Best score: <span id="best">0</span></p></section>
+    <section id="settings" class="panel hidden"><p class="eyebrow">PERSISTENT OPTIONS</p><h2>Settings</h2><div class="setting-list"><button id="difficultySetting" class="setting-row"><span>Difficulty</span><b>NORMAL</b></button><button id="shakeSetting" class="setting-row"><span>Screen shake</span><b>ON</b></button><button id="soundSetting" class="setting-row"><span>Sound</span><b>ON</b></button></div><button class="back secondary">BACK</button></section>
+    <section id="stats" class="panel hidden"><p class="eyebrow">FLIGHT RECORD</p><h2>Stats</h2><div class="stats-grid"><div><b id="statRuns">0</b><span>RUNS</span></div><div><b id="statWins">0</b><span>WINS</span></div><div><b id="statKills">0</b><span>KILLS</span></div><div><b id="statBest">0</b><span>BEST</span></div></div><p id="nextUnlock" class="unlock-note"></p><div class="menu-actions"><button class="back secondary">BACK</button><button id="resetStats" class="danger">RESET STATS</button></div></section>
     <section id="levelup" class="panel hidden"><p class="eyebrow">LEVEL UP</p><h2>Choose an upgrade</h2><div id="choices"></div></section>
     <section id="gameover" class="panel hidden"><p class="eyebrow">SIGNAL LOST</p><h2>Run over</h2><p class="final">Score <span id="finalScore">0</span></p><button id="restart">RUN IT BACK</button></section>
     <section id="victory" class="panel hidden"><p class="eyebrow">ORBIT STABILIZED</p><h2>You survived.</h2><p class="lede">Ten minutes, five sectors and several deeply unreasonable machines later.</p><p class="final">Score <span id="victoryScore">0</span></p><button id="victoryRestart">ANOTHER RUN</button></section>
     <section id="fatal" class="panel hidden"><p class="eyebrow">RUNTIME ERROR</p><h2>The simulation crashed</h2><pre id="fatalMessage"></pre><button id="fatalRestart">RELOAD GAME</button></section>
   </div>
   <div id="touchHint">DRAG TO MOVE</div>
-  <script type="module" src="./src/game.js?v=7"></script>
+  <script type="module" src="./src/game.js?v=8"></script>
 </body>
 </html>
