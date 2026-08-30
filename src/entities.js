@@ -7,7 +7,10 @@ const ARCHETYPES=[
   {kind:"dart",unlock:70,r:9,s:68,hp:24,d:10,v:14,behavior:"charger",color:"#ffb35a"},
   {kind:"bulwark",unlock:120,r:21,s:34,hp:96,d:20,v:30,behavior:"chase",color:"#ff5f74"},
   {kind:"wisp",unlock:170,r:12,s:78,hp:48,d:12,v:24,behavior:"strafe",color:"#d76dff"},
-  {kind:"spitter",unlock:230,r:14,s:52,hp:64,d:14,v:32,behavior:"shooter",color:"#75d7ff"}
+  {kind:"spitter",unlock:230,r:14,s:52,hp:64,d:14,v:32,behavior:"shooter",color:"#75d7ff"},
+  {kind:"swarm",unlock:285,r:7,s:105,hp:20,d:7,v:16,behavior:"swarm",color:"#8dffcf"},
+  {kind:"sniper",unlock:335,r:13,s:44,hp:70,d:13,v:38,behavior:"sniper",color:"#ffef83"},
+  {kind:"orbiter",unlock:405,r:15,s:70,hp:82,d:15,v:42,behavior:"orbiter",color:"#91a2ff"}
 ];
 
 function edgeSpawn(w,h){
@@ -18,25 +21,11 @@ function edgeSpawn(w,h){
   return{x:-m,y:Math.random()*h};
 }
 
-export function spawnEnemy(w,h,time,boss=false){
-  const pos=edgeSpawn(w,h);
-  if(boss){
-    const hp=820+time*8;
-    return{...pos,px:pos.x,py:pos.y,kind:"boss",behavior:"boss",r:38,s:31,hp,hpMax:hp,d:32,v:240,boss:true,color:"#ff3f71",flash:0,phase:Math.random()*6.28,shootCd:1.1,chargeCd:2.4,elite:false};
-  }
-  const pool=ARCHETYPES.filter(a=>time>=a.unlock);
-  const base=pool[Math.floor(Math.random()*pool.length)];
-  const elite=time>150&&Math.random()<Math.min(.18,.04+time/2400);
-  const scale=1+Math.max(0,time-180)*.0014;
-  const hp=base.hp*scale*(elite?1.9:1);
+export function spawnEnemy(w,h,time){
+  const pos=edgeSpawn(w,h),pool=ARCHETYPES.filter(a=>time>=a.unlock),base=pool[Math.floor(Math.random()*pool.length)];
+  const elite=time>150&&Math.random()<Math.min(.18,.04+time/2400),scale=1+Math.max(0,time-180)*.0014,hp=base.hp*scale*(elite?1.9:1);
   return{...pos,px:pos.x,py:pos.y,...base,hp,hpMax:hp,d:base.d*(elite?1.25:1),v:Math.round(base.v*(elite?1.8:1)),s:base.s*(elite?1.08:1),r:base.r*(elite?1.18:1),boss:false,elite,flash:0,phase:Math.random()*6.28,shootCd:.8+Math.random()*1.4,chargeCd:1.2+Math.random()*1.8};
 }
 
-export function spawnEnemyProjectile(x,y,angle,speed=170,damage=10,r=4,life=5){
-  return{x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,damage,r,life};
-}
-
-export function particle(x,y,kind="spark"){
-  const a=Math.random()*Math.PI*2,s=30+Math.random()*180;
-  return{x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.25+Math.random()*.55,max:.8,kind,size:1+Math.random()*3};
-}
+export function spawnEnemyProjectile(x,y,angle,speed=170,damage=10,r=4,life=5){return{x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,damage,r,life}}
+export function particle(x,y,kind="spark"){const a=Math.random()*Math.PI*2,s=30+Math.random()*180;return{x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.25+Math.random()*.55,max:.8,kind,size:1+Math.random()*3}}
