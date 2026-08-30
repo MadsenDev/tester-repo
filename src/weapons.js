@@ -8,13 +8,14 @@ export function initWeapons(player){
 }
 
 export function weaponLabel(player){
+  if(!player)return "BLASTER ONLY";
   const names={missile:"SEEKER",arc:"ARC",nova:"NOVA",mines:"MINES",beam:"BEAM"};
   const active=Object.entries(player.weapons||{}).filter(([,level])=>level>0).map(([id,level])=>`${names[id]} ${level}`);
   return active.length?active.join(" · "):"BLASTER ONLY";
 }
 
 export function updateWeapons(player,dt,enemies,bullets,particles,time){
-  if(!player.weapons)return;
+  if(!player?.weapons)return;
   for(const id of Object.keys(player.weaponCd))player.weaponCd[id]-=dt;
   player.weaponFx=player.weaponFx.filter(f=>(f.life-=dt)>0);
 
@@ -49,9 +50,10 @@ export function updateWeapons(player,dt,enemies,bullets,particles,time){
 }
 
 export function updateWeaponProjectiles(bullets,enemies,dt){
-  for(const b of bullets){if(b.kind!=="missile")continue;const t=nearest(b,enemies);if(!t)continue;const speed=Math.max(1,Math.hypot(b.vx,b.vy)),current=Math.atan2(b.vy,b.vx),desired=Math.atan2(t.y-b.y,t.x-b.x);let delta=((desired-current+Math.PI*3)%(Math.PI*2))-Math.PI;const next=current+Math.max(-b.turn*dt,Math.min(b.turn*dt,delta));b.vx=Math.cos(next)*speed;b.vy=Math.sin(next)*speed}
+  for(const b of bullets){if(b.kind!=="missile")continue;const t=nearest(b,enemies);if(!t)continue;const speed=Math.max(1,Math.hypot(b.vx,b.vy)),current=Math.atan2(b.vy,b.vx),desired=Math.atan2(t.y-b.y,t.x-b.x);const delta=((desired-current+Math.PI*3)%(Math.PI*2))-Math.PI,next=current+Math.max(-b.turn*dt,Math.min(b.turn*dt,delta));b.vx=Math.cos(next)*speed;b.vy=Math.sin(next)*speed}
 }
 
 export function drawWeaponFx(ctx,player){
+  if(!player)return;
   for(const f of player.weaponFx||[]){const alpha=Math.max(0,f.life/f.max);ctx.save();ctx.globalAlpha=alpha;if(f.kind==="arc"){ctx.strokeStyle="#b9f7ff";ctx.shadowColor="#78eaff";ctx.shadowBlur=18;ctx.lineWidth=3;ctx.beginPath();f.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke()}else if(f.kind==="nova"){ctx.strokeStyle="#d69cff";ctx.shadowColor="#b675ff";ctx.shadowBlur=22;ctx.lineWidth=5;ctx.beginPath();ctx.arc(f.x,f.y,f.radius*(1.1-alpha*.1),0,Math.PI*2);ctx.stroke()}else if(f.kind==="beam"){ctx.strokeStyle="#7ffcff";ctx.shadowColor="#7ffcff";ctx.shadowBlur=26;ctx.lineWidth=f.width*alpha;ctx.beginPath();ctx.moveTo(f.a.x,f.a.y);ctx.lineTo(f.b.x,f.b.y);ctx.stroke();ctx.strokeStyle="#fff";ctx.lineWidth=Math.max(1,f.width*.18);ctx.stroke()}ctx.restore()}
 }
