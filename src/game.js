@@ -5,6 +5,7 @@ import {randomChoices} from "./upgrades.js";
 const canvas=document.querySelector("#game"),ctx=canvas.getContext("2d");
 const ui={overlay:document.querySelector("#overlay"),menu:document.querySelector("#menu"),levelup:document.querySelector("#levelup"),gameover:document.querySelector("#gameover"),choices:document.querySelector("#choices"),hp:document.querySelector("#hp"),level:document.querySelector("#level"),time:document.querySelector("#time"),score:document.querySelector("#score"),hpBar:document.querySelector("#hpBar"),xpBar:document.querySelector("#xpBar"),best:document.querySelector("#best"),finalScore:document.querySelector("#finalScore")};
 const audio=new AudioSystem(),keys=new Set();
+const touch={active:false,startX:0,startY:0,dx:0,dy:0};
 let W=innerWidth,H=innerHeight,dpr=1,last=0,state="menu",time=0,score=0,nextBoss=60,spawnTimer=0,shake=0;
 let player,enemies=[],bullets=[],gems=[],particles=[];
 ui.best.textContent=localStorage.getItem("orbital-best")||0;
@@ -12,19 +13,23 @@ function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight
 addEventListener("resize",resize);resize();
 addEventListener("keydown",e=>{const k=e.key.toLowerCase();keys.add(k);if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k))e.preventDefault();if(k==="p"&&state==="playing")state="paused";else if(k==="p"&&state==="paused")state="playing";if(k==="m")audio.toggle()});
 addEventListener("keyup",e=>keys.delete(e.key.toLowerCase()));
+canvas.addEventListener("pointerdown",e=>{if(state!=="playing"||e.pointerType==="mouse")return;touch.active=true;touch.startX=e.clientX;touch.startY=e.clientY;touch.dx=0;touch.dy=0;canvas.setPointerCapture?.(e.pointerId)});
+canvas.addEventListener("pointermove",e=>{if(!touch.active)return;const dx=e.clientX-touch.startX,dy=e.clientY-touch.startY,l=Math.hypot(dx,dy);if(l>4){const m=Math.min(1,l/55);touch.dx=dx/l*m;touch.dy=dy/l*m}else{touch.dx=0;touch.dy=0}});
+function stopTouch(){touch.active=false;touch.dx=0;touch.dy=0}
+canvas.addEventListener("pointerup",stopTouch);canvas.addEventListener("pointercancel",stopTouch);
 document.querySelector("#start").onclick=()=>start();
 document.querySelector("#restart").onclick=()=>start();
 
 function freshPlayer(){return{x:W/2,y:H/2,r:11,hp:100,maxHp:100,speed:245,fireRate:.42,fireCd:0,damage:18,shots:1,pierce:0,bulletSpeed:520,bulletSize:4,magnet:110,regen:0,crit:.05,armor:0,dashBoost:0,xpGain:1,orbitals:0,invuln:0,boost:0,level:1,xp:0,nextXp:35}}
-function start(){audio.ensure();player=freshPlayer();enemies=[];bullets=[];gems=[];particles=[];time=score=spawnTimer=0;nextBoss=60;shake=0;state="playing";ui.overlay.classList.remove("show");ui.menu.classList.add("hidden");ui.gameover.classList.add("hidden");ui.levelup.classList.add("hidden")}
-function end(){state="gameover";const best=Math.max(score,+(localStorage.getItem("orbital-best")||0));localStorage.setItem("orbital-best",best);ui.best.textContent=best;ui.finalScore.textContent=Math.floor(score);ui.overlay.classList.add("show");ui.gameover.classList.remove("hidden")}
-function levelUp(){state="levelup";audio.level();ui.overlay.classList.add("show");ui.levelup.classList.remove("hidden");ui.choices.innerHTML="";for(const u of randomChoices()){const b=document.createElement("button");b.className="choice";b.innerHTML="<b>"+u.name+"</b><small>"+u.desc+"</small>";b.onclick=()=>{u.apply(player);ui.levelup.classList.add("hidden");ui.overlay.classList.remove("show");state="playing"};ui.choices.appendChild(b)}}
+function start(){audio.ensure();player=freshPlayer();enemies=[];bullets=[];gems=[];particles=[];time=score=spawnTimer=0;nextBoss=60;shake=0;stopTouch();state="playing";ui.overlay.classList.remove("show");ui.menu.classList.add("hidden");ui.gameover.classList.add("hidden");ui.levelup.classList.add("hidden")}
+function end(){state="gameover";stopTouch();const best=Math.max(score,+(localStorage.getItem("orbital-best")||0));localStorage.setItem("orbital-best",best);ui.best.textContent=best;ui.finalScore.textContent=Math.floor(score);ui.overlay.classList.add("show");ui.gameover.classList.remove("hidden")}
+function levelUp(){state="levelup";stopTouch();audio.level();ui.overlay.classList.add("show");ui.levelup.classList.remove("hidden");ui.choices.innerHTML="";for(const u of randomChoices()){const b=document.createElement("button");b.className="choice";b.innerHTML="<b>"+u.name+"</b><small>"+u.desc+"</small>";b.onclick=()=>{u.apply(player);ui.levelup.classList.add("hidden");ui.overlay.classList.remove("show");state="playing"};ui.choices.appendChild(b)}}
 function nearest(){let best=null,bd=Infinity;for(const e of enemies){const d=dist2(player,e);if(d<bd){bd=d;best=e}}return best}
 function shoot(){const t=nearest();if(!t)return;const base=Math.atan2(t.y-player.y,t.x-player.x);for(let i=0;i<player.shots;i++){const spread=(i-(player.shots-1)/2)*.14,a=base+spread;bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*player.bulletSpeed,vy:Math.sin(a)*player.bulletSpeed,r:player.bulletSize,life:1.8,pierce:player.pierce,damage:player.damage*(Math.random()<player.crit?2:1)})}audio.shot()}
 function update(dt){
   if(state!=="playing")return;
   time+=dt;score+=dt*10;player.invuln=Math.max(0,player.invuln-dt);player.boost=Math.max(0,player.boost-dt);player.hp=Math.min(player.maxHp,player.hp+player.regen*dt);
-  let dx=(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0),dy=(keys.has("s")||keys.has("arrowdown")?1:0)-(keys.has("w")||keys.has("arrowup")?1:0);if(dx||dy){const l=Math.hypot(dx,dy);dx/=l;dy/=l}const sp=player.speed*(player.boost>0?1+player.dashBoost:1);player.x=clamp(player.x+dx*sp*dt,20,W-20);player.y=clamp(player.y+dy*sp*dt,70,H-20);
+  let dx=(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0),dy=(keys.has("s")||keys.has("arrowdown")?1:0)-(keys.has("w")||keys.has("arrowup")?1:0);if(!dx&&!dy&&touch.active){dx=touch.dx;dy=touch.dy}if(dx||dy){const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}}const sp=player.speed*(player.boost>0?1+player.dashBoost:1);player.x=clamp(player.x+dx*sp*dt,20,W-20);player.y=clamp(player.y+dy*sp*dt,70,H-20);
   player.fireCd-=dt;if(player.fireCd<=0){shoot();player.fireCd=player.fireRate}
   const rate=Math.max(.12,.7-time*.004);spawnTimer-=dt;while(spawnTimer<=0){enemies.push(spawnEnemy(W,H,time,false));spawnTimer+=rate}
   if(time>=nextBoss){enemies.push(spawnEnemy(W,H,time,true));nextBoss+=60;audio.boss();shake=12}
