@@ -29,6 +29,7 @@ jobs:
           node --check src/events.js
           node --check src/ships.js
           node --check src/modes.js
+          node --check src/selector-feedback.js
           node --check src/game.js
       - name: Validate required files
         run: |
@@ -45,4 +46,5 @@ jobs:
           test -f src/events.js
           test -f src/ships.js
           test -f src/modes.js
+          test -f src/selector-feedback.js
           test -f .github/workflows/pages.yml
