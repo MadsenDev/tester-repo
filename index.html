@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#07111f" />
   <title>Orbital Last Stand</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=3" />
 </head>
 <body>
   <canvas id="game" aria-label="Orbital Last Stand game canvas"></canvas>
@@ -27,7 +27,7 @@
       <h1>ORBITAL<br>LAST STAND</h1>
       <p class="lede">Move. Survive. Escalate. Every pixel and sound is generated in code.</p>
       <button id="start">START RUN</button>
-      <p class="controls">WASD / Arrows · P pause · M mute</p>
+      <p class="controls">WASD / Arrows · touch-drag on mobile · P pause · M mute</p>
       <p class="best">Best score: <span id="best">0</span></p>
     </section>
     <section id="levelup" class="panel hidden">
@@ -42,6 +42,7 @@
       <button id="restart">RUN IT BACK</button>
     </section>
   </div>
-  <script type="module" src="./src/game.js"></script>
+  <div id="touchHint">DRAG TO MOVE</div>
+  <script type="module" src="./src/game.js?v=3"></script>
 </body>
 </html>
