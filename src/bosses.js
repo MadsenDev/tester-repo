@@ -1,4 +1,10 @@
 import { spawnEnemyProjectile, particle } from "./entities.js";
+import {
+  applyBossDifficulty,
+  bossDifficulty,
+  predictiveTarget,
+  tuneBossProjectiles,
+} from "./boss-difficulty.js";
 
 export const BOSSES = [
   {
@@ -100,7 +106,7 @@ function edgeSpawn(w, h) {
   if (side === 2) return { x: Math.random() * w, y: h + m };
   return { x: -m, y: Math.random() * h };
 }
-export function spawnBoss(w, h, time) {
+export function spawnBoss(w, h, time, difficulty = "normal") {
   const minute = Math.max(1, Math.floor(time / 60)),
     bossIndex = (minute - 1) % BOSSES.length,
     base = BOSSES[bossIndex],
@@ -109,40 +115,43 @@ export function spawnBoss(w, h, time) {
     durability =
       bossIndex >= 2 ? 1.55 + Math.min(0.55, (bossIndex - 2) * 0.12) : 1,
     hp = base.hp * scale * durability;
-  return {
-    ...pos,
-    px: pos.x,
-    py: pos.y,
-    ...base,
-    hp,
-    hpMax: hp,
-    boss: true,
-    bossName: base.name,
-    bossOrder: bossIndex + 1,
-    behavior: "boss",
-    v: 280 + minute * 35,
-    flash: 0,
-    phase: Math.random() * 6.28,
-    shootCd: 0.7,
-    chargeCd: 1.7,
-    telegraph: 0,
-    dashTime: 0,
-    dashVx: 0,
-    dashVy: 0,
-    elite: false,
-    bossPhase: 1,
-    phaseFlash: 0,
-    blastCd: 2.6,
-    blastZones: [],
-    arenaW: w,
-    arenaH: h,
-    sideWarnings: [],
-    sideVolleyCd: 1.1,
-    railCd: 2.8,
-    sideFlip: Math.random() < 0.5 ? -1 : 1,
-    summonCd: 2.4,
-    summonBurst: 0,
-  };
+  return applyBossDifficulty(
+    {
+      ...pos,
+      px: pos.x,
+      py: pos.y,
+      ...base,
+      hp,
+      hpMax: hp,
+      boss: true,
+      bossName: base.name,
+      bossOrder: bossIndex + 1,
+      behavior: "boss",
+      v: 280 + minute * 35,
+      flash: 0,
+      phase: Math.random() * 6.28,
+      shootCd: 0.7,
+      chargeCd: 1.7,
+      telegraph: 0,
+      dashTime: 0,
+      dashVx: 0,
+      dashVy: 0,
+      elite: false,
+      bossPhase: 1,
+      phaseFlash: 0,
+      blastCd: 2.6,
+      blastZones: [],
+      arenaW: w,
+      arenaH: h,
+      sideWarnings: [],
+      sideVolleyCd: 1.1,
+      railCd: 2.8,
+      sideFlip: Math.random() < 0.5 ? -1 : 1,
+      summonCd: 2.4,
+      summonBurst: 0,
+    },
+    difficulty,
+  );
 }
 function updateBlastZones(e, dt, enemyBullets, particles, onShake) {
   for (const z of e.blastZones) {
@@ -241,11 +250,12 @@ function fireSideVolley(e, player, enemyBullets, rage) {
   e.sideFlip *= -1;
 }
 function publishBossArena(e) {
+  const tuning = e.bossTuning || bossDifficulty(e.bossDifficulty);
   globalThis.__orbitalBossArena = {
     at: performance.now(),
-    suppressRegulars: e.bossOrder >= 3 && e.kind !== "brood",
-    summoner: e.kind === "brood",
-    burst: e.kind === "brood" && e.summonBurst > 0,
+    suppressRegulars: !tuning.regularsDuringBoss,
+    summoner: tuning.regularsDuringBoss && e.kind === "brood",
+    burst: tuning.regularsDuringBoss && e.kind === "brood" && e.summonBurst > 0,
     hpRatio: e.hp / e.hpMax,
   };
 }
@@ -254,8 +264,14 @@ export function updateBoss(
   dt,
   { player, enemyBullets, particles, time, onShake },
 ) {
-  const ratio = e.hp / e.hpMax;
-  if (ratio <= 0.5 && e.bossPhase === 1) {
+  const tuning = e.bossTuning || bossDifficulty(e.bossDifficulty),
+    tempoDt = dt * tuning.tempo,
+    projectileStart = enemyBullets.length,
+    target = predictiveTarget(player, tuning, e.arenaW, e.arenaH),
+    finishAttacks = () =>
+      tuneBossProjectiles(enemyBullets, projectileStart, tuning),
+    ratio = e.hp / e.hpMax;
+  if (ratio <= tuning.phaseThreshold && e.bossPhase === 1) {
     e.bossPhase = 2;
     e.phaseFlash = 1.4;
     e.shootCd = 0;
@@ -265,9 +281,9 @@ export function updateBoss(
     onShake(12);
     for (let i = 0; i < 28; i++) particles.push(particle(e.x, e.y, "boss"));
   }
-  e.phaseFlash = Math.max(0, e.phaseFlash - dt);
+  e.phaseFlash = Math.max(0, e.phaseFlash - tempoDt);
   const rage = e.bossPhase === 2;
-  e.summonBurst = Math.max(0, e.summonBurst - dt);
+  e.summonBurst = Math.max(0, e.summonBurst - tempoDt);
   publishBossArena(e);
   const dx = player.x - e.x,
     dy = player.y - e.y,
@@ -275,26 +291,27 @@ export function updateBoss(
     nx = dx / d,
     ny = dy / d,
     wasTelegraph = e.telegraph;
-  e.shootCd -= dt;
-  e.chargeCd -= dt;
-  e.telegraph = Math.max(0, e.telegraph - dt);
-  e.dashTime = Math.max(0, e.dashTime - dt);
-  e.blastCd -= dt;
-  updateBlastZones(e, dt, enemyBullets, particles, onShake);
+  e.shootCd -= tempoDt;
+  e.chargeCd -= tempoDt;
+  e.telegraph = Math.max(0, e.telegraph - tempoDt);
+  e.dashTime = Math.max(0, e.dashTime - tempoDt);
+  e.blastCd -= tempoDt;
+  updateBlastZones(e, tempoDt, enemyBullets, particles, onShake);
   if (e.kind === "leviathan") {
     e.x = e.arenaW / 2;
     e.y = -92;
-    e.sideVolleyCd -= dt;
-    e.railCd -= dt;
-    updateRails(e, dt, enemyBullets, onShake);
+    e.sideVolleyCd -= tempoDt;
+    e.railCd -= tempoDt;
+    updateRails(e, tempoDt, enemyBullets, onShake);
     if (e.sideVolleyCd <= 0) {
-      fireSideVolley(e, player, enemyBullets, rage);
+      fireSideVolley(e, target, enemyBullets, rage);
       e.sideVolleyCd = rage ? 1.05 : 1.45;
     }
     if (e.railCd <= 0) {
-      queueRail(e, player, rage);
+      queueRail(e, target, rage);
       e.railCd = rage ? 2.6 : 3.5;
     }
+    finishAttacks();
     return;
   }
   if (e.kind === "brood") {
@@ -302,7 +319,7 @@ export function updateBoss(
       tangent = Math.sin(e.phase) > 0.0 ? 1 : -1;
     e.x += (nx * radial - ny * 0.34 * tangent) * e.s * dt;
     e.y += (ny * radial + nx * 0.34 * tangent) * e.s * dt;
-    e.summonCd -= dt;
+    e.summonCd -= tempoDt;
     if (e.summonCd <= 0) {
       e.summonBurst = rage ? 1.55 : 1.15;
       e.summonCd = rage ? 3.7 : 5.0;
@@ -310,7 +327,7 @@ export function updateBoss(
       for (let i = 0; i < 16; i++) particles.push(particle(e.x, e.y, "boss"));
     }
     if (e.shootCd <= 0) {
-      const base = Math.atan2(dy, dx),
+      const base = Math.atan2(target.y - e.y, target.x - e.x),
         count = rage ? 5 : 3;
       for (let i = 0; i < count; i++)
         enemyBullets.push(
@@ -326,6 +343,7 @@ export function updateBoss(
         );
       e.shootCd = rage ? 1.25 : 1.75;
     }
+    finishAttacks();
     return;
   }
   if (e.kind === "warden") {
@@ -367,7 +385,7 @@ export function updateBoss(
     if (e.chargeCd <= 0 && e.dashTime <= 0 && e.telegraph <= 0) {
       e.telegraph = rage ? 0.4 : 0.6;
       e.chargeCd = rage ? 1.35 : 2.5;
-      const a = Math.atan2(dy, dx);
+      const a = Math.atan2(target.y - e.y, target.x - e.x);
       e.dashVx = Math.cos(a) * (rage ? 520 : 430);
       e.dashVy = Math.sin(a) * (rage ? 520 : 430);
     }
@@ -377,7 +395,7 @@ export function updateBoss(
           spawnEnemyProjectile(
             e.x,
             e.y,
-            Math.atan2(dy, dx) + i * 0.18,
+            Math.atan2(target.y - e.y, target.x - e.x) + i * 0.18,
             rage ? 245 : 205,
             11,
             4,
@@ -391,7 +409,7 @@ export function updateBoss(
     e.x += (nx * radial - ny * (rage ? 0.42 : 0.28)) * e.s * dt;
     e.y += (ny * radial + nx * (rage ? 0.42 : 0.28)) * e.s * dt;
     if (e.shootCd <= 0) {
-      const base = Math.atan2(dy, dx),
+      const base = Math.atan2(target.y - e.y, target.x - e.x),
         spread = rage ? 4 : 3,
         spacing = rage ? 0.17 : 0.2;
       for (let i = -spread; i <= spread; i++)
@@ -410,7 +428,7 @@ export function updateBoss(
       onShake(3);
     }
     if (e.blastCd <= 0) {
-      queueBlastZones(e, player, rage);
+      queueBlastZones(e, target, rage);
       e.blastCd = rage ? 2.8 : 3.7;
     }
   } else if (e.kind === "singularity") {
@@ -453,7 +471,7 @@ export function updateBoss(
         ],
         spread = rage ? 3 : 2;
       for (const [x, y] of origins) {
-        const aim = Math.atan2(player.y - y, player.x - x);
+        const aim = Math.atan2(target.y - y, target.x - x);
         for (let i = -spread; i <= spread; i++)
           enemyBullets.push(
             spawnEnemyProjectile(
@@ -471,7 +489,7 @@ export function updateBoss(
       onShake(4);
     }
     if (e.blastCd <= 0) {
-      queueBlastZones(e, player, rage);
+      queueBlastZones(e, target, rage);
       e.blastCd = rage ? 2.5 : 3.2;
     }
   } else if (e.kind === "architect") {
@@ -482,10 +500,10 @@ export function updateBoss(
       td = Math.max(1, Math.hypot(tx, ty));
     e.x += (tx / td) * e.s * dt;
     e.y += (ty / td) * e.s * dt;
-    e.railCd -= dt;
-    updateRails(e, dt, enemyBullets, onShake);
+    e.railCd -= tempoDt;
+    updateRails(e, tempoDt, enemyBullets, onShake);
     if (e.railCd <= 0) {
-      queueRail(e, player, rage);
+      queueRail(e, target, rage);
       e.railCd = rage ? 1.9 : 2.7;
     }
     if (e.blastCd <= 0) {
@@ -494,8 +512,8 @@ export function updateBoss(
       for (let i = 0; i < count; i++) {
         const horizontal = i % 2 === 0;
         e.blastZones.push({
-          x: horizontal ? player.x + (i - count / 2) * spacing : player.x,
-          y: horizontal ? player.y : player.y + (i - count / 2) * spacing,
+          x: horizontal ? target.x + (i - count / 2) * spacing : target.x,
+          y: horizontal ? target.y : target.y + (i - count / 2) * spacing,
           r: rage ? 48 : 43,
           warn: rage ? 0.8 : 1.05,
           life: 0,
@@ -514,10 +532,10 @@ export function updateBoss(
       player.x -= nx * force * dt;
       player.y -= ny * force * dt;
     }
-    e.railCd -= dt;
-    updateRails(e, dt, enemyBullets, onShake);
+    e.railCd -= tempoDt;
+    updateRails(e, tempoDt, enemyBullets, onShake);
     if (e.railCd <= 0) {
-      queueRail(e, player, rage);
+      queueRail(e, target, rage);
       e.railCd = rage ? 2.75 : 3.7;
     }
     if (e.shootCd <= 0) {
@@ -541,7 +559,7 @@ export function updateBoss(
       onShake(7);
     }
     if (e.blastCd <= 0) {
-      queueBlastZones(e, player, true);
+      queueBlastZones(e, target, true);
       e.blastCd = rage ? 2.15 : 2.8;
     }
   } else {
@@ -569,4 +587,5 @@ export function updateBoss(
       onShake(6);
     }
   }
+  finishAttacks();
 }

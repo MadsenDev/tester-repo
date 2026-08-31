@@ -15,6 +15,8 @@ Survive for **10 minutes** while crossing five increasingly hostile sectors. You
 
 Move with **WASD**, the **arrow keys**, or **touch-drag on mobile**. **P** pauses and **M** toggles sound.
 
+Difficulty changes the shape of boss encounters rather than only adjusting global numbers. **Chill** clears regular enemies and uses slower, simpler bosses. **Normal** also creates a clean duel, but bosses gain more durability, faster phases and predictive aim. **Intense** keeps the swarm active while bosses use their strongest tuning.
+
 ## World
 
 The arena changes every two minutes:
