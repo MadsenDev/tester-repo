@@ -21,6 +21,7 @@ import {
   difficultyConfig,
 } from "./meta.js";
 import { createHazardState, updateHazards } from "./hazards.js";
+import { onCompanionProjectileHit } from "./companions.js";
 import { createEventState, updateEvents, eventModifiers } from "./events.js";
 import { SHIPS, unlockedShips, shipById, applyShip } from "./ships.js";
 import {
@@ -46,6 +47,17 @@ import {
   selectRoute,
   updateRouteBadge,
 } from "./sector-routes.js";
+import {
+  afterSpecialDamage,
+  echoSpecialVolley,
+  onSpecialKill,
+  onSpecialLevelUp,
+  resolveSpecialDamage,
+  specialChoiceCount,
+  specialDamageMultiplier,
+  specialGemMultiplier,
+  updateSpecialModules,
+} from "./special-modules.js";
 const routeUi = createRouteUI();
 const canvas = document.querySelector("#game"),
   ctx = canvas.getContext("2d");
@@ -407,12 +419,13 @@ function showFatal(error) {
   showPanel(ui.fatal);
 }
 function levelUp() {
+  onSpecialLevelUp(player, enemyBullets);
   state = "levelup";
   input.stopTouch();
   audio.level();
   showPanel(ui.levelup);
   ui.choices.innerHTML = "";
-  for (const u of randomChoices(player)) {
+  for (const u of randomChoices(player, specialChoiceCount(player))) {
     const b = document.createElement("button");
     b.className = "choice";
     b.innerHTML = "<b>" + u.name + "</b><small>" + u.desc + "</small>";
@@ -459,7 +472,9 @@ function nearest() {
 function shoot() {
   const t = nearest();
   if (!t) return;
-  const base = Math.atan2(t.y - player.y, t.x - player.x);
+  const base = Math.atan2(t.y - player.y, t.x - player.x),
+    startIndex = bullets.length,
+    damageMultiplier = specialDamageMultiplier(player);
   for (let i = 0; i < player.shots; i++) {
     const spread = (i - (player.shots - 1) / 2) * 0.14,
       a = base + spread;
@@ -472,9 +487,13 @@ function shoot() {
       r: player.bulletSize,
       life: 1.8,
       pierce: player.pierce,
-      damage: player.damage * (Math.random() < player.crit ? 2 : 1),
+      damage:
+        player.damage *
+        damageMultiplier *
+        (Math.random() < player.crit ? 2 : 1),
     });
   }
+  echoSpecialVolley(player, bullets, startIndex);
   audio.shot();
 }
 function hurt(amount) {
@@ -484,7 +503,16 @@ function hurt(amount) {
       settings.mode === "bossrush" ? {} : eventModifiers(events),
       routeModifiers(routes),
     );
-  player.hp -= amount * (1 - player.armor) * diff.damage * mods.damageTaken;
+  const result = resolveSpecialDamage(
+    player,
+    amount * (1 - player.armor) * diff.damage * mods.damageTaken,
+  );
+  if (result.evaded) {
+    for (let i = 0; i < 6; i++)
+      particles.push(particle(player.x, player.y, "spark"));
+    return;
+  }
+  player.hp -= result.damage;
   player.invuln = 0.22;
   player.boost = 0.65;
   shake = 8;
@@ -492,11 +520,13 @@ function hurt(amount) {
   audio.hurt();
   for (let i = 0; i < 10; i++)
     particles.push(particle(player.x, player.y, "hurt"));
+  afterSpecialDamage(player, result);
   if (player.hp <= 0) finish(false);
 }
 function awardKill(e, mods) {
   const diff = difficultyConfig(settings.difficulty);
   kills++;
+  onSpecialKill(player, e);
   combo = comboTimer > 0 ? combo + 1 : 1;
   comboTimer = 2.8;
   score +=
@@ -582,6 +612,12 @@ function update(dt) {
   }
   if (!player.nullified)
     updateWeapons(player, dt, enemies, bullets, particles, time);
+  updateSpecialModules(player, dt, {
+    enemies,
+    enemyBullets,
+    particles,
+    time,
+  });
   updateWeaponProjectiles(bullets, enemies, dt);
   if (allowsRegularEnemies(settings.mode)) {
     const rate =
@@ -654,7 +690,9 @@ function update(dt) {
         b.hit.add(e);
         e.hp -= b.damage;
         e.flash = 0.06;
+        onCompanionProjectileHit(b, e, enemies, player.weaponFx);
         b.pierce--;
+        if (b.phaseMemory && b.pierce >= 0) b.damage *= 1.12;
         audio.hit();
         for (let i = 0; i < (b.kind === "missile" ? 8 : 3); i++)
           particles.push(
@@ -698,7 +736,7 @@ function update(dt) {
       g.y += Math.sin(a) * (140 + 420 * k) * dt;
     }
     if (d < player.r + 8) {
-      player.xp += g.v * player.xpGain * mods.xp;
+      player.xp += g.v * player.xpGain * mods.xp * specialGemMultiplier(player);
       audio.xp();
       gems.splice(i, 1);
       if (player.xp >= player.nextXp) {

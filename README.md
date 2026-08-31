@@ -56,6 +56,10 @@ Every run begins with the blaster. Level-up choices can unlock and improve five 
 - **Grav Mines** — persistent mines
 - **Prism Lance** — piercing beam
 
+The module pool contains 150 upgrades, including 50 authored special modules. Specials now change the rules of a run instead of merely carrying a rarity label: **Last Bulkhead** prevents one lethal hit, **Echo Chamber** repeats every sixth volley, **Prism Mirror** fires beams backwards, and companion modules can fork drone fire, electrify Ember shots, or turn Wisp pulses into gravity anchors.
+
+Nine apex modules complete named multi-trait builds such as **Seeking Storm**, **Event Horizon**, **Recursive Violence**, **Thunder Choir**, and **Guardian Swarm**. The rare **Dead God Circuit** activates the entire apex network at once, with an appropriately unstable annihilation aura.
+
 ## Enemies
 
 The roster includes Scouts, Brutes, Darts, Bulwarks, Wisps, Spitters, Swarmers, Snipers, Orbiters, Leeches, Sentinels and Phasers. Their behavior ranges from direct pursuit and charging to strafing, ranged fire, long-range shots, teleportation and orbiting attack patterns. Elite variants appear later in runs.
