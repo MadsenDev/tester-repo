@@ -1,5 +1,15 @@
 import {spawnEnemyProjectile,particle,isInViewport} from "./entities.js";
 
+function eliteMotionFx(e,particles,time){
+  if(!e.elite||e.boss||!isInViewport(e))return;
+  e.fxCd=(e.fxCd||0)-1/60;if(e.fxCd>0)return;
+  const kind=e.eliteTrait;
+  if(kind==="frenzied"){particles.push({x:e.x,y:e.y,vx:0,vy:0,life:.22,max:.22,kind:"frenzied",size:4});e.fxCd=.06}
+  else if(kind==="volatile"){particles.push({x:e.x,y:e.y,vx:0,vy:0,life:.28,max:.28,kind:"volatile",size:3});e.fxCd=.16}
+  else if(kind==="vampiric"){particles.push({x:e.x,y:e.y,vx:0,vy:-8,life:.35,max:.35,kind:"vampiric",size:3});e.fxCd=.22}
+  else if(kind==="splitter"){particles.push({x:e.x+(Math.random()-.5)*e.r,y:e.y+(Math.random()-.5)*e.r,vx:(Math.random()-.5)*18,vy:(Math.random()-.5)*18,life:.25,max:.25,kind:"splitter",size:2});e.fxCd=.12}
+}
+
 export function moveEnemy(e,dt,{player,enemyBullets,particles,time}){
   const dx=player.x-e.x,dy=player.y-e.y,d=Math.max(1,Math.hypot(dx,dy)),nx=dx/d,ny=dy/d;
   e.shootCd-=dt;e.chargeCd-=dt;
@@ -23,4 +33,5 @@ export function moveEnemy(e,dt,{player,enemyBullets,particles,time}){
   }else{
     e.x+=nx*e.s*dt;e.y+=ny*e.s*dt;
   }
+  eliteMotionFx(e,particles,time);
 }
