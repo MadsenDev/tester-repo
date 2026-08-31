@@ -384,6 +384,7 @@ export function renderScene(ctx, view, world) {
         pulse: "#fff07a",
         overdrive: "#b585ff",
       },
+      symbols = { repair: "+", pulse: "○", overdrive: "»" },
       color = colors[p.kind];
     ctx.save();
     ctx.translate(p.x, p.y);
@@ -393,6 +394,12 @@ export function renderScene(ctx, view, world) {
     ctx.fillStyle = color;
     polygon(ctx, 0, 0, p.r, 6, time);
     ctx.fill();
+    ctx.rotate(-p.phase);
+    ctx.fillStyle = "#071018";
+    ctx.font = "900 10px IBM Plex Mono, monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(symbols[p.kind], 0, 0.5);
     ctx.restore();
   }
   for (const e of enemies) drawEnemy(ctx, e, time);
