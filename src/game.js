@@ -12,6 +12,11 @@ import { createInput } from "./input.js";
 import { moveEnemy } from "./enemy-ai.js";
 import { renderScene } from "./render.js";
 import { spawnBoss, updateBoss } from "./bosses.js";
+import {
+  bossDifficulty,
+  prepareBossArena,
+  regularEnemiesAllowed,
+} from "./boss-difficulty.js";
 import { sectorAt } from "./world.js";
 import {
   loadSettings,
@@ -700,6 +705,8 @@ function update(dt) {
   const { dx, dy } = input.movement(),
     sp = player.speed * (player.boost > 0 ? 1 + player.dashBoost : 1),
     margin = player.r + 4;
+  player.vx = dx * sp;
+  player.vy = dy * sp;
   player.x = clamp(player.x + dx * sp * dt, margin, W - margin);
   player.y = clamp(player.y + dy * sp * dt, margin, H - margin);
   player.fireCd -= dt;
@@ -717,7 +724,12 @@ function update(dt) {
     time,
   });
   updateWeaponProjectiles(bullets, enemies, dt);
-  if (allowsRegularEnemies(settings.mode)) {
+  const bossAlive = enemies.some((e) => e.boss);
+  const bossRules = bossDifficulty(settings.difficulty);
+  if (
+    allowsRegularEnemies(settings.mode) &&
+    regularEnemiesAllowed(settings.difficulty, bossAlive)
+  ) {
     const rate =
       Math.max(0.085, 0.7 - time * 0.00092) /
       (diff.spawn *
@@ -730,11 +742,17 @@ function update(dt) {
       spawnTimer += rate;
     }
   }
-  const bossAlive = enemies.some((e) => e.boss);
   if (time >= nextBoss && !bossAlive) {
     bossCount++;
     const bossTime = settings.mode === "bossrush" ? bossCount * 60 : time;
-    const boss = spawnBoss(W, H, bossTime);
+    if (bossRules.clearArena) {
+      ({ enemies, enemyBullets } = prepareBossArena(
+        enemies,
+        enemyBullets,
+        settings.difficulty,
+      ));
+    }
+    const boss = spawnBoss(W, H, bossTime, settings.difficulty);
     enemies.push(boss);
     noteDiscovery("bosses", boss.kind);
     nextBoss =
