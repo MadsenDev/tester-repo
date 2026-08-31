@@ -75,6 +75,10 @@ import { discover, recordArchiveRun } from "./discovery.js";
 import { activeSynergies } from "./synergy-catalog.js";
 import { attractPowerup, rollPowerupDrop } from "./drop-economy.js";
 import { regulateProjectilePressure } from "./projectile-pressure.js";
+import {
+  syncManifestations,
+  updateManifestations,
+} from "./manifestations.js";
 const routeUi = createRouteUI();
 const blackSignalUi = createBlackSignalUI();
 const canvas = document.querySelector("#game"),
@@ -733,6 +737,13 @@ function update(dt) {
     particles,
     time,
   });
+  const newManifestations = syncManifestations(player);
+  if (newManifestations.length) {
+    const latest = newManifestations[newManifestations.length - 1];
+    audio.manifestation(latest.tone);
+    shake = Math.max(shake, 16);
+  }
+  updateManifestations(player, dt, { enemies, enemyBullets });
   updateWeaponProjectiles(bullets, enemies, dt);
   const bossAlive = enemies.some((e) => e.boss);
   const bossRules = bossDifficulty(settings.difficulty);

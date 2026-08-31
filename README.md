@@ -66,6 +66,8 @@ The module pool contains 150 upgrades, including 50 authored special modules. Sp
 
 Nine apex modules complete named multi-trait builds such as **Seeking Storm**, **Event Horizon**, **Recursive Violence**, **Thunder Choir**, and **Guardian Swarm**. The rare **Dead God Circuit** activates the entire apex network at once, with an appropriately unstable annihilation aura.
 
+Five showcase apexes now manifest physically. Seeking Storm grows conductor fins and electrifies guided rounds; Recursive Violence exposes projectile generations; Event Horizon installs a dark gravity core; Thunder Choir synchronizes Ember and Wisp into periodic multi-target discharges; Guardian Swarm forms a defensive network that intercepts ordinary hostile shots while leaving telegraphed boss attacks intact. Every first activation receives a dedicated combat banner, palette and synthesized audio sting.
+
 Level-ups now draw from themed module pools. Most levels offer salvage, every fifth level opens a boss cache, and every seventh level offers companion technology. This gives major milestones a distinct identity and makes build-defining modules feel earned rather than evenly shuffled into every choice.
 
 ## Signal Archive
