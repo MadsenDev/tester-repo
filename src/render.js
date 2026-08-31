@@ -2,6 +2,13 @@ import { drawWeaponFx } from "./weapons.js";
 import { sectorAt } from "./world.js";
 import { drawHazards } from "./hazards.js";
 import { drawEventBanner } from "./events.js";
+import {
+  drawManifestationAura,
+  drawManifestationCue,
+  drawManifestationHull,
+  drawManifestationProjectile,
+  drawManifestationWorldFx,
+} from "./manifestation-render.js";
 function polygon(ctx, x, y, r, n, rot = 0) {
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
@@ -404,7 +411,10 @@ export function renderScene(ctx, view, world) {
   }
   for (const e of enemies) drawEnemy(ctx, e, time);
   drawSideWarnings(ctx, enemies, time, W);
-  if (player) drawWeaponFx(ctx, player);
+  if (player) {
+    drawWeaponFx(ctx, player);
+    drawManifestationWorldFx(ctx, player);
+  }
   for (const b of bullets) {
     const kind = b.kind || "blaster";
     ctx.save();
@@ -429,6 +439,7 @@ export function renderScene(ctx, view, world) {
       ctx.arc(0, 0, b.r, 0, Math.PI * 2);
     }
     ctx.fill();
+    if (kind === "blaster") drawManifestationProjectile(ctx, b, time);
     ctx.restore();
   }
   for (const b of enemyBullets) {
@@ -475,6 +486,7 @@ export function renderScene(ctx, view, world) {
     ctx.save();
     ctx.translate(player.x, player.y);
     ctx.rotate(time * 0.8);
+    drawManifestationAura(ctx, player, time);
     const baseColor = player.shipColor || "#78ebff",
       glow = player.nullified
         ? "#79ffd2"
@@ -500,6 +512,7 @@ export function renderScene(ctx, view, world) {
       time * -1.5,
     );
     ctx.stroke();
+    drawManifestationHull(ctx, player, time);
     ctx.restore();
   }
   for (const p of particles) {
@@ -518,6 +531,7 @@ export function renderScene(ctx, view, world) {
   }
   ctx.globalAlpha = 1;
   if (events) drawEventBanner(ctx, events, W);
+  if (player) drawManifestationCue(ctx, player, W, H);
   ctx.restore();
   if (state === "paused") {
     ctx.fillStyle = "rgba(1,5,10,.55)";

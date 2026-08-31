@@ -9,4 +9,5 @@ export class AudioSystem{
   level(){this.tone(440,.18,"triangle",.04,2.2)}
   hurt(){this.tone(90,.12,"sawtooth",.05,.6)}
   boss(){this.tone(70,.5,"square",.05,1.6)}
+  manifestation(freq=220){this.tone(freq,.46,"sawtooth",.032,1.8);this.tone(freq*1.5,.34,"triangle",.026,1.35);this.tone(freq*2,.22,"sine",.018,.92)}
 }
