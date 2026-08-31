@@ -102,6 +102,8 @@ This repository started essentially empty as an experiment: can an AI coding age
 
 Everything visible is rendered from code and all sound is synthesized at runtime. No external assets, game engine or runtime dependencies are used.
 
+Late-game readability uses a visual-only friendly-projectile budget, value-preserving salvage consolidation and a compact loadout strip. The build still deals every point of earned damage; duplicate cyan effects simply stop competing with hostile fire. Architect and Last Light phase two encounters also introduce difficulty-scaled safe-corridor tests and brief phase gates, so the closing minutes reward positioning as well as build strength.
+
 ## Deployment
 
 CI syntax-checks all JavaScript modules on pull requests. Merges to `main` deploy automatically via GitHub Pages.

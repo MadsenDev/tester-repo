@@ -76,6 +76,11 @@ import { activeSynergies } from "./synergy-catalog.js";
 import { attractPowerup, rollPowerupDrop } from "./drop-economy.js";
 import { regulateProjectilePressure } from "./projectile-pressure.js";
 import {
+  applyFriendlyVisualBudget,
+  compressSalvage,
+} from "./combat-readability.js";
+import { bossDamageMultiplier } from "./boss-counterplay.js";
+import {
   syncManifestations,
   updateManifestations,
 } from "./manifestations.js";
@@ -794,6 +799,7 @@ function update(dt) {
         enemyBullets,
         particles,
         time,
+        onHazard: hurt,
         onShake: (v) => (shake = Math.max(shake, v)),
       });
     else {
@@ -827,7 +833,7 @@ function update(dt) {
       if (e.hp <= 0 || b.hit.has(e)) continue;
       if (dist2(b, e) < (b.r + e.r) ** 2) {
         b.hit.add(e);
-        e.hp -= b.damage;
+        e.hp -= b.damage * bossDamageMultiplier(e);
         e.flash = 0.06;
         onCompanionProjectileHit(b, e, enemies, player.weaponFx);
         b.pierce--;
@@ -875,6 +881,8 @@ function update(dt) {
     height: H,
     player,
   });
+  applyFriendlyVisualBudget(bullets, { width: W, height: H, player });
+  gems = compressSalvage(gems, { width: W, height: H });
   const magnet = player.magnet * mods.magnet;
   for (let i = gems.length - 1; i >= 0; i--) {
     const g = gems[i],
@@ -940,7 +948,10 @@ function updateUI() {
   const mult = 1 + Math.min(combo, 30) * 0.03;
   ui.combo.textContent = "COMBO x" + mult.toFixed(2);
   ui.combo.classList.toggle("hot", combo >= 3);
-  ui.arsenal.textContent = player.shipName + " · " + weaponLabel(player);
+  const apex = activeSynergies(player).filter((synergy) => synergy.apex);
+  ui.arsenal.textContent = apex.length
+    ? `${player.shipName} · ${player.upgrades.length} MODULES · ${apex.length === 1 ? apex[0].name : `${apex.length} APEX SYNERGIES`}`
+    : `${player.shipName} · ${player.upgrades.length} MODULES · ${weaponLabel(player)}`;
   ui.sector.textContent =
     settings.mode === "bossrush" ? "BOSS CIRCUIT" : sectorAt(time).name;
   ui.objective.textContent =
