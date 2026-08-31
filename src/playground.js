@@ -1,6 +1,7 @@
-import {UPGRADES} from "./upgrades.js";
+import {loadSettings,saveSettings} from "./meta.js";
 
 const KEY="orbital-playground-build-v1";
+const LAUNCH_KEY="orbital-playground-launch";
 const TRAITS=[
  ["multishot","Forked Signal","FORK","Each volley gains another branch."],
  ["pierce","Phase Rounds","PIERCE","Rounds continue through additional targets."],
@@ -29,12 +30,14 @@ let build={};try{build=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch{bui
 const has=id=>(build[id]||0)>0;
 const save=()=>localStorage.setItem(KEY,JSON.stringify(build));
 function activeSynergies(){return SYNERGIES.filter(s=>s.need.every(has))}
+function ensureLaunchButton(){const actions=document.querySelector(".playground-actions");if(!actions||document.querySelector("#playgroundLaunch"))return;const b=document.createElement("button");b.id="playgroundLaunch";b.textContent="LAUNCH TEST ARENA";b.className="playground-launch";actions.prepend(b);b.onclick=launchArena}
 function render(){
- const grid=document.querySelector("#playgroundTraits"),synergies=document.querySelector("#playgroundSynergies"),summary=document.querySelector("#playgroundSummary");if(!grid)return;
- grid.innerHTML="";
+ const grid=document.querySelector("#playgroundTraits"),synergies=document.querySelector("#playgroundSynergies"),summary=document.querySelector("#playgroundSummary");if(!grid)return;ensureLaunchButton();grid.innerHTML="";
  for(const [id,name,tag,desc] of TRAITS){const level=build[id]||0,b=document.createElement("button");b.className="playground-trait"+(level?" active":"");b.innerHTML=`<span>${tag}</span><strong>${name}</strong><small>${desc}</small><em>${level?`ACTIVE · L${level}`:"ADD TRAIT"}</em>`;b.onclick=()=>{build[id]=level?0:1;save();render()};grid.appendChild(b)}
  const active=activeSynergies();synergies.innerHTML=active.length?active.map(s=>`<article class="synergy-node tier-${s.tier}"><span>TIER ${s.tier} SYNERGY</span><strong>${s.name}</strong><p>${s.desc}</p><small>${s.need.map(id=>TRAITS.find(t=>t[0]===id)?.[2]||id).join(" + ")}</small></article>`).join(""):`<div class="synergy-empty"><b>NO INTERACTIONS YET</b><span>Add traits above. Pair, compound and transformation synergies will appear here.</span></div>`;
- const selected=TRAITS.filter(([id])=>has(id));summary.innerHTML=`<b>${selected.length} TRAIT${selected.length===1?"":"S"}</b><span>${active.length} ACTIVE SYNERG${active.length===1?"Y":"IES"}</span>`;
+ const selected=TRAITS.filter(([id])=>has(id));summary.innerHTML=`<b>${selected.length} TRAIT${selected.length===1?"":"S"}</b><span>${active.length} ACTIVE SYNERG${active.length===1?"Y":"IES"}</span>`;const launch=document.querySelector("#playgroundLaunch");if(launch){launch.disabled=!selected.length;launch.textContent=selected.length?`LAUNCH TEST ARENA · ${selected.length} TRAITS`:"SELECT TRAITS TO LAUNCH"}
 }
+function launchArena(){if(!TRAITS.some(([id])=>has(id)))return;save();const settings=loadSettings();settings.mode="playground";saveSettings(settings);sessionStorage.setItem(LAUNCH_KEY,"1");location.reload()}
+function resumeLaunch(){if(sessionStorage.getItem(LAUNCH_KEY)!=="1")return;sessionStorage.removeItem(LAUNCH_KEY);setTimeout(()=>document.querySelector("#start")?.click(),0)}
 export function openPlayground(){document.dispatchEvent(new CustomEvent("orbital:show-panel",{detail:"playground"}));render()}
-addEventListener("DOMContentLoaded",()=>{document.querySelector("#openPlayground")?.addEventListener("click",openPlayground);document.querySelector("#playgroundClear")?.addEventListener("click",()=>{build={};save();render()});document.querySelector("#playgroundMax")?.addEventListener("click",()=>{for(const [id] of TRAITS)build[id]=1;save();render()});render()});
+addEventListener("DOMContentLoaded",()=>{document.querySelector("#openPlayground")?.addEventListener("click",openPlayground);document.querySelector("#playgroundClear")?.addEventListener("click",()=>{build={};save();render()});document.querySelector("#playgroundMax")?.addEventListener("click",()=>{for(const [id] of TRAITS)build[id]=1;save();render()});render();resumeLaunch()});
