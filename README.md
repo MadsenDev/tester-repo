@@ -27,6 +27,8 @@ The arena changes every two minutes:
 
 Each sector has a generated palette, moving background detail and its own pressure multiplier.
 
+At every sector boundary, navigation pauses the run and offers three routes across distinct risk bands. Route rewards permanently shape the current build, while route threats alter enemy pressure, elites, damage or scoring until the next boundary. Endless mode keeps generating route decisions beyond the campaign's fifth sector.
+
 ## Bosses
 
 Bosses arrive every minute and rotate through original behavior-driven encounters:
