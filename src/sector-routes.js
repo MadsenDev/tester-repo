@@ -90,10 +90,92 @@ export const SECTOR_ROUTES = Object.freeze([
       player.xpGain *= 1.08;
     },
   },
+  {
+    id: "aegis-corridor",
+    name: "AEGIS CORRIDOR",
+    risk: "SAFE",
+    glyph: "⬡",
+    color: "#9dffd1",
+    reward: "Permanently reinforce damage resistance by 3%.",
+    threat: "The protected passage yields 10% less score.",
+    modifiers: { enemySpeed: 0.92, score: 0.9 },
+    apply(player) {
+      player.armor = Math.min(0.65, player.armor + 0.03);
+    },
+  },
+  {
+    id: "research-wake",
+    name: "RESEARCH WAKE",
+    risk: "BALANCED",
+    glyph: "✹",
+    color: "#8ee8ff",
+    reward: "Gain 4% permanent critical chance and 35% sector XP yield.",
+    threat: "Unstable telemetry amplifies hull damage by 12%.",
+    modifiers: { xp: 1.35, damageTaken: 1.12, score: 1.18 },
+    apply(player) {
+      player.crit = Math.min(0.75, player.crit + 0.04);
+    },
+  },
+  {
+    id: "munitions-vault",
+    name: "MUNITIONS VAULT",
+    risk: "DANGEROUS",
+    glyph: "✦",
+    color: "#ffbd72",
+    reward:
+      "Permanently increase weapon damage by 7% and projectile mass by 10%.",
+    threat: "Vault guardians increase elite activity and pressure.",
+    modifiers: { elite: 0.14, spawn: 1.12, score: 1.4 },
+    apply(player) {
+      player.damage *= 1.07;
+      player.bulletSize *= 1.1;
+    },
+  },
+  {
+    id: "razor-passage",
+    name: "RAZOR PASSAGE",
+    risk: "DANGEROUS",
+    glyph: "➤",
+    color: "#ff9a8d",
+    reward: "Permanently add one level of projectile piercing.",
+    threat: "Hostiles move 18% faster through the narrow lane.",
+    modifiers: { enemySpeed: 1.18, score: 1.43 },
+    apply(player) {
+      player.pierce += 1;
+    },
+  },
+  {
+    id: "glass-orbit",
+    name: "GLASS ORBIT",
+    risk: "VOLATILE",
+    glyph: "△",
+    color: "#ff82c3",
+    reward: "Gain 12% permanent damage and 8% critical chance.",
+    threat: "Incoming hull damage is amplified by 55%.",
+    modifiers: { damageTaken: 1.55, score: 1.82 },
+    apply(player) {
+      player.damage *= 1.12;
+      player.crit = Math.min(0.75, player.crit + 0.08);
+    },
+  },
+  {
+    id: "swarm-nest",
+    name: "SWARM NEST",
+    risk: "VOLATILE",
+    glyph: "⑂",
+    color: "#b7ff65",
+    reward: "Permanently add one round to every blaster volley.",
+    threat: "Enemy pressure rises by 50% for the entire sector.",
+    modifiers: { spawn: 1.5, enemySpeed: 1.06, score: 1.62 },
+    apply(player) {
+      player.shots += 1;
+      player.damage *= 0.94;
+    },
+  },
 ]);
 
 export function createRouteState() {
-  return { resolvedLeg: 0, active: null, history: [] };
+  return { resolvedLeg: 0, active: null, history: [], offered: [] };
 }
 
 export function routeLeg(time) {
@@ -111,14 +193,14 @@ export function routeModifiers(state) {
 
 export function combineModifiers(eventMods, routeMods) {
   return {
-    fire: eventMods.fire * routeMods.fire,
-    enemySpeed: eventMods.enemySpeed * routeMods.enemySpeed,
-    magnet: eventMods.magnet * routeMods.magnet,
-    elite: Math.min(0.85, eventMods.elite + routeMods.elite),
-    score: eventMods.score * routeMods.score,
-    spawn: routeMods.spawn,
-    xp: routeMods.xp,
-    damageTaken: routeMods.damageTaken,
+    fire: (eventMods.fire ?? 1) * routeMods.fire,
+    enemySpeed: (eventMods.enemySpeed ?? 1) * routeMods.enemySpeed,
+    magnet: (eventMods.magnet ?? 1) * routeMods.magnet,
+    elite: Math.min(0.85, (eventMods.elite ?? 0) + routeMods.elite),
+    score: (eventMods.score ?? 1) * routeMods.score,
+    spawn: (eventMods.spawn ?? 1) * routeMods.spawn,
+    xp: (eventMods.xp ?? 1) * routeMods.xp,
+    damageTaken: (eventMods.damageTaken ?? 1) * routeMods.damageTaken,
   };
 }
 
@@ -131,22 +213,22 @@ function shuffled(items, random) {
 
 export function routeChoices(state, random = Math.random) {
   const previous = state.history.at(-1);
-  const candidates = SECTOR_ROUTES.filter((route) => route.id !== previous);
-  const safe = shuffled(
-    candidates.filter(
-      (route) => route.risk === "SAFE" || route.risk === "BALANCED",
-    ),
-    random,
-  );
-  const dangerous = shuffled(
-    candidates.filter((route) => route.risk === "DANGEROUS"),
-    random,
-  );
-  const volatile = shuffled(
-    candidates.filter((route) => route.risk === "VOLATILE"),
-    random,
-  );
-  return [safe[0], dangerous[0], volatile[0]].filter(Boolean);
+  const seen = new Set(state.offered || []);
+  const pool = (risks) => {
+    const lane = SECTOR_ROUTES.filter((route) => risks.includes(route.risk));
+    const fresh = lane.filter((route) => !seen.has(route.id));
+    return shuffled(
+      (fresh.length ? fresh : lane).filter((route) => route.id !== previous),
+      random,
+    );
+  };
+  const safe = pool(["SAFE", "BALANCED"]);
+  const dangerous = pool(["DANGEROUS"]);
+  const volatile = pool(["VOLATILE"]);
+  const choices = [safe[0], dangerous[0], volatile[0]].filter(Boolean);
+  state.offered ??= [];
+  state.offered.push(...choices.map((route) => route.id));
+  return choices;
 }
 
 export function selectRoute(state, routeId, player, leg) {
@@ -163,7 +245,7 @@ function installStylesheet() {
   if (document.querySelector("link[data-sector-routes]")) return;
   const link = document.createElement("link");
   link.rel = "stylesheet";
-  link.href = "./sector-routes.css?v=1";
+  link.href = "./sector-routes.css?v=2";
   link.dataset.sectorRoutes = "1";
   document.head.appendChild(link);
 }

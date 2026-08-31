@@ -1,31 +1,572 @@
-import {spawnEnemyProjectile,particle} from "./entities.js";
+import { spawnEnemyProjectile, particle } from "./entities.js";
 
-const BOSSES=[
-  {kind:"warden",name:"THE WARDEN",color:"#ff547c",r:40,s:30,hp:900,d:30},
-  {kind:"harrower",name:"HARROWER",color:"#ff9b5d",r:34,s:38,hp:980,d:34},
-  {kind:"prism",name:"PRISMATIC EYE",color:"#8ee8ff",r:37,s:28,hp:1080,d:30},
-  {kind:"singularity",name:"SINGULARITY",color:"#c77dff",r:42,s:24,hp:1180,d:28},
-  {kind:"crown",name:"THE CROWN",color:"#ffe06a",r:46,s:27,hp:1380,d:36},
-  {kind:"leviathan",name:"LEVIATHAN",color:"#6dffca",r:150,s:0,hp:1750,d:40},
-  {kind:"brood",name:"THE BROODMIND",color:"#b7ff65",r:44,s:28,hp:1480,d:24}
+export const BOSSES = [
+  {
+    kind: "warden",
+    name: "THE WARDEN",
+    color: "#ff547c",
+    r: 40,
+    s: 30,
+    hp: 900,
+    d: 30,
+  },
+  {
+    kind: "harrower",
+    name: "HARROWER",
+    color: "#ff9b5d",
+    r: 34,
+    s: 38,
+    hp: 980,
+    d: 34,
+  },
+  {
+    kind: "prism",
+    name: "PRISMATIC EYE",
+    color: "#8ee8ff",
+    r: 37,
+    s: 28,
+    hp: 1080,
+    d: 30,
+  },
+  {
+    kind: "singularity",
+    name: "SINGULARITY",
+    color: "#c77dff",
+    r: 42,
+    s: 24,
+    hp: 1180,
+    d: 28,
+  },
+  {
+    kind: "crown",
+    name: "THE CROWN",
+    color: "#ffe06a",
+    r: 46,
+    s: 27,
+    hp: 1380,
+    d: 36,
+  },
+  {
+    kind: "leviathan",
+    name: "LEVIATHAN",
+    color: "#6dffca",
+    r: 150,
+    s: 0,
+    hp: 1750,
+    d: 40,
+  },
+  {
+    kind: "brood",
+    name: "THE BROODMIND",
+    color: "#b7ff65",
+    r: 44,
+    s: 28,
+    hp: 1480,
+    d: 24,
+  },
+  {
+    kind: "mirror",
+    name: "THE MIRROR ENGINE",
+    color: "#ff8bd8",
+    r: 40,
+    s: 31,
+    hp: 1580,
+    d: 30,
+  },
+  {
+    kind: "lastlight",
+    name: "THE LAST LIGHT",
+    color: "#fff19a",
+    r: 51,
+    s: 29,
+    hp: 1900,
+    d: 40,
+  },
+  {
+    kind: "architect",
+    name: "GRID ARCHITECT",
+    color: "#72f4ff",
+    r: 45,
+    s: 26,
+    hp: 1710,
+    d: 34,
+  },
 ];
-function edgeSpawn(w,h){const side=Math.floor(Math.random()*4),m=80;if(side===0)return{x:Math.random()*w,y:-m};if(side===1)return{x:w+m,y:Math.random()*h};if(side===2)return{x:Math.random()*w,y:h+m};return{x:-m,y:Math.random()*h}}
-export function spawnBoss(w,h,time){const minute=Math.max(1,Math.floor(time/60)),bossIndex=(minute-1)%BOSSES.length,base=BOSSES[bossIndex],pos=base.kind==="leviathan"?{x:w/2,y:-92}:edgeSpawn(w,h),scale=1+(minute-1)*.18,durability=bossIndex>=2?1.55+Math.min(.55,(bossIndex-2)*.12):1,hp=base.hp*scale*durability;return{...pos,px:pos.x,py:pos.y,...base,hp,hpMax:hp,boss:true,bossName:base.name,bossOrder:bossIndex+1,behavior:"boss",v:280+minute*35,flash:0,phase:Math.random()*6.28,shootCd:.7,chargeCd:1.7,telegraph:0,dashTime:0,dashVx:0,dashVy:0,elite:false,bossPhase:1,phaseFlash:0,blastCd:2.6,blastZones:[],arenaW:w,arenaH:h,sideWarnings:[],sideVolleyCd:1.1,railCd:2.8,sideFlip:Math.random()<.5?-1:1,summonCd:2.4,summonBurst:0}}
-function updateBlastZones(e,dt,enemyBullets,particles,onShake){for(const z of e.blastZones){z.warn-=dt;if(z.warn<=0&&!z.detonated){z.detonated=true;z.life=.28;enemyBullets.push({...spawnEnemyProjectile(z.x,z.y,0,0,z.damage,z.r,.14),kind:"blast"});for(let i=0;i<18;i++)particles.push(particle(z.x,z.y,"boss"));onShake(7)}if(z.detonated)z.life-=dt}e.blastZones=e.blastZones.filter(z=>!z.detonated||z.life>0)}
-function queueBlastZones(e,player,rage){const count=rage?3:2,base=Math.atan2(player.y-e.y,player.x-e.x),lead=rage?62:48;for(let i=0;i<count;i++){const spread=(i-(count-1)/2)*(rage?1.0:1.2),distance=i===0?0:lead,x=player.x+Math.cos(base+spread)*distance,y=player.y+Math.sin(base+spread)*distance;e.blastZones.push({x,y,r:rage?58:52,warn:rage?1.0:1.2,life:0,detonated:false,damage:rage?26:22})}}
-function queueRail(e,player,rage){const count=rage?2:1;for(let i=0;i<count;i++){const side=i%2===0?e.sideFlip:-e.sideFlip,offset=count===1?0:(i===0?-46:46),y=Math.max(120,Math.min(e.arenaH-36,player.y+offset));e.sideWarnings.push({side,y,warn:rage?.68:.86,fired:false})}e.sideFlip*=-1}
-function updateRails(e,dt,enemyBullets,onShake){for(const w of e.sideWarnings){w.warn-=dt;if(w.warn<=0&&!w.fired){w.fired=true;const fromLeft=w.side<0,x=fromLeft?-34:e.arenaW+34,a=fromLeft?0:Math.PI;enemyBullets.push({...spawnEnemyProjectile(x,w.y,a,e.bossPhase===2?760:680,e.bossPhase===2?25:21,10,2.2),kind:"rail",side:w.side});onShake(6)}}e.sideWarnings=e.sideWarnings.filter(w=>!w.fired)}
-function fireSideVolley(e,player,enemyBullets,rage){const fromLeft=e.sideFlip<0,x=fromLeft?-28:e.arenaW+28,dir=fromLeft?1:-1,count=rage?4:3;for(let i=0;i<count;i++){const y=Math.max(120,Math.min(e.arenaH-30,player.y+(i-(count-1)/2)*58)),b=spawnEnemyProjectile(x,y,fromLeft?0:Math.PI,rage?235:195,rage?14:12,6,4);enemyBullets.push({...b,kind:"sidebolt",vx:Math.abs(b.vx)*dir})}e.sideFlip*=-1}
-function publishBossArena(e){globalThis.__orbitalBossArena={at:performance.now(),suppressRegulars:e.bossOrder>=3&&e.kind!=="brood",summoner:e.kind==="brood",burst:e.kind==="brood"&&e.summonBurst>0,hpRatio:e.hp/e.hpMax}}
-export function updateBoss(e,dt,{player,enemyBullets,particles,time,onShake}){
-  const ratio=e.hp/e.hpMax;if(ratio<=.5&&e.bossPhase===1){e.bossPhase=2;e.phaseFlash=1.4;e.shootCd=0;e.chargeCd=0;e.railCd=.4;e.summonCd=.35;onShake(12);for(let i=0;i<28;i++)particles.push(particle(e.x,e.y,"boss"))}e.phaseFlash=Math.max(0,e.phaseFlash-dt);const rage=e.bossPhase===2;
-  e.summonBurst=Math.max(0,e.summonBurst-dt);publishBossArena(e);
-  const dx=player.x-e.x,dy=player.y-e.y,d=Math.max(1,Math.hypot(dx,dy)),nx=dx/d,ny=dy/d,wasTelegraph=e.telegraph;e.shootCd-=dt;e.chargeCd-=dt;e.telegraph=Math.max(0,e.telegraph-dt);e.dashTime=Math.max(0,e.dashTime-dt);e.blastCd-=dt;updateBlastZones(e,dt,enemyBullets,particles,onShake);
-  if(e.kind==="leviathan"){e.x=e.arenaW/2;e.y=-92;e.sideVolleyCd-=dt;e.railCd-=dt;updateRails(e,dt,enemyBullets,onShake);if(e.sideVolleyCd<=0){fireSideVolley(e,player,enemyBullets,rage);e.sideVolleyCd=rage?1.05:1.45}if(e.railCd<=0){queueRail(e,player,rage);e.railCd=rage?2.6:3.5}return}
-  if(e.kind==="brood"){const radial=d>245?1:d<190?-.55:0,tangent=Math.sin(e.phase)>.0?1:-1;e.x+=(nx*radial-ny*.34*tangent)*e.s*dt;e.y+=(ny*radial+nx*.34*tangent)*e.s*dt;e.summonCd-=dt;if(e.summonCd<=0){e.summonBurst=rage?1.55:1.15;e.summonCd=rage?3.7:5.0;onShake(5);for(let i=0;i<16;i++)particles.push(particle(e.x,e.y,"boss"))}if(e.shootCd<=0){const base=Math.atan2(dy,dx),count=rage?5:3;for(let i=0;i<count;i++)enemyBullets.push(spawnEnemyProjectile(e.x,e.y,base+(i-(count-1)/2)*.28,rage?205:175,10,4,5));e.shootCd=rage?1.25:1.75}return}
-  if(e.kind==="warden"){const radial=d>220?1:d<155?-.5:0;e.x+=(nx*radial-ny*(rage?.58:.38))*e.s*dt;e.y+=(ny*radial+nx*(rage?.58:.38))*e.s*dt;if(e.shootCd<=0){const count=rage?18:14,gaps=rage?1:2,gap=Math.floor((time*(rage?1.35:.8))%count);for(let i=0;i<count;i++){let skip=false;for(let g=0;g<gaps;g++)if(i===(gap+g)%count)skip=true;if(!skip)enemyBullets.push(spawnEnemyProjectile(e.x,e.y,i*Math.PI*2/count+time*.22,rage?185:155,12,5,7))}e.shootCd=rage?.82:1.25;onShake(4)}}
-  else if(e.kind==="harrower"){if(wasTelegraph>0&&e.telegraph===0)e.dashTime=rage?.52:.42;if(e.dashTime>0){e.x+=e.dashVx*dt;e.y+=e.dashVy*dt}else if(e.telegraph<=0){e.x+=nx*e.s*dt;e.y+=ny*e.s*dt}if(e.chargeCd<=0&&e.dashTime<=0&&e.telegraph<=0){e.telegraph=rage?.4:.6;e.chargeCd=rage?1.35:2.5;const a=Math.atan2(dy,dx);e.dashVx=Math.cos(a)*(rage?520:430);e.dashVy=Math.sin(a)*(rage?520:430)}if(e.shootCd<=0){for(let i=-2;i<=2;i++)enemyBullets.push(spawnEnemyProjectile(e.x,e.y,Math.atan2(dy,dx)+i*.18,rage?245:205,11,4,5));e.shootCd=rage?1.05:1.7}}
-  else if(e.kind==="prism"){const radial=d>275?1:d<200?-.6:0;e.x+=(nx*radial-ny*(rage?.42:.28))*e.s*dt;e.y+=(ny*radial+nx*(rage?.42:.28))*e.s*dt;if(e.shootCd<=0){const base=Math.atan2(dy,dx),spread=rage?4:3,spacing=rage?.17:.2;for(let i=-spread;i<=spread;i++)enemyBullets.push(spawnEnemyProjectile(e.x,e.y,base+i*spacing,rage?255:225,11,4,5));e.shootCd=rage?.9:1.32;onShake(3)}if(e.blastCd<=0){queueBlastZones(e,player,rage);e.blastCd=rage?2.8:3.7}}
-  else if(e.kind==="singularity"){const radial=d>190?1:d<135?-.45:0;e.x+=(nx*radial-ny*.5)*e.s*dt;e.y+=(ny*radial+nx*.5)*e.s*dt;if(d<390){const force=(1-d/390)*(rage?62:36)*(rage&&Math.floor(time/3)%2?-1:1);player.x-=nx*force*dt;player.y-=ny*force*dt}if(e.shootCd<=0){const count=rage?16:12;for(let i=0;i<count;i++)enemyBullets.push(spawnEnemyProjectile(e.x,e.y,i*Math.PI*2/count-time*(rage?1.05:.65),rage?155+i%2*65:125+i%2*55,10,4,8));e.shootCd=rage?.72:1.05}}
-  else{const radial=d>205?1:d<150?-.5:0;e.x+=(nx*radial-ny*.34)*e.s*dt;e.y+=(ny*radial+nx*.34)*e.s*dt;if(e.shootCd<=0){const base=time*(rage?.58:.35),rings=rage?3:2;for(let ring=0;ring<rings;ring++)for(let i=0;i<10;i++)enemyBullets.push(spawnEnemyProjectile(e.x,e.y,base+i*Math.PI*2/10+ring*.16,145+ring*62,13,5,7));for(let i=0;i<10;i++)particles.push(particle(e.x,e.y,"boss"));e.shootCd=rage?.62:.95;onShake(6)}}
+function edgeSpawn(w, h) {
+  const side = Math.floor(Math.random() * 4),
+    m = 80;
+  if (side === 0) return { x: Math.random() * w, y: -m };
+  if (side === 1) return { x: w + m, y: Math.random() * h };
+  if (side === 2) return { x: Math.random() * w, y: h + m };
+  return { x: -m, y: Math.random() * h };
+}
+export function spawnBoss(w, h, time) {
+  const minute = Math.max(1, Math.floor(time / 60)),
+    bossIndex = (minute - 1) % BOSSES.length,
+    base = BOSSES[bossIndex],
+    pos = base.kind === "leviathan" ? { x: w / 2, y: -92 } : edgeSpawn(w, h),
+    scale = 1 + (minute - 1) * 0.18,
+    durability =
+      bossIndex >= 2 ? 1.55 + Math.min(0.55, (bossIndex - 2) * 0.12) : 1,
+    hp = base.hp * scale * durability;
+  return {
+    ...pos,
+    px: pos.x,
+    py: pos.y,
+    ...base,
+    hp,
+    hpMax: hp,
+    boss: true,
+    bossName: base.name,
+    bossOrder: bossIndex + 1,
+    behavior: "boss",
+    v: 280 + minute * 35,
+    flash: 0,
+    phase: Math.random() * 6.28,
+    shootCd: 0.7,
+    chargeCd: 1.7,
+    telegraph: 0,
+    dashTime: 0,
+    dashVx: 0,
+    dashVy: 0,
+    elite: false,
+    bossPhase: 1,
+    phaseFlash: 0,
+    blastCd: 2.6,
+    blastZones: [],
+    arenaW: w,
+    arenaH: h,
+    sideWarnings: [],
+    sideVolleyCd: 1.1,
+    railCd: 2.8,
+    sideFlip: Math.random() < 0.5 ? -1 : 1,
+    summonCd: 2.4,
+    summonBurst: 0,
+  };
+}
+function updateBlastZones(e, dt, enemyBullets, particles, onShake) {
+  for (const z of e.blastZones) {
+    z.warn -= dt;
+    if (z.warn <= 0 && !z.detonated) {
+      z.detonated = true;
+      z.life = 0.28;
+      enemyBullets.push({
+        ...spawnEnemyProjectile(z.x, z.y, 0, 0, z.damage, z.r, 0.14),
+        kind: "blast",
+      });
+      for (let i = 0; i < 18; i++) particles.push(particle(z.x, z.y, "boss"));
+      onShake(7);
+    }
+    if (z.detonated) z.life -= dt;
+  }
+  e.blastZones = e.blastZones.filter((z) => !z.detonated || z.life > 0);
+}
+function queueBlastZones(e, player, rage) {
+  const count = rage ? 3 : 2,
+    base = Math.atan2(player.y - e.y, player.x - e.x),
+    lead = rage ? 62 : 48;
+  for (let i = 0; i < count; i++) {
+    const spread = (i - (count - 1) / 2) * (rage ? 1.0 : 1.2),
+      distance = i === 0 ? 0 : lead,
+      x = player.x + Math.cos(base + spread) * distance,
+      y = player.y + Math.sin(base + spread) * distance;
+    e.blastZones.push({
+      x,
+      y,
+      r: rage ? 58 : 52,
+      warn: rage ? 1.0 : 1.2,
+      life: 0,
+      detonated: false,
+      damage: rage ? 26 : 22,
+    });
+  }
+}
+function queueRail(e, player, rage) {
+  const count = rage ? 2 : 1;
+  for (let i = 0; i < count; i++) {
+    const side = i % 2 === 0 ? e.sideFlip : -e.sideFlip,
+      offset = count === 1 ? 0 : i === 0 ? -46 : 46,
+      y = Math.max(120, Math.min(e.arenaH - 36, player.y + offset));
+    e.sideWarnings.push({ side, y, warn: rage ? 0.68 : 0.86, fired: false });
+  }
+  e.sideFlip *= -1;
+}
+function updateRails(e, dt, enemyBullets, onShake) {
+  for (const w of e.sideWarnings) {
+    w.warn -= dt;
+    if (w.warn <= 0 && !w.fired) {
+      w.fired = true;
+      const fromLeft = w.side < 0,
+        x = fromLeft ? -34 : e.arenaW + 34,
+        a = fromLeft ? 0 : Math.PI;
+      enemyBullets.push({
+        ...spawnEnemyProjectile(
+          x,
+          w.y,
+          a,
+          e.bossPhase === 2 ? 760 : 680,
+          e.bossPhase === 2 ? 25 : 21,
+          10,
+          2.2,
+        ),
+        kind: "rail",
+        side: w.side,
+      });
+      onShake(6);
+    }
+  }
+  e.sideWarnings = e.sideWarnings.filter((w) => !w.fired);
+}
+function fireSideVolley(e, player, enemyBullets, rage) {
+  const fromLeft = e.sideFlip < 0,
+    x = fromLeft ? -28 : e.arenaW + 28,
+    dir = fromLeft ? 1 : -1,
+    count = rage ? 4 : 3;
+  for (let i = 0; i < count; i++) {
+    const y = Math.max(
+        120,
+        Math.min(e.arenaH - 30, player.y + (i - (count - 1) / 2) * 58),
+      ),
+      b = spawnEnemyProjectile(
+        x,
+        y,
+        fromLeft ? 0 : Math.PI,
+        rage ? 235 : 195,
+        rage ? 14 : 12,
+        6,
+        4,
+      );
+    enemyBullets.push({ ...b, kind: "sidebolt", vx: Math.abs(b.vx) * dir });
+  }
+  e.sideFlip *= -1;
+}
+function publishBossArena(e) {
+  globalThis.__orbitalBossArena = {
+    at: performance.now(),
+    suppressRegulars: e.bossOrder >= 3 && e.kind !== "brood",
+    summoner: e.kind === "brood",
+    burst: e.kind === "brood" && e.summonBurst > 0,
+    hpRatio: e.hp / e.hpMax,
+  };
+}
+export function updateBoss(
+  e,
+  dt,
+  { player, enemyBullets, particles, time, onShake },
+) {
+  const ratio = e.hp / e.hpMax;
+  if (ratio <= 0.5 && e.bossPhase === 1) {
+    e.bossPhase = 2;
+    e.phaseFlash = 1.4;
+    e.shootCd = 0;
+    e.chargeCd = 0;
+    e.railCd = 0.4;
+    e.summonCd = 0.35;
+    onShake(12);
+    for (let i = 0; i < 28; i++) particles.push(particle(e.x, e.y, "boss"));
+  }
+  e.phaseFlash = Math.max(0, e.phaseFlash - dt);
+  const rage = e.bossPhase === 2;
+  e.summonBurst = Math.max(0, e.summonBurst - dt);
+  publishBossArena(e);
+  const dx = player.x - e.x,
+    dy = player.y - e.y,
+    d = Math.max(1, Math.hypot(dx, dy)),
+    nx = dx / d,
+    ny = dy / d,
+    wasTelegraph = e.telegraph;
+  e.shootCd -= dt;
+  e.chargeCd -= dt;
+  e.telegraph = Math.max(0, e.telegraph - dt);
+  e.dashTime = Math.max(0, e.dashTime - dt);
+  e.blastCd -= dt;
+  updateBlastZones(e, dt, enemyBullets, particles, onShake);
+  if (e.kind === "leviathan") {
+    e.x = e.arenaW / 2;
+    e.y = -92;
+    e.sideVolleyCd -= dt;
+    e.railCd -= dt;
+    updateRails(e, dt, enemyBullets, onShake);
+    if (e.sideVolleyCd <= 0) {
+      fireSideVolley(e, player, enemyBullets, rage);
+      e.sideVolleyCd = rage ? 1.05 : 1.45;
+    }
+    if (e.railCd <= 0) {
+      queueRail(e, player, rage);
+      e.railCd = rage ? 2.6 : 3.5;
+    }
+    return;
+  }
+  if (e.kind === "brood") {
+    const radial = d > 245 ? 1 : d < 190 ? -0.55 : 0,
+      tangent = Math.sin(e.phase) > 0.0 ? 1 : -1;
+    e.x += (nx * radial - ny * 0.34 * tangent) * e.s * dt;
+    e.y += (ny * radial + nx * 0.34 * tangent) * e.s * dt;
+    e.summonCd -= dt;
+    if (e.summonCd <= 0) {
+      e.summonBurst = rage ? 1.55 : 1.15;
+      e.summonCd = rage ? 3.7 : 5.0;
+      onShake(5);
+      for (let i = 0; i < 16; i++) particles.push(particle(e.x, e.y, "boss"));
+    }
+    if (e.shootCd <= 0) {
+      const base = Math.atan2(dy, dx),
+        count = rage ? 5 : 3;
+      for (let i = 0; i < count; i++)
+        enemyBullets.push(
+          spawnEnemyProjectile(
+            e.x,
+            e.y,
+            base + (i - (count - 1) / 2) * 0.28,
+            rage ? 205 : 175,
+            10,
+            4,
+            5,
+          ),
+        );
+      e.shootCd = rage ? 1.25 : 1.75;
+    }
+    return;
+  }
+  if (e.kind === "warden") {
+    const radial = d > 220 ? 1 : d < 155 ? -0.5 : 0;
+    e.x += (nx * radial - ny * (rage ? 0.58 : 0.38)) * e.s * dt;
+    e.y += (ny * radial + nx * (rage ? 0.58 : 0.38)) * e.s * dt;
+    if (e.shootCd <= 0) {
+      const count = rage ? 18 : 14,
+        gaps = rage ? 1 : 2,
+        gap = Math.floor((time * (rage ? 1.35 : 0.8)) % count);
+      for (let i = 0; i < count; i++) {
+        let skip = false;
+        for (let g = 0; g < gaps; g++) if (i === (gap + g) % count) skip = true;
+        if (!skip)
+          enemyBullets.push(
+            spawnEnemyProjectile(
+              e.x,
+              e.y,
+              (i * Math.PI * 2) / count + time * 0.22,
+              rage ? 185 : 155,
+              12,
+              5,
+              7,
+            ),
+          );
+      }
+      e.shootCd = rage ? 0.82 : 1.25;
+      onShake(4);
+    }
+  } else if (e.kind === "harrower") {
+    if (wasTelegraph > 0 && e.telegraph === 0) e.dashTime = rage ? 0.52 : 0.42;
+    if (e.dashTime > 0) {
+      e.x += e.dashVx * dt;
+      e.y += e.dashVy * dt;
+    } else if (e.telegraph <= 0) {
+      e.x += nx * e.s * dt;
+      e.y += ny * e.s * dt;
+    }
+    if (e.chargeCd <= 0 && e.dashTime <= 0 && e.telegraph <= 0) {
+      e.telegraph = rage ? 0.4 : 0.6;
+      e.chargeCd = rage ? 1.35 : 2.5;
+      const a = Math.atan2(dy, dx);
+      e.dashVx = Math.cos(a) * (rage ? 520 : 430);
+      e.dashVy = Math.sin(a) * (rage ? 520 : 430);
+    }
+    if (e.shootCd <= 0) {
+      for (let i = -2; i <= 2; i++)
+        enemyBullets.push(
+          spawnEnemyProjectile(
+            e.x,
+            e.y,
+            Math.atan2(dy, dx) + i * 0.18,
+            rage ? 245 : 205,
+            11,
+            4,
+            5,
+          ),
+        );
+      e.shootCd = rage ? 1.05 : 1.7;
+    }
+  } else if (e.kind === "prism") {
+    const radial = d > 275 ? 1 : d < 200 ? -0.6 : 0;
+    e.x += (nx * radial - ny * (rage ? 0.42 : 0.28)) * e.s * dt;
+    e.y += (ny * radial + nx * (rage ? 0.42 : 0.28)) * e.s * dt;
+    if (e.shootCd <= 0) {
+      const base = Math.atan2(dy, dx),
+        spread = rage ? 4 : 3,
+        spacing = rage ? 0.17 : 0.2;
+      for (let i = -spread; i <= spread; i++)
+        enemyBullets.push(
+          spawnEnemyProjectile(
+            e.x,
+            e.y,
+            base + i * spacing,
+            rage ? 255 : 225,
+            11,
+            4,
+            5,
+          ),
+        );
+      e.shootCd = rage ? 0.9 : 1.32;
+      onShake(3);
+    }
+    if (e.blastCd <= 0) {
+      queueBlastZones(e, player, rage);
+      e.blastCd = rage ? 2.8 : 3.7;
+    }
+  } else if (e.kind === "singularity") {
+    const radial = d > 190 ? 1 : d < 135 ? -0.45 : 0;
+    e.x += (nx * radial - ny * 0.5) * e.s * dt;
+    e.y += (ny * radial + nx * 0.5) * e.s * dt;
+    if (d < 390) {
+      const force =
+        (1 - d / 390) *
+        (rage ? 62 : 36) *
+        (rage && Math.floor(time / 3) % 2 ? -1 : 1);
+      player.x -= nx * force * dt;
+      player.y -= ny * force * dt;
+    }
+    if (e.shootCd <= 0) {
+      const count = rage ? 16 : 12;
+      for (let i = 0; i < count; i++)
+        enemyBullets.push(
+          spawnEnemyProjectile(
+            e.x,
+            e.y,
+            (i * Math.PI * 2) / count - time * (rage ? 1.05 : 0.65),
+            rage ? 155 + (i % 2) * 65 : 125 + (i % 2) * 55,
+            10,
+            4,
+            8,
+          ),
+        );
+      e.shootCd = rage ? 0.72 : 1.05;
+    }
+  } else if (e.kind === "mirror") {
+    const radial = d > 245 ? 1 : d < 180 ? -0.6 : 0,
+      tangent = Math.sin(time * 0.7) > 0 ? 0.48 : -0.48;
+    e.x += (nx * radial - ny * tangent) * e.s * dt;
+    e.y += (ny * radial + nx * tangent) * e.s * dt;
+    if (e.shootCd <= 0) {
+      const origins = [
+          [e.x, e.y],
+          [e.arenaW - e.x, e.arenaH - e.y],
+        ],
+        spread = rage ? 3 : 2;
+      for (const [x, y] of origins) {
+        const aim = Math.atan2(player.y - y, player.x - x);
+        for (let i = -spread; i <= spread; i++)
+          enemyBullets.push(
+            spawnEnemyProjectile(
+              x,
+              y,
+              aim + i * 0.19,
+              rage ? 255 : 215,
+              rage ? 13 : 11,
+              4,
+              6,
+            ),
+          );
+      }
+      e.shootCd = rage ? 0.88 : 1.24;
+      onShake(4);
+    }
+    if (e.blastCd <= 0) {
+      queueBlastZones(e, player, rage);
+      e.blastCd = rage ? 2.5 : 3.2;
+    }
+  } else if (e.kind === "architect") {
+    const targetX = e.arenaW / 2,
+      targetY = Math.max(120, e.arenaH * 0.27),
+      tx = targetX - e.x,
+      ty = targetY - e.y,
+      td = Math.max(1, Math.hypot(tx, ty));
+    e.x += (tx / td) * e.s * dt;
+    e.y += (ty / td) * e.s * dt;
+    e.railCd -= dt;
+    updateRails(e, dt, enemyBullets, onShake);
+    if (e.railCd <= 0) {
+      queueRail(e, player, rage);
+      e.railCd = rage ? 1.9 : 2.7;
+    }
+    if (e.blastCd <= 0) {
+      const spacing = rage ? 82 : 96,
+        count = rage ? 5 : 3;
+      for (let i = 0; i < count; i++) {
+        const horizontal = i % 2 === 0;
+        e.blastZones.push({
+          x: horizontal ? player.x + (i - count / 2) * spacing : player.x,
+          y: horizontal ? player.y : player.y + (i - count / 2) * spacing,
+          r: rage ? 48 : 43,
+          warn: rage ? 0.8 : 1.05,
+          life: 0,
+          detonated: false,
+          damage: rage ? 28 : 24,
+        });
+      }
+      e.blastCd = rage ? 2.35 : 3.1;
+    }
+  } else if (e.kind === "lastlight") {
+    const radial = d > 220 ? 1 : d < 165 ? -0.55 : 0;
+    e.x += (nx * radial - ny * 0.4) * e.s * dt;
+    e.y += (ny * radial + nx * 0.4) * e.s * dt;
+    if (d < 450) {
+      const force = (1 - d / 450) * (rage ? 48 : 26);
+      player.x -= nx * force * dt;
+      player.y -= ny * force * dt;
+    }
+    e.railCd -= dt;
+    updateRails(e, dt, enemyBullets, onShake);
+    if (e.railCd <= 0) {
+      queueRail(e, player, rage);
+      e.railCd = rage ? 2.75 : 3.7;
+    }
+    if (e.shootCd <= 0) {
+      const count = rage ? 22 : 18,
+        gap = Math.floor((time * 1.4) % count);
+      for (let i = 0; i < count; i++) {
+        if (i === gap || (!rage && i === (gap + 1) % count)) continue;
+        enemyBullets.push(
+          spawnEnemyProjectile(
+            e.x,
+            e.y,
+            (i * Math.PI * 2) / count - time * 0.72,
+            175 + (i % 3) * 34,
+            rage ? 15 : 13,
+            5,
+            7,
+          ),
+        );
+      }
+      e.shootCd = rage ? 0.58 : 0.82;
+      onShake(7);
+    }
+    if (e.blastCd <= 0) {
+      queueBlastZones(e, player, true);
+      e.blastCd = rage ? 2.15 : 2.8;
+    }
+  } else {
+    const radial = d > 205 ? 1 : d < 150 ? -0.5 : 0;
+    e.x += (nx * radial - ny * 0.34) * e.s * dt;
+    e.y += (ny * radial + nx * 0.34) * e.s * dt;
+    if (e.shootCd <= 0) {
+      const base = time * (rage ? 0.58 : 0.35),
+        rings = rage ? 3 : 2;
+      for (let ring = 0; ring < rings; ring++)
+        for (let i = 0; i < 10; i++)
+          enemyBullets.push(
+            spawnEnemyProjectile(
+              e.x,
+              e.y,
+              base + (i * Math.PI * 2) / 10 + ring * 0.16,
+              145 + ring * 62,
+              13,
+              5,
+              7,
+            ),
+          );
+      for (let i = 0; i < 10; i++) particles.push(particle(e.x, e.y, "boss"));
+      e.shootCd = rage ? 0.62 : 0.95;
+      onShake(6);
+    }
+  }
 }
