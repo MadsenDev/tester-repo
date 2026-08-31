@@ -19,3 +19,83 @@ button{min-height:46px;border-radius:0!important;background:var(--signal)!import
 .pause-panel,.run-summary div,.run-unlock{border-radius:0!important}.pause-panel{background:var(--panel)!important;border:1px solid var(--line)!important}.run-summary div{background:var(--void);border-color:var(--line)}
 @media(max-width:680px){.screen-stack{padding:20px 18px 108px!important}.panel{padding:0!important}.home-screen{gap:10px}.ship-hero{height:210px;min-height:210px}.compact-select{min-height:68px}.home-screen #modeSelect{margin-top:-68px}.screen-heading{margin-bottom:16px}.bottom-nav button{min-height:68px}.hangar-track{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px}.objective{top:128px}.arsenal{bottom:max(18px,env(safe-area-inset-bottom))}#overlay.gameplay-modal .panel{padding:0!important}#overlay.gameplay-modal #levelup{padding:0!important}}
 @media(max-height:720px){.ship-hero{height:168px;min-height:168px}.orbit-ring{width:132px;height:132px}.home-screen{gap:8px}.home-screen #openPlayground{min-height:48px}.bottom-nav button{min-height:60px;padding-top:10px!important}.module-choice{padding:12px!important}.module-flavor{display:none!important}.module-effects{margin-top:5px!important;padding-top:5px!important}}
+
+/* Keep enhanced module cards cohesive when legacy evolution-choice rules load first. */
+#overlay.gameplay-modal #levelup h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0;
+}
+#overlay.gameplay-modal #levelup h2::after {
+  float: none;
+  flex: 0 0 auto;
+  margin: 0;
+}
+#overlay.gameplay-modal #levelup .module-choice-subtitle {
+  margin: 6px 0 16px;
+}
+#overlay.gameplay-modal .module-choice {
+  display: block !important;
+  text-align: left;
+}
+#overlay.gameplay-modal .module-choice-main {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  gap: 11px;
+}
+#overlay.gameplay-modal .module-glyph {
+  display: grid !important;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line-signal);
+  border-radius: 0;
+  background: rgba(124, 246, 200, 0.04);
+  color: var(--signal);
+}
+#overlay.gameplay-modal .module-copy {
+  min-width: 0;
+}
+#overlay.gameplay-modal .module-copy b {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  #overlay.gameplay-modal .screen-stack {
+    place-items: center;
+    padding: max(14px, env(safe-area-inset-top)) 14px
+      max(14px, env(safe-area-inset-bottom)) !important;
+  }
+  #overlay.gameplay-modal #levelup h2::after {
+    display: none;
+  }
+  #overlay.gameplay-modal #levelup .module-choice-subtitle {
+    margin-bottom: 12px;
+  }
+  #overlay.gameplay-modal #choices {
+    gap: 8px;
+  }
+  #overlay.gameplay-modal .module-choice {
+    padding: 12px !important;
+  }
+  #overlay.gameplay-modal .module-choice-top {
+    margin-bottom: 9px;
+  }
+  #overlay.gameplay-modal .module-glyph {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+  }
+  #overlay.gameplay-modal .module-copy b {
+    font-size: 16px !important;
+  }
+  #overlay.gameplay-modal .module-effects div {
+    min-height: 18px !important;
+  }
+  #overlay.gameplay-modal .module-flavor {
+    font-size: 10px !important;
+  }
+}
