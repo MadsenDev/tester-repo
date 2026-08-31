@@ -80,6 +80,7 @@ import {
   compressSalvage,
 } from "./combat-readability.js";
 import { bossDamageMultiplier } from "./boss-counterplay.js";
+import { compactArsenalLabel } from "./hud-summary.js";
 import {
   syncManifestations,
   updateManifestations,
@@ -948,10 +949,11 @@ function updateUI() {
   const mult = 1 + Math.min(combo, 30) * 0.03;
   ui.combo.textContent = "COMBO x" + mult.toFixed(2);
   ui.combo.classList.toggle("hot", combo >= 3);
-  const apex = activeSynergies(player).filter((synergy) => synergy.apex);
-  ui.arsenal.textContent = apex.length
-    ? `${player.shipName} · ${player.upgrades.length} MODULES · ${apex.length === 1 ? apex[0].name : `${apex.length} APEX SYNERGIES`}`
-    : `${player.shipName} · ${player.upgrades.length} MODULES · ${weaponLabel(player)}`;
+  ui.arsenal.textContent = compactArsenalLabel(
+    player,
+    activeSynergies(player),
+    weaponLabel(player),
+  );
   ui.sector.textContent =
     settings.mode === "bossrush" ? "BOSS CIRCUIT" : sectorAt(time).name;
   ui.objective.textContent =
