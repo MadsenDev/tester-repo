@@ -96,6 +96,17 @@ Open `index.html` directly, or serve the directory with any static server:
 python -m http.server 8080
 ```
 
+## Install and offline play
+
+The deployed game is an installable PWA. After one successful online load, its
+complete runtime shell is available offline. Releases use the semantic version
+in `app-version.js`; a new service worker downloads each version into a
+separate cache and waits until the player accepts the in-game **Update now**
+prompt. This keeps the running page and its modules on one atomic version
+instead of mixing new HTML with stale JavaScript.
+
+See [the release guide](docs/releasing.md) for the versioning and cache rules.
+
 ## Philosophy
 
 This repository started essentially empty as an experiment: can an AI coding agent create and ship a complete game without being given assets, starter code, a framework, or a design file?
