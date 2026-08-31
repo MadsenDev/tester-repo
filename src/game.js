@@ -74,6 +74,7 @@ import {
 import { discover, recordArchiveRun } from "./discovery.js";
 import { activeSynergies } from "./synergy-catalog.js";
 import { attractPowerup, rollPowerupDrop } from "./drop-economy.js";
+import { regulateProjectilePressure } from "./projectile-pressure.js";
 const routeUi = createRouteUI();
 const blackSignalUi = createBlackSignalUI();
 const canvas = document.querySelector("#game"),
@@ -856,6 +857,13 @@ function update(dt) {
   enemyBullets = enemyBullets.filter(
     (b) => b.life > 0 && b.x > -70 && b.y > -70 && b.x < W + 70 && b.y < H + 70,
   );
+  enemyBullets = regulateProjectilePressure(enemyBullets, {
+    difficulty: settings.difficulty,
+    time,
+    width: W,
+    height: H,
+    player,
+  });
   const magnet = player.magnet * mods.magnet;
   for (let i = gems.length - 1; i >= 0; i--) {
     const g = gems[i],
