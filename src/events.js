@@ -1,7 +1,7 @@
 export function createEventState() {
   return { next: 42, current: null, banner: null };
 }
-const EVENTS = [
+export const EVENTS = [
   {
     id: "overload",
     name: "SYSTEM OVERLOAD",
@@ -19,6 +19,24 @@ const EVENTS = [
     name: "ELITE HUNT",
     desc: "Elites flood the sector. Score bonus active.",
     duration: 18,
+  },
+  {
+    id: "swarm-tide",
+    name: "SWARM TIDE",
+    desc: "Hostile density surges. Salvage yield amplified.",
+    duration: 16,
+  },
+  {
+    id: "glass-space",
+    name: "GLASS SPACE",
+    desc: "Hull damage becomes severe. Score transmission doubled.",
+    duration: 14,
+  },
+  {
+    id: "temporal-echo",
+    name: "TEMPORAL ECHO",
+    desc: "Weapons and hostiles fall into asymmetric slow time.",
+    duration: 13,
   },
 ];
 export function updateEvents(state, dt, time) {
@@ -46,11 +64,23 @@ export function updateEvents(state, dt, time) {
 export function eventModifiers(state) {
   const id = state.current?.id;
   return {
-    fire: id === "overload" ? 0.5 : 1,
-    enemySpeed: id === "overload" ? 1.22 : 1,
+    fire: id === "overload" ? 0.5 : id === "temporal-echo" ? 0.68 : 1,
+    enemySpeed: id === "overload" ? 1.22 : id === "temporal-echo" ? 0.7 : 1,
     magnet: id === "harvest" ? 2.8 : 1,
     elite: id === "hunt" ? 0.38 : 0,
-    score: id === "hunt" ? 1.5 : 1,
+    score:
+      id === "glass-space"
+        ? 2
+        : id === "hunt"
+          ? 1.5
+          : id === "temporal-echo"
+            ? 1.35
+            : id === "swarm-tide"
+              ? 1.25
+              : 1,
+    spawn: id === "swarm-tide" ? 1.65 : 1,
+    xp: id === "swarm-tide" ? 1.55 : 1,
+    damageTaken: id === "glass-space" ? 1.75 : 1,
   };
 }
 export function drawEventBanner(ctx, state, W) {

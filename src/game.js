@@ -480,8 +480,11 @@ function shoot() {
 function hurt(amount) {
   if (player.invuln > 0 || state !== "playing") return;
   const diff = difficultyConfig(settings.difficulty),
-    route = routeModifiers(routes);
-  player.hp -= amount * (1 - player.armor) * diff.damage * route.damageTaken;
+    mods = combineModifiers(
+      settings.mode === "bossrush" ? {} : eventModifiers(events),
+      routeModifiers(routes),
+    );
+  player.hp -= amount * (1 - player.armor) * diff.damage * mods.damageTaken;
   player.invuln = 0.22;
   player.boost = 0.65;
   shake = 8;

@@ -27,7 +27,7 @@ The arena changes every two minutes:
 
 Each sector has a generated palette, moving background detail and its own pressure multiplier.
 
-At every sector boundary, navigation pauses the run and offers three routes across distinct risk bands. Route rewards permanently shape the current build, while route threats alter enemy pressure, elites, damage or scoring until the next boundary. Endless mode keeps generating route decisions beyond the campaign's fifth sector.
+At every sector boundary, navigation pauses the run and offers three routes across distinct risk bands. Twelve possible routes can permanently shape the current build, while their threats alter enemy pressure, elites, damage or scoring until the next boundary. Endless mode keeps generating route decisions beyond the campaign's fifth sector.
 
 ## Bosses
 
@@ -38,6 +38,11 @@ Bosses arrive every minute and rotate through original behavior-driven encounter
 - **Prismatic Eye** fires dense aimed projectile fans
 - **Singularity** pulls the player toward itself while emitting spiral patterns
 - **The Crown** layers fast overlapping projectile rings
+- **Leviathan** occupies the arena edge with rail warnings and side volleys
+- **The Broodmind** replaces the swarm with concentrated summon bursts
+- **The Mirror Engine** attacks from reflected positions on both sides of the arena
+- **The Last Light** closes the campaign with gravity, rail fire and rotating rings
+- **Grid Architect** enters the later Boss Rush rotation with rail-and-blast lattices
 
 The goal is readable attack patterns and movement tests rather than merely giving ordinary enemies absurd health bars.
 
@@ -53,7 +58,9 @@ Every run begins with the blaster. Level-up choices can unlock and improve five 
 
 ## Enemies
 
-The roster includes Scouts, Brutes, Darts, Bulwarks, Wisps, Spitters, Swarmers, Snipers and Orbiters. Their behavior ranges from direct pursuit and charging to strafing, ranged fire, long-range shots and orbiting attack patterns. Elite variants appear later in runs.
+The roster includes Scouts, Brutes, Darts, Bulwarks, Wisps, Spitters, Swarmers, Snipers, Orbiters, Leeches, Sentinels and Phasers. Their behavior ranges from direct pursuit and charging to strafing, ranged fire, long-range shots, teleportation and orbiting attack patterns. Elite variants appear later in runs.
+
+Six timed sector events interrupt the normal pressure curve, including Swarm Tide, Glass Space and Temporal Echo. Event modifiers compose with the selected route instead of replacing it.
 
 ## Persistent menu
 
