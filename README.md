@@ -60,6 +60,16 @@ The module pool contains 150 upgrades, including 50 authored special modules. Sp
 
 Nine apex modules complete named multi-trait builds such as **Seeking Storm**, **Event Horizon**, **Recursive Violence**, **Thunder Choir**, and **Guardian Swarm**. The rare **Dead God Circuit** activates the entire apex network at once, with an appropriately unstable annihilation aura.
 
+Level-ups now draw from themed module pools. Most levels offer salvage, every fifth level opens a boss cache, and every seventh level offers companion technology. This gives major milestones a distinct identity and makes build-defining modules feel earned rather than evenly shuffled into every choice.
+
+## Signal Archive
+
+The persistent **Signal Archive** records modules, synergies, bosses, routes and sector events as they are encountered. Undiscovered entries remain redacted, while a searchable module catalog reveals each recovered signal's pool, rarity and effect.
+
+Completed runs earn ship-and-mode completion marks. The Archive also keeps a compact history of recent runs with their final loadouts, decoded synergies, routes and scores, and the end-of-run debrief highlights discoveries made during that attempt.
+
+Every second defeated boss can intercept the run with a **Black Signal** contract. Accepting its forbidden module requires a permanent sacrifice for the rest of the run—hull, mobility or defenses—while rejecting it leaves the build untouched. Accepted contracts and their costs appear in the final debrief and Archive history.
+
 ## Enemies
 
 The roster includes Scouts, Brutes, Darts, Bulwarks, Wisps, Spitters, Swarmers, Snipers, Orbiters, Leeches, Sentinels and Phasers. Their behavior ranges from direct pursuit and charging to strafing, ranged fire, long-range shots, teleportation and orbiting attack patterns. Elite variants appear later in runs.
@@ -68,7 +78,7 @@ Six timed sector events interrupt the normal pressure curve, including Swarm Tid
 
 ## Persistent menu
 
-The title screen includes persistent local settings for difficulty, screen shake and sound, plus run statistics for completed runs, victories, kills and best score. Nothing leaves the browser.
+The title screen includes persistent local settings for difficulty, screen shake and sound, plus run statistics, completion marks and the Signal Archive. Nothing leaves the browser.
 
 ## Local
 
