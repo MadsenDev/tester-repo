@@ -1,10 +1,14 @@
 const active=(p,id)=>(p.passives?.[id]||0)>0||(p.weapons?.[id]||0)>0;
+const transformed=(p,id)=>active(p,`transform-${id}`);
 export function blasterTraits(player){
  const fork=active(player,"multishot"),pierce=active(player,"pierce"),payload=active(player,"size"),crit=active(player,"crit"),velocity=active(player,"bullet"),seek=active(player,"missile"),arc=active(player,"arc"),nova=active(player,"nova"),anchor=active(player,"mines"),prism=active(player,"beam");
  return{fork,pierce,payload,crit,velocity,seek,arc,nova,anchor,prism,
   forkedGuidance:fork&&seek,criticalConduction:crit&&arc,massDriver:payload&&velocity,phaseDischarge:pierce&&nova,prismaticPhase:pierce&&prism,
-  seekingStorm:fork&&seek&&arc,criticalMass:payload&&crit&&nova,railPrism:velocity&&pierce&&prism,
-  recursiveViolence:fork&&pierce&&seek&&arc,eventHorizon:payload&&nova&&anchor&&pierce};
+  seekingStorm:fork&&seek&&arc&&(player.playgroundBuild||transformed(player,"storm")),
+  criticalMass:payload&&crit&&nova&&(player.playgroundBuild||transformed(player,"critical-mass")),
+  railPrism:velocity&&pierce&&prism&&(player.playgroundBuild||transformed(player,"rail-prism")),
+  recursiveViolence:fork&&pierce&&seek&&arc&&(player.playgroundBuild||transformed(player,"recursive")),
+  eventHorizon:payload&&nova&&anchor&&pierce&&(player.playgroundBuild||transformed(player,"horizon"))};
 }
 const generation=(parent)=>Math.min(3,(parent?.generation||0)+1);
 export function decorateBlaster(bullet,player,parent=null){
