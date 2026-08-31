@@ -19,6 +19,8 @@ Difficulty changes the shape of boss encounters rather than only adjusting globa
 
 Difficulty also controls the recovery economy. Chill produces more frequent, stronger and longer-lived repair drops; Normal keeps recovery dependable without making it constant; Intense makes every recovery opportunity more deliberate. Missing hull increases the chance and repair bias, bosses rescue critically damaged ships, and a kill-based pity rule prevents extreme dry spells. Powerups attract from farther away on easier settings so healing does not require diving back into the worst part of the swarm.
 
+Hostile projectile pressure follows the same philosophy. Chill and Normal use viewport-aware limits to stop late runs from becoming unreadable walls of stale shots, retiring off-screen and distant projectiles first while preserving nearby threats and telegraphed rail or blast attacks. Intense keeps the complete bullet hell.
+
 ## World
 
 The arena changes every two minutes:

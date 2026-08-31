@@ -50,6 +50,7 @@ jobs:
           test -f src/debrief-ui.js
           test -f src/discovery.js
           test -f src/drop-economy.js
+          test -f src/projectile-pressure.js
           test -f src/synergy-catalog.js
           test -f src/selector-feedback.js
           test -f src/dev-mode.js
