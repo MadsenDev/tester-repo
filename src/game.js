@@ -73,6 +73,7 @@ import {
 } from "./black-signal.js";
 import { discover, recordArchiveRun } from "./discovery.js";
 import { activeSynergies } from "./synergy-catalog.js";
+import { attractPowerup, rollPowerupDrop } from "./drop-economy.js";
 const routeUi = createRouteUI();
 const blackSignalUi = createBlackSignalUI();
 const canvas = document.querySelector("#game"),
@@ -137,6 +138,7 @@ let { w: W, h: H } = viewportSize(),
   combo = 0,
   comboTimer = 0,
   kills = 0,
+  killsSinceRepair = 0,
   bossCount = 0,
   pendingBlackSignal = false,
   defeatedBosses = [],
@@ -403,6 +405,7 @@ function start() {
       combo =
       comboTimer =
       kills =
+      killsSinceRepair =
       bossCount =
         0;
     nextBoss = settings.mode === "bossrush" ? 2 : bossInterval(settings.mode);
@@ -617,6 +620,7 @@ function hurt(amount) {
 function awardKill(e, mods) {
   const diff = difficultyConfig(settings.difficulty);
   kills++;
+  killsSinceRepair++;
   onSpecialKill(player, e);
   if (e.boss) {
     defeatedBosses.push(e.kind);
@@ -641,22 +645,27 @@ function awardKill(e, mods) {
     });
   for (let j = 0; j < (e.boss ? 36 : e.elite ? 16 : 9); j++)
     particles.push(particle(e.x, e.y, e.boss ? "boss" : "spark"));
-  const powerChance = e.boss ? 1 : e.elite ? 0.2 : 0.045;
-  if (Math.random() < powerChance) {
-    const kinds = ["repair", "pulse", "overdrive"];
+  const drop = rollPowerupDrop(
+    e,
+    settings.difficulty,
+    player,
+    killsSinceRepair,
+  );
+  if (drop) {
     powerups.push({
       x: e.x,
       y: e.y,
-      kind: kinds[Math.floor(Math.random() * kinds.length)],
+      ...drop,
       r: 9,
-      life: 14,
       phase: Math.random() * 6.28,
     });
+    if (drop.kind === "repair") killsSinceRepair = 0;
   }
   if (e.boss && settings.mode === "bossrush") nextBoss = time + 8;
 }
 function collectPowerup(p) {
-  if (p.kind === "repair") player.hp = Math.min(player.maxHp, player.hp + 32);
+  if (p.kind === "repair")
+    player.hp = Math.min(player.maxHp, player.hp + (p.value || 32));
   else if (p.kind === "pulse") {
     enemyBullets = [];
     for (const e of enemies) e.hp -= Math.max(80, player.damage * 4);
@@ -874,6 +883,7 @@ function update(dt) {
     const p = powerups[i];
     p.life -= dt;
     p.phase += dt * 2;
+    attractPowerup(p, player, dt);
     if (dist2(player, p) < (player.r + p.r + 8) ** 2) {
       collectPowerup(p);
       powerups.splice(i, 1);
