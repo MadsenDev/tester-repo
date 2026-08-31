@@ -5,6 +5,10 @@ import {
   predictiveTarget,
   tuneBossProjectiles,
 } from "./boss-difficulty.js";
+import {
+  beginBossPhaseGate,
+  updateBossCounterplay,
+} from "./boss-counterplay.js";
 
 export const BOSSES = [
   {
@@ -149,6 +153,10 @@ export function spawnBoss(w, h, time, difficulty = "normal") {
       sideFlip: Math.random() < 0.5 ? -1 : 1,
       summonCd: 2.4,
       summonBurst: 0,
+      phaseGate: 0,
+      positionTests: [],
+      positionTestCd: 3.6,
+      positionTestFlip: false,
     },
     difficulty,
   );
@@ -262,7 +270,7 @@ function publishBossArena(e) {
 export function updateBoss(
   e,
   dt,
-  { player, enemyBullets, particles, time, onShake },
+  { player, enemyBullets, particles, time, onHazard, onShake },
 ) {
   const tuning = e.bossTuning || bossDifficulty(e.bossDifficulty),
     tempoDt = dt * tuning.tempo,
@@ -278,10 +286,12 @@ export function updateBoss(
     e.chargeCd = 0;
     e.railCd = 0.4;
     e.summonCd = 0.35;
+    beginBossPhaseGate(e);
     onShake(12);
     for (let i = 0; i < 28; i++) particles.push(particle(e.x, e.y, "boss"));
   }
   e.phaseFlash = Math.max(0, e.phaseFlash - tempoDt);
+  updateBossCounterplay(e, tempoDt, player, onHazard, onShake);
   const rage = e.bossPhase === 2;
   e.summonBurst = Math.max(0, e.summonBurst - tempoDt);
   publishBossArena(e);

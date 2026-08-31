@@ -99,3 +99,16 @@ button{min-height:46px;border-radius:0!important;background:var(--signal)!import
     font-size: 10px !important;
   }
 }
+
+/* Keep late-run loadouts readable without covering the playfield. */
+.arsenal {
+  display: block;
+  overflow: hidden;
+  padding: 6px 9px;
+  border: 1px solid rgba(124, 246, 200, 0.18);
+  background: rgba(5, 7, 14, 0.68);
+  font-size: 9px;
+  white-space: nowrap;
+  text-align: center;
+  text-overflow: ellipsis;
+}

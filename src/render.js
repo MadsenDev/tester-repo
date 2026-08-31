@@ -9,6 +9,8 @@ import {
   drawManifestationProjectile,
   drawManifestationWorldFx,
 } from "./manifestation-render.js";
+import { friendlyThreatAlpha } from "./combat-readability.js";
+import { drawBossCounterplay } from "./boss-counterplay.js";
 function polygon(ctx, x, y, r, n, rot = 0) {
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
@@ -374,6 +376,7 @@ export function renderScene(ctx, view, world) {
   drawBackdrop(ctx, W, H, time, sector);
   if (hazards) drawHazards(ctx, hazards, time, W, H);
   drawBlastZones(ctx, enemies, time);
+  drawBossCounterplay(ctx, enemies, time, W, H);
   for (const g of gems) {
     ctx.save();
     ctx.translate(g.x, g.y);
@@ -383,6 +386,12 @@ export function renderScene(ctx, view, world) {
     ctx.fillStyle = "#7bf5ff";
     polygon(ctx, 0, 0, g.r, 4, Math.PI / 4);
     ctx.fill();
+    if ((g.stack || 1) > 1) {
+      ctx.strokeStyle = "rgba(223,255,246,.88)";
+      ctx.lineWidth = 1.5;
+      polygon(ctx, 0, 0, g.r + 3, 4, Math.PI / 4);
+      ctx.stroke();
+    }
     ctx.restore();
   }
   for (const p of powerups) {
@@ -417,7 +426,10 @@ export function renderScene(ctx, view, world) {
   }
   for (const b of bullets) {
     const kind = b.kind || "blaster";
+    const visualAlpha = friendlyThreatAlpha(b, enemyBullets);
+    if (visualAlpha <= 0.01) continue;
     ctx.save();
+    ctx.globalAlpha = visualAlpha;
     ctx.translate(b.x, b.y);
     if (kind === "missile") {
       ctx.rotate(Math.atan2(b.vy, b.vx));
@@ -440,34 +452,6 @@ export function renderScene(ctx, view, world) {
     }
     ctx.fill();
     if (kind === "blaster") drawManifestationProjectile(ctx, b, time);
-    ctx.restore();
-  }
-  for (const b of enemyBullets) {
-    ctx.save();
-    ctx.translate(b.x, b.y);
-    if (b.kind === "rail") {
-      ctx.rotate(b.vx >= 0 ? 0 : Math.PI);
-      ctx.shadowBlur = 24;
-      ctx.shadowColor = "#ff547c";
-      ctx.fillStyle = "#ffd8e2";
-      ctx.fillRect(-34, -6, 68, 12);
-      ctx.fillStyle = "#ff547c";
-      ctx.fillRect(-48, -3, 96, 6);
-    } else if (b.kind === "sidebolt") {
-      ctx.rotate(Math.atan2(b.vy, b.vx));
-      ctx.shadowBlur = 14;
-      ctx.shadowColor = "#6dffca";
-      ctx.fillStyle = "#aaffea";
-      polygon(ctx, 0, 0, 8, 4, Math.PI / 4);
-      ctx.fill();
-    } else {
-      ctx.shadowBlur = b.kind === "blast" ? 24 : 12;
-      ctx.shadowColor = b.kind === "blast" ? "#fff1c7" : "#ff638e";
-      ctx.fillStyle = b.kind === "blast" ? "rgba(255,238,190,.82)" : "#ff7a9c";
-      ctx.beginPath();
-      ctx.arc(0, 0, b.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.restore();
   }
   ctx.shadowBlur = 0;
@@ -527,6 +511,35 @@ export function renderScene(ctx, view, world) {
       ctx.arc(p.x, p.y, Math.max(1, p.size * a), 0, Math.PI * 2);
       ctx.fill();
     } else ctx.fillRect(p.x, p.y, p.size, p.size);
+    ctx.restore();
+  }
+  // Hostile fire is deliberately the top combat layer.
+  for (const b of enemyBullets) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    if (b.kind === "rail") {
+      ctx.rotate(b.vx >= 0 ? 0 : Math.PI);
+      ctx.shadowBlur = 24;
+      ctx.shadowColor = "#ff547c";
+      ctx.fillStyle = "#ffd8e2";
+      ctx.fillRect(-34, -6, 68, 12);
+      ctx.fillStyle = "#ff547c";
+      ctx.fillRect(-48, -3, 96, 6);
+    } else if (b.kind === "sidebolt") {
+      ctx.rotate(Math.atan2(b.vy, b.vx));
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = "#6dffca";
+      ctx.fillStyle = "#aaffea";
+      polygon(ctx, 0, 0, 8, 4, Math.PI / 4);
+      ctx.fill();
+    } else {
+      ctx.shadowBlur = b.kind === "blast" ? 24 : 12;
+      ctx.shadowColor = b.kind === "blast" ? "#fff1c7" : "#ff638e";
+      ctx.fillStyle = b.kind === "blast" ? "rgba(255,238,190,.82)" : "#ff7a9c";
+      ctx.beginPath();
+      ctx.arc(0, 0, b.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   }
   ctx.globalAlpha = 1;
