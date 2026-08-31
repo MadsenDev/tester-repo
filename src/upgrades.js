@@ -1,49 +1,49 @@
 const mark=(p,id)=>{p.passives??={};p.passives[id]=(p.passives[id]||0)+1};
-const evolve=(p,id)=>{p.weaponEvolved??={};p.weaponEvolved[id]=true};
-const levelWeapon=(p,id)=>{p.weapons[id]=Math.min(5,(p.weapons[id]||0)+1)};
-const evolved=(p,id)=>!!p.weaponEvolved?.[id];
-const ready=(p,weapon,passive)=>p.weapons?.[weapon]>=5&&(p.passives?.[passive]||0)>=2&&!evolved(p,weapon);
-const recipes={
- missile:{evolution:"SUNFALL ARRAY",passive:"Heavy Payload II"},
- arc:{evolution:"STORM CROWN",passive:"Lucky Circuit II"},
- nova:{evolution:"SUPERNOVA HEART",passive:"Reinforced Hull II"},
- mines:{evolution:"VOID ANCHORS",passive:"Gravity Well II"},
- beam:{evolution:"PRISM JUDGEMENT",passive:"Rail Accelerators II"}
-};
-const weaponDesc=(p,id,name)=>{const level=p.weapons?.[id]||0,r=recipes[id],base=level>0?`${name} to level ${Math.min(5,level+1)}.`:`Unlock ${name}.`;return`${base} Evolution: ${r.evolution} with ${r.passive}.`};
-const passiveDesc=(base,evolution,weapon)=>`${base} Synergy: ${weapon} V + this II evolves into ${evolution}.`;
+const rank=(p,id)=>p.passives?.[id]||0;
+const capped=(id,max=5)=>p=>rank(p,id)<max;
+const trait=(id,name,desc,apply,{rarity="COMMON",max=5,requires=null}={})=>({id,name,desc,rarity,apply:p=>{apply(p);mark(p,id)},available:p=>rank(p,id)<max&&(!requires||requires(p))});
+const has=(p,...ids)=>ids.every(id=>rank(p,id)>0);
+const transform=(id,name,desc,requires,apply)=>({id,name,desc,rarity:"TRANSFORM",transform:true,apply:p=>{apply(p);mark(p,id)},available:p=>rank(p,id)===0&&requires(p)});
 
 export const UPGRADES=[
- {id:"firerate",name:"Overclock",desc:"Fire 18% faster.",apply:p=>{p.fireRate*=.82;mark(p,"firerate")}},
- {id:"damage",name:"Hot Core",desc:"+35% blaster damage.",apply:p=>{p.damage*=1.35;mark(p,"damage")}},
- {id:"speed",name:"Vector Thrusters",desc:"+16% movement speed.",apply:p=>{p.speed*=1.16;mark(p,"speed")}},
- {id:"multishot",name:"Forked Signal",desc:"+1 blaster projectile per volley.",apply:p=>{p.shots=Math.min(7,p.shots+1);mark(p,"multishot")}},
- {id:"pierce",name:"Phase Rounds",desc:"Blaster projectiles pierce +1 enemy.",apply:p=>{p.pierce++;mark(p,"pierce")}},
- {id:"health",name:"Reinforced Hull",desc:passiveDesc("+25 max HP and heal 25.","SUPERNOVA HEART","Nova Core"),apply:p=>{p.maxHp+=25;p.hp=Math.min(p.maxHp,p.hp+25);mark(p,"health")}},
- {id:"magnet",name:"Gravity Well",desc:passiveDesc("+35% XP pickup radius.","VOID ANCHORS","Grav Mines"),apply:p=>{p.magnet*=1.35;mark(p,"magnet")}},
- {id:"bullet",name:"Rail Accelerators",desc:passiveDesc("+22% blaster projectile speed.","PRISM JUDGEMENT","Prism Lance"),apply:p=>{p.bulletSpeed*=1.22;mark(p,"bullet")}},
- {id:"regen",name:"Repair Nanites",desc:"Regenerate 0.4 HP/s.",apply:p=>{p.regen+=.4;mark(p,"regen")}},
- {id:"crit",name:"Lucky Circuit",desc:passiveDesc("+8% blaster critical hit chance.","STORM CROWN","Arc Conductor"),apply:p=>{p.crit=Math.min(.55,p.crit+.08);mark(p,"crit")}},
- {id:"size",name:"Heavy Payload",desc:passiveDesc("+20% blaster projectile size.","SUNFALL ARRAY","Seeker Rack"),apply:p=>{p.bulletSize*=1.2;mark(p,"size")}},
- {id:"armor",name:"Reactive Plating",desc:"Take 10% less damage.",apply:p=>{p.armor=Math.min(.6,p.armor+.1);mark(p,"armor")}},
- {id:"dash",name:"Slipstream",desc:"Brief speed burst after taking damage.",apply:p=>{p.dashBoost+=.18;mark(p,"dash")}},
- {id:"xp",name:"Signal Harvest",desc:"+20% XP gained.",apply:p=>{p.xpGain*=1.2;mark(p,"xp")}},
- {id:"orbit",name:"Guardian Orbit",desc:"+1 damaging orbital drone.",apply:p=>{p.orbitals=Math.min(5,p.orbitals+1);mark(p,"orbit")},available:p=>p.orbitals<5},
- {id:"missile",name:"Seeker Rack",descFor:p=>weaponDesc(p,"missile","homing missiles"),apply:p=>levelWeapon(p,"missile"),available:p=>(p.weapons?.missile||0)<5},
- {id:"arc",name:"Arc Conductor",descFor:p=>weaponDesc(p,"arc","chain lightning"),apply:p=>levelWeapon(p,"arc"),available:p=>(p.weapons?.arc||0)<5},
- {id:"nova",name:"Nova Core",descFor:p=>weaponDesc(p,"nova","radial shockwave"),apply:p=>levelWeapon(p,"nova"),available:p=>(p.weapons?.nova||0)<5},
- {id:"mines",name:"Grav Mines",descFor:p=>weaponDesc(p,"mines","proximity mines"),apply:p=>levelWeapon(p,"mines"),available:p=>(p.weapons?.mines||0)<5},
- {id:"beam",name:"Prism Lance",descFor:p=>weaponDesc(p,"beam","piercing beam"),apply:p=>levelWeapon(p,"beam"),available:p=>(p.weapons?.beam||0)<5},
- {id:"evo-missile",name:"SUNFALL ARRAY",desc:"EVOLUTION · Seeker Rack V + Heavy Payload II. Launch a three-missile hunting salvo.",apply:p=>evolve(p,"missile"),available:p=>ready(p,"missile","size")},
- {id:"evo-arc",name:"STORM CROWN",desc:"EVOLUTION · Arc Conductor V + Lucky Circuit II. Longer, harder chain lightning with extra jumps.",apply:p=>evolve(p,"arc"),available:p=>ready(p,"arc","crit")},
- {id:"evo-nova",name:"SUPERNOVA HEART",desc:"EVOLUTION · Nova Core V + Reinforced Hull II. Detonates two concentric shockwaves.",apply:p=>evolve(p,"nova"),available:p=>ready(p,"nova","health")},
- {id:"evo-mines",name:"VOID ANCHORS",desc:"EVOLUTION · Grav Mines V + Gravity Well II. Larger, longer-lived mines with brutal impact power.",apply:p=>evolve(p,"mines"),available:p=>ready(p,"mines","magnet")},
- {id:"evo-beam",name:"PRISM JUDGEMENT",desc:"EVOLUTION · Prism Lance V + Rail Accelerators II. Fires a triple beam fan through the entire formation.",apply:p=>evolve(p,"beam"),available:p=>ready(p,"beam","bullet")}
+ trait("firerate","Overclock","Fire 16% faster.",p=>p.fireRate*=.84),
+ trait("damage","Hot Core","+28% blaster damage.",p=>p.damage*=1.28),
+ trait("speed","Vector Thrusters","+15% movement speed.",p=>p.speed*=1.15,{max:4}),
+ trait("multishot","Forked Signal","Add another blaster round to each volley. Enables FORK interactions.",p=>p.shots=Math.min(7,p.shots+1),{rarity:"UNCOMMON",max:6}),
+ trait("pierce","Phase Rounds","Rounds pierce +1 target. Enables PIERCE interactions.",p=>p.pierce++,{rarity:"UNCOMMON",max:5}),
+ trait("size","Heavy Payload","+18% projectile size and +8% damage. Enables PAYLOAD interactions.",p=>{p.bulletSize*=1.18;p.damage*=1.08},{rarity:"UNCOMMON",max:4}),
+ trait("bullet","Rail Accelerators","+24% projectile velocity. Enables VELOCITY interactions.",p=>p.bulletSpeed*=1.24,{max:4}),
+ trait("crit","Lucky Circuit","+8% critical chance. Enables CRIT interactions.",p=>p.crit=Math.min(.6,p.crit+.08),{rarity:"UNCOMMON",max:5}),
+ trait("missile","Guidance Kernel","Blaster rounds steer toward visible targets. Enables SEEK interactions.",()=>{}, {rarity:"RARE",max:1}),
+ trait("arc","Arc Imprint","Blaster impacts discharge chain lightning. Enables ARC interactions.",()=>{}, {rarity:"RARE",max:1}),
+ trait("nova","Nova Imprint","Blaster impacts emit damaging shockwaves. Enables NOVA interactions.",()=>{}, {rarity:"RARE",max:1}),
+ trait("mines","Gravity Anchor","Heavy phase builds can leave delayed gravity detonations. Enables ANCHOR interactions.",()=>{}, {rarity:"RARE",max:1}),
+ trait("beam","Prism Imprint","Blaster impacts project short damaging energy lanes. Enables PRISM interactions.",()=>{}, {rarity:"RARE",max:1}),
+ trait("health","Reinforced Hull","+25 max HP and heal 25.",p=>{p.maxHp+=25;p.hp=Math.min(p.maxHp,p.hp+25)},{max:4}),
+ trait("magnet","Gravity Well","+32% XP pickup radius.",p=>p.magnet*=1.32,{max:4}),
+ trait("regen","Repair Nanites","Regenerate 0.4 HP/s.",p=>p.regen+=.4,{max:4}),
+ trait("armor","Reactive Plating","Take 9% less damage.",p=>p.armor=Math.min(.55,p.armor+.09),{max:5}),
+ trait("dash","Slipstream","Taking damage grants a stronger escape burst.",p=>p.dashBoost+=.18,{max:4}),
+ trait("xp","Signal Harvest","+18% XP gained.",p=>p.xpGain*=1.18,{max:4}),
+ trait("orbit","Guardian Orbit","Add a defensive orbital drone.",p=>p.orbitals=Math.min(5,p.orbitals+1),{rarity:"UNCOMMON",max:5}),
+ trait("glass","Glass Reactor","+42% damage, but lose 12 max HP.",p=>{p.damage*=1.42;p.maxHp=Math.max(35,p.maxHp-12);p.hp=Math.min(p.hp,p.maxHp)},{rarity:"RARE",max:3}),
+ trait("cadence","Pulse Loader","Every blaster volley gets faster at the cost of 8% projectile damage.",p=>{p.fireRate*=.76;p.damage*=.92},{rarity:"RARE",max:3}),
+ trait("stability","Gyro Stabilizer","+14% damage and +12% projectile speed.",p=>{p.damage*=1.14;p.bulletSpeed*=1.12},{max:4}),
+ transform("transform-storm","STORM PROTOCOL","TRANSFORMATION · FORK + SEEK + ARC. Guided volleys become a branching electrical storm.",p=>has(p,"multishot","missile","arc"),p=>{p.shots=Math.min(7,p.shots+1);p.crit=Math.min(.6,p.crit+.06)}),
+ transform("transform-recursive","RECURSIVE VIOLENCE","TRANSFORMATION · FORK + PIERCE + SEEK + ARC. Lethal rounds reproduce into inherited guided children.",p=>has(p,"multishot","pierce","missile","arc"),p=>{p.pierce++;p.damage*=1.12}),
+ transform("transform-horizon","EVENT HORIZON","TRANSFORMATION · PAYLOAD + NOVA + ANCHOR + PIERCE. Final impacts seed delayed gravity detonations.",p=>has(p,"size","nova","mines","pierce"),p=>{p.bulletSize*=1.15;p.damage*=1.12}),
+ transform("transform-critical-mass","CRITICAL MASS","TRANSFORMATION · PAYLOAD + CRIT + NOVA. Critical shockwaves fragment into inherited child rounds.",p=>has(p,"size","crit","nova"),p=>p.crit=Math.min(.65,p.crit+.08)),
+ transform("transform-rail-prism","RAIL PRISM","TRANSFORMATION · VELOCITY + PIERCE + PRISM. High-speed piercing hits carve extended energy lanes.",p=>has(p,"bullet","pierce","beam"),p=>p.bulletSpeed*=1.18)
 ];
 
+const weight=u=>u.rarity==="COMMON"?7:u.rarity==="UNCOMMON"?5:u.rarity==="RARE"?2:1;
+const weightedShuffle=pool=>pool.map(u=>({u,k:Math.random()**(1/weight(u))})).sort((a,b)=>b.k-a.k).map(x=>x.u);
 export function randomChoices(player,n=3){
- const evolutions=UPGRADES.filter(u=>u.id.startsWith("evo-")&&(!u.available||u.available(player)));
- const normal=UPGRADES.filter(u=>!u.id.startsWith("evo-")&&(!u.available||u.available(player)));
- const pool=evolutions.length?[...evolutions,...normal.sort(()=>Math.random()-.5)]:normal.sort(()=>Math.random()-.5);
- return pool.slice(0,n).map(u=>({...u,desc:u.descFor?u.descFor(player):u.desc}));
+ const available=UPGRADES.filter(u=>!u.available||u.available(player));
+ const transforms=available.filter(u=>u.transform);
+ const normal=available.filter(u=>!u.transform);
+ const chosen=[];
+ if(transforms.length)chosen.push(transforms[Math.floor(Math.random()*transforms.length)]);
+ for(const u of weightedShuffle(normal))if(chosen.length<n&&!chosen.some(c=>c.id===u.id))chosen.push(u);
+ return chosen.slice(0,n).map(u=>({...u,desc:`${u.rarity} · ${u.desc}`}));
 }
