@@ -185,10 +185,64 @@ const weight = (m) =>
       : m.rarity === "RARE"
         ? 2
         : 0.7;
-export function randomModules(player, n = 3) {
+const BLACK_SIGNAL_MODULES = new Set([
+  "blood-battery",
+  "revenge-relay",
+  "last-bulkhead",
+  "kill-switch",
+  "ghost-protocol",
+  "black-sun",
+  "white-noise",
+  "glass-needle",
+  "heavy-phase",
+  "funeral-star",
+  "dead-god-circuit",
+]);
+export const MODULE_POOLS = Object.freeze({
+  salvage: { name: "SALVAGE TRANSMISSION", color: "#78ebff" },
+  boss: { name: "BOSS RELIC", color: "#ffe27b" },
+  companion: { name: "FOUNDRY SIGNAL", color: "#c994ff" },
+  black: { name: "BLACK SIGNAL", color: "#ff6f9f" },
+});
+export function modulePoolForLevel(level) {
+  if (level > 1 && level % 7 === 0) return "companion";
+  if (level > 1 && level % 5 === 0) return "boss";
+  return "salvage";
+}
+export function modulePool(module) {
+  if (BLACK_SIGNAL_MODULES.has(module.id)) return "black";
+  if (module.tags.some((tag) => tag === "orbital" || tag === "familiar"))
+    return "companion";
+  if (module.effect.special) return "boss";
+  return "salvage";
+}
+function poolCandidates(pool) {
+  if (pool === "black")
+    return MODULES.filter((module) => BLACK_SIGNAL_MODULES.has(module.id));
+  if (pool === "companion")
+    return MODULES.filter((module) =>
+      module.tags.some((tag) => tag === "orbital" || tag === "familiar"),
+    );
+  if (pool === "boss")
+    return MODULES.filter(
+      (module) => module.effect.special || module.rarity === "RARE",
+    );
+  return MODULES.filter((module) => module.rarity !== "SPECIAL");
+}
+export function randomModules(
+  player,
+  n = 3,
+  pool = "salvage",
+  random = Math.random,
+) {
   const owned = player.items || new Set();
-  return MODULES.filter((m) => !owned.has(m.id))
-    .map((m) => ({ m, k: Math.random() ** (1 / weight(m)) }))
+  let candidates = poolCandidates(pool).filter(
+    (module) => !owned.has(module.id),
+  );
+  if (candidates.length < n)
+    candidates = MODULES.filter((module) => !owned.has(module.id));
+  return candidates
+    .map((m) => ({ m, k: random() ** (1 / weight(m)) }))
     .sort((a, b) => b.k - a.k)
     .slice(0, n)
     .map((x) => x.m);

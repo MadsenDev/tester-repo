@@ -1,6 +1,7 @@
 import { AudioSystem } from "./audio.js";
 import { clamp, dist2, spawnEnemy, particle } from "./entities.js";
 import { randomChoices } from "./upgrades.js";
+import { MODULE_POOLS, modulePoolForLevel } from "./module-catalog.js";
 import {
   initWeapons,
   updateWeapons,
@@ -58,7 +59,17 @@ import {
   specialGemMultiplier,
   updateSpecialModules,
 } from "./special-modules.js";
+import {
+  acceptBlackSignal,
+  blackSignalOffers,
+  createBlackSignalUI,
+  renderBlackSignal,
+  shouldOfferBlackSignal,
+} from "./black-signal.js";
+import { discover, recordArchiveRun } from "./discovery.js";
+import { activeSynergies } from "./synergy-catalog.js";
 const routeUi = createRouteUI();
+const blackSignalUi = createBlackSignalUI();
 const canvas = document.querySelector("#game"),
   ctx = canvas.getContext("2d");
 const ui = {
@@ -68,6 +79,7 @@ const ui = {
   stats: document.querySelector("#stats"),
   levelup: document.querySelector("#levelup"),
   route: routeUi.panel,
+  blackSignal: blackSignalUi.panel,
   gameover: document.querySelector("#gameover"),
   victory: document.querySelector("#victory"),
   fatal: document.querySelector("#fatal"),
@@ -121,6 +133,11 @@ let { w: W, h: H } = viewportSize(),
   comboTimer = 0,
   kills = 0,
   bossCount = 0,
+  pendingBlackSignal = false,
+  defeatedBosses = [],
+  encounteredEvents = [],
+  contractHistory = [],
+  runDiscoveries = [],
   player,
   enemies = [],
   bullets = [],
@@ -171,10 +188,18 @@ function allPanels() {
     ui.stats,
     ui.levelup,
     ui.route,
+    ui.blackSignal,
     ui.gameover,
     ui.victory,
     ui.fatal,
   ];
+}
+function noteDiscovery(kind, id) {
+  if (discover(kind, id)) runDiscoveries.push({ kind, id });
+}
+function syncSynergyDiscoveries() {
+  for (const synergy of activeSynergies(player))
+    noteDiscovery("synergies", synergy.id);
 }
 function hidePanels() {
   for (const p of allPanels()) p?.classList.add("hidden");
@@ -376,6 +401,11 @@ function start() {
       bossCount =
         0;
     nextBoss = settings.mode === "bossrush" ? 2 : bossInterval(settings.mode);
+    pendingBlackSignal = false;
+    defeatedBosses = [];
+    encounteredEvents = [];
+    contractHistory = [];
+    runDiscoveries = [];
     input.stopTouch();
     hidePanels();
     state = "playing";
@@ -395,6 +425,25 @@ function finish(victory = false) {
     best = Math.max(rounded, Number(localStorage.getItem("orbital-best") || 0));
   localStorage.setItem("orbital-best", best);
   stats = recordRun({ won: victory, kills, score: rounded });
+  const run = recordArchiveRun({
+    won: victory,
+    ship: settings.ship,
+    mode: settings.mode,
+    score: rounded,
+    kills,
+    time,
+    level: player.level,
+    modules: [...(player.items || [])],
+    routes: [...routes.history],
+    bosses: [...defeatedBosses],
+    events: [...encounteredEvents],
+    synergies: activeSynergies(player).map((synergy) => synergy.id),
+    contracts: [...contractHistory],
+    newly: [...runDiscoveries],
+  });
+  window.dispatchEvent(
+    new CustomEvent("orbital:run-finished", { detail: run }),
+  );
   refreshStats();
   refreshShip();
   refreshMode();
@@ -420,17 +469,23 @@ function showFatal(error) {
 }
 function levelUp() {
   onSpecialLevelUp(player, enemyBullets);
+  const pool = modulePoolForLevel(player.level),
+    poolMeta = MODULE_POOLS[pool];
   state = "levelup";
   input.stopTouch();
   audio.level();
   showPanel(ui.levelup);
+  ui.levelup.querySelector(".eyebrow").textContent = poolMeta.name;
+  ui.levelup.style.setProperty("--module-source", poolMeta.color);
   ui.choices.innerHTML = "";
-  for (const u of randomChoices(player, specialChoiceCount(player))) {
+  for (const u of randomChoices(player, specialChoiceCount(player), pool)) {
     const b = document.createElement("button");
     b.className = "choice";
     b.innerHTML = "<b>" + u.name + "</b><small>" + u.desc + "</small>";
     b.onclick = () => {
       u.apply(player);
+      noteDiscovery("modules", u.id);
+      syncSynergyDiscoveries();
       ui.levelup.classList.add("hidden");
       ui.overlay.classList.remove("show");
       state = "playing";
@@ -448,6 +503,7 @@ function chooseSectorRoute() {
   input.stopTouch();
   renderRouteChoice(routeUi, routeChoices(routes), leg, (routeId) => {
     selectRoute(routes, routeId, player, leg);
+    noteDiscovery("routes", routeId);
     updateRouteBadge(routeUi, routes);
     ui.route.classList.add("hidden");
     ui.overlay.classList.remove("show");
@@ -456,6 +512,31 @@ function chooseSectorRoute() {
     updateUI();
   });
   showPanel(ui.route);
+}
+function chooseBlackSignal() {
+  const offers = blackSignalOffers(player);
+  pendingBlackSignal = false;
+  if (!offers.length) return;
+  state = "blacksignal";
+  input.stopTouch();
+  const resume = () => {
+    ui.blackSignal.classList.add("hidden");
+    ui.overlay.classList.remove("show");
+    state = "playing";
+    updateUI();
+  };
+  renderBlackSignal(blackSignalUi, offers, {
+    onAccept(offer) {
+      const accepted = acceptBlackSignal(player, offer);
+      contractHistory.push(accepted);
+      noteDiscovery("modules", accepted.module);
+      syncSynergyDiscoveries();
+      audio.level();
+      resume();
+    },
+    onReject: resume,
+  });
+  showPanel(ui.blackSignal);
 }
 function nearest() {
   let best = null,
@@ -505,7 +586,12 @@ function hurt(amount) {
     );
   const result = resolveSpecialDamage(
     player,
-    amount * (1 - player.armor) * diff.damage * mods.damageTaken,
+    amount *
+      (1 - player.armor) *
+      diff.damage *
+      mods.damageTaken *
+      (player.contractDamageTaken || 1),
+    Math.random,
   );
   if (result.evaded) {
     for (let i = 0; i < 6; i++)
@@ -527,6 +613,12 @@ function awardKill(e, mods) {
   const diff = difficultyConfig(settings.difficulty);
   kills++;
   onSpecialKill(player, e);
+  if (e.boss) {
+    defeatedBosses.push(e.kind);
+    noteDiscovery("bosses", e.kind);
+    if (shouldOfferBlackSignal(defeatedBosses.length))
+      pendingBlackSignal = true;
+  }
   combo = comboTimer > 0 ? combo + 1 : 1;
   comboTimer = 2.8;
   score +=
@@ -584,7 +676,13 @@ function update(dt) {
     chooseSectorRoute();
     return;
   }
-  if (settings.mode !== "bossrush") updateEvents(events, dt, time);
+  if (settings.mode !== "bossrush") {
+    updateEvents(events, dt, time);
+    if (events.current && !encounteredEvents.includes(events.current.id)) {
+      encounteredEvents.push(events.current.id);
+      noteDiscovery("events", events.current.id);
+    }
+  }
   const eventMods =
       settings.mode === "bossrush"
         ? { fire: 1, enemySpeed: 1, magnet: 1, elite: 0, score: 1 }
@@ -636,7 +734,9 @@ function update(dt) {
   if (time >= nextBoss && !bossAlive) {
     bossCount++;
     const bossTime = settings.mode === "bossrush" ? bossCount * 60 : time;
-    enemies.push(spawnBoss(W, H, bossTime));
+    const boss = spawnBoss(W, H, bossTime);
+    enemies.push(boss);
+    noteDiscovery("bosses", boss.kind);
     nextBoss =
       settings.mode === "bossrush"
         ? Infinity
@@ -719,6 +819,10 @@ function update(dt) {
       awardKill(enemies[i], mods);
       enemies.splice(i, 1);
     }
+  if (pendingBlackSignal) {
+    chooseBlackSignal();
+    return;
+  }
   bullets = bullets.filter(
     (b) => b.life > 0 && b.x > -50 && b.y > -50 && b.x < W + 50 && b.y < H + 50,
   );

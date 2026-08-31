@@ -20,6 +20,7 @@ const hangarTrack = document.querySelector("#hangarTrack");
 const gameplayPanels = new Set([
   "pause",
   "route",
+  "blackSignal",
   "levelup",
   "gameover",
   "victory",

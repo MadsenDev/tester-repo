@@ -24,6 +24,7 @@ jobs:
           test -f styles.css
           test -f gameplay-overlays.css
           test -f evolution-guide.css
+          test -f archive.css
           test -f src/enemy-ai.js
           test -f src/input.js
           test -f src/render.js
@@ -43,6 +44,11 @@ jobs:
           test -f src/shell-ui.js
           test -f src/menu-exit.js
           test -f src/evolution-guide.js
+          test -f src/archive-ui.js
+          test -f src/black-signal.js
+          test -f src/debrief-ui.js
+          test -f src/discovery.js
+          test -f src/synergy-catalog.js
           test -f src/selector-feedback.js
           test -f src/dev-mode.js
           test -f .github/workflows/pages.yml
