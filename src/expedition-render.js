@@ -94,6 +94,12 @@ function drawChevron(ctx, direction, size = 8) {
   ctx.stroke();
 }
 
+export function expeditionDoorLabelOffset(direction) {
+  if (direction === "n") return { x: 0, y: 22 };
+  if (direction === "s") return { x: 0, y: -42 };
+  return { x: direction === "w" ? 28 : -28, y: 0 };
+}
+
 function drawDoor(ctx, door, time) {
   const horizontal = door.direction === "n" || door.direction === "s",
     pulse = 0.58 + Math.sin(time * 3.5 + door.x + door.y) * 0.12;
@@ -123,12 +129,14 @@ function drawDoor(ctx, door, time) {
     ctx.font = "600 8px IBM Plex Mono, monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const offset = horizontal
-      ? { x: 0, y: door.direction === "n" ? 17 : -17 }
-      : { x: door.direction === "w" ? 25 : -25, y: 0 };
+    const offset = expeditionDoorLabelOffset(door.direction),
+      labelWidth = ctx.measureText(door.label).width + 12;
     ctx.save();
     ctx.translate(offset.x, offset.y);
     if (!horizontal) ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = "rgba(2,7,13,.72)";
+    ctx.fillRect(-labelWidth / 2, -7, labelWidth, 14);
+    ctx.fillStyle = door.color;
     ctx.fillText(door.label, 0, 0);
     ctx.restore();
   }

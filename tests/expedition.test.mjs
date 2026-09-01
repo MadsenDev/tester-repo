@@ -14,6 +14,7 @@ import {
 } from "../src/expedition.js";
 import {
   drawExpedition,
+  expeditionDoorLabelOffset,
   expeditionRoomEntryPosition,
   layoutExpeditionObjects,
 } from "../src/expedition-render.js";
@@ -227,4 +228,10 @@ test("entering a room cannot immediately collide with its return exit", () => {
       Math.abs(spawn.y - door.y) < door.h / 2 + radius;
     assert.equal(touching, false, `${direction} entry overlaps ${opposite} return exit`);
   }
+});
+
+test("the south exit label clears the mobile loadout safe area", () => {
+  assert.ok(expeditionDoorLabelOffset("s").y <= -40);
+  assert.ok(expeditionDoorLabelOffset("n").y > 0);
+  assert.ok(Math.abs(expeditionDoorLabelOffset("e").x) >= 28);
 });

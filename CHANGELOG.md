@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.43.1] - 2026-09-01
+
+- Move south-edge Expedition labels farther into the arena so the mobile loadout bar cannot cover them.
+- Add restrained backing plates to all labeled exits for consistent readability over room geometry.
+- Add label safe-area regression coverage and advance the PWA cache version.
+
 ## [0.43.0] - 2026-09-01
 
 - Add six controlled Expedition encounter layouts with sector-based unlocks and anti-repeat selection.
