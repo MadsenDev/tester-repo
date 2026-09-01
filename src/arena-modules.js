@@ -362,7 +362,9 @@ const updateExecutionMark = (player, state, enemies, dt) => {
     state.markBurst = { ...burst, life: 0.3 };
   }
   state.pendingBursts.length = 0;
-  if (!alive(state.mark)) {
+  const markPresent = state.mark && enemies.includes(state.mark);
+  if (!alive(state.mark) || !markPresent) {
+    if (state.mark) state.mark.arenaMarked = false;
     state.mark = nearest(player, enemies, 700);
     if (state.mark) state.mark.arenaMarked = true;
   }
