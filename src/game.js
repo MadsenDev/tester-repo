@@ -736,7 +736,15 @@ function update(dt) {
       player.fireRate * (player.overdrive > 0 ? 0.55 : 1) * mods.fire;
   }
   if (!player.nullified)
-    updateWeapons(player, dt, enemies, bullets, particles, time);
+    updateWeapons(
+      player,
+      dt,
+      enemies,
+      bullets,
+      enemyBullets,
+      particles,
+      time,
+    );
   updateSpecialModules(player, dt, {
     enemies,
     enemyBullets,
@@ -852,6 +860,7 @@ function update(dt) {
     }
   }
   for (const b of enemyBullets) {
+    if (b.life <= 0) continue;
     b.x += b.vx * dt;
     b.y += b.vy * dt;
     b.life -= dt;
