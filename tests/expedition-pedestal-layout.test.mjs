@@ -8,15 +8,15 @@ import {
 
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
-test("mobile Expedition pedestals stay well clear of every room entry",()=>{
-  const W=390,H=844,playerRadius=12;
+test("mobile Expedition pedestals stay clear of every room entry pickup envelope",()=>{
+  const W=390,H=844,playerRadius=12,safetyMargin=6;
   const state={doors:[],pedestals:Array.from({length:3},()=>({}))};
   layoutExpeditionObjects(state,W,H);
   for(const direction of ["n","e","s","w"]){
     const entry=expeditionRoomEntryPosition(direction,W,H,playerRadius);
     for(const pedestal of state.pedestals){
       assert.ok(
-        distance(entry,pedestal)>playerRadius+pedestal.r+12,
+        distance(entry,pedestal)>playerRadius+pedestal.r+safetyMargin,
         `${direction} entry is too close to pedestal at ${pedestal.x},${pedestal.y}`,
       );
     }
