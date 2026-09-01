@@ -97,15 +97,17 @@ export function adaptiveBossTuning(player, telemetry = {}, context = {}) {
       0,
       1,
     ),
+    performance = clamp(telemetry.bossPressure || 0, 0, 1),
     pressure = clamp(power * 0.82 + depth * 0.18, 0, 1);
   return Object.freeze({
     power,
     pressure,
-    hp: 1 + pressure * 0.72,
-    tempo: 1 + pressure * 0.16,
-    projectileSpeed: 1 + pressure * 0.07,
+    performance,
+    hp: (1 + pressure * 0.72) * (1 + performance * 0.95),
+    tempo: 1 + pressure * 0.16 + performance * 0.08,
+    projectileSpeed: 1 + pressure * 0.07 + performance * 0.025,
     projectileDamage: 1 + pressure * 0.025,
-    phaseThresholdBonus: pressure * 0.12,
+    phaseThresholdBonus: pressure * 0.12 + performance * 0.06,
   });
 }
 
@@ -127,7 +129,7 @@ export function applyAdaptiveBossScaling(boss, player, telemetry = {}, context =
       phaseThreshold: clamp(
         boss.bossTuning.phaseThreshold + adaptive.phaseThresholdBonus,
         0.25,
-        0.78,
+        0.8,
       ),
     };
   }
