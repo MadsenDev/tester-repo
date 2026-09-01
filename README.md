@@ -62,7 +62,14 @@ Every run begins with the blaster. Level-up choices can unlock and improve five 
 - **Grav Mines** — persistent mines
 - **Prism Lance** — piercing beam
 
-The module pool contains 150 upgrades, including 50 authored special modules. Specials now change the rules of a run instead of merely carrying a rarity label: **Last Bulkhead** prevents one lethal hit, **Echo Chamber** repeats every sixth volley, **Prism Mirror** fires beams backwards, and companion modules can fork drone fire, electrify Ember shots, or turn Wisp pulses into gravity anchors.
+The module pool contains 160 upgrades, including 60 authored special modules. Specials now change the rules of a run instead of merely carrying a rarity label: **Last Bulkhead** prevents one lethal hit, **Echo Chamber** repeats every sixth volley, **Prism Mirror** fires beams backwards, and companion modules can fork drone fire, electrify Ember shots, or turn Wisp pulses into gravity anchors.
+
+Ten arena-altering modules push builds into stranger territory. **Constellation
+Engine** constructs damaging star triangles, **Reversal Chamber** returns rounds
+through the arena, **Aegis Reservoir** weaponizes intercepted fire, and **Orbit
+Loom** connects companions into a moving damage web. Broadside cannons, friendly
+enemy ghosts, screen-wrapping rounds, a projectile-devouring moon, an orbiting
+Pulse Heart and transferable execution marks complete the set.
 
 Companions have distinct active jobs. Razor orbitals launch out to cut distant
 targets, Aegis turns toward incoming fire and spends rechargeable interceptions,

@@ -47,10 +47,10 @@ const install = (ship, id) => {
   assert.equal(applyModule(ship, module), true);
 };
 
-test("all 50 special modules have authored descriptions and effects", () => {
-  assert.equal(Object.keys(SPECIAL_MODULES).length, 50);
+test("all 60 special modules have authored descriptions and effects", () => {
+  assert.equal(Object.keys(SPECIAL_MODULES).length, 60);
   const catalog = MODULES.filter((module) => module.effect.special);
-  assert.equal(catalog.length, 50);
+  assert.equal(catalog.length, 60);
   for (const module of catalog) {
     assert.equal(module.desc, SPECIAL_MODULES[module.name].description);
     assert.doesNotMatch(module.desc, /Rule-changing module:/);

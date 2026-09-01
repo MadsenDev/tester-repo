@@ -85,6 +85,10 @@ import {
   syncManifestations,
   updateManifestations,
 } from "./manifestations.js";
+import {
+  onArenaEnemyKilled,
+  updateArenaModules,
+} from "./arena-modules.js";
 const routeUi = createRouteUI();
 const blackSignalUi = createBlackSignalUI();
 const canvas = document.querySelector("#game"),
@@ -633,6 +637,7 @@ function awardKill(e, mods) {
   kills++;
   killsSinceRepair++;
   onSpecialKill(player, e);
+  onArenaEnemyKilled(player, e);
   if (e.boss) {
     defeatedBosses.push(e.kind);
     noteDiscovery("bosses", e.kind);
@@ -869,6 +874,14 @@ function update(dt) {
       hurt(b.damage);
     }
   }
+  updateArenaModules(player, dt, {
+    enemies,
+    bullets,
+    enemyBullets,
+    time,
+    W,
+    H,
+  });
   for (let i = enemies.length - 1; i >= 0; i--)
     if (enemies[i].hp <= 0) {
       awardKill(enemies[i], mods);

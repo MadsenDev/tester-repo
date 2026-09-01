@@ -11,6 +11,7 @@ import {
 } from "./manifestation-render.js";
 import { friendlyThreatAlpha } from "./combat-readability.js";
 import { drawBossCounterplay } from "./boss-counterplay.js";
+import { drawArenaModules } from "./arena-module-render.js";
 function polygon(ctx, x, y, r, n, rot = 0) {
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
@@ -420,6 +421,7 @@ export function renderScene(ctx, view, world) {
   }
   for (const e of enemies) drawEnemy(ctx, e, time);
   drawSideWarnings(ctx, enemies, time, W);
+  if (player) drawArenaModules(ctx, player, time, W, H);
   if (player) {
     drawWeaponFx(ctx, player);
     drawManifestationWorldFx(ctx, player);
@@ -445,8 +447,17 @@ export function renderScene(ctx, view, world) {
       polygon(ctx, 0, 0, b.r, b.evolved ? 6 : 4, Math.PI / 4);
     } else {
       ctx.shadowBlur = 10;
-      ctx.shadowColor = "#a8f6ff";
-      ctx.fillStyle = "#baf8ff";
+      const arenaColors = {
+        reversal: "#ffe680",
+        horizon: "#a9b7ff",
+        reservoir: "#ff9bc0",
+        echo: "#d4adff",
+        moon: "#fff1b0",
+        heart: "#9bf5ff",
+      };
+      ctx.shadowColor = arenaColors[b.arenaFlavor] || "#a8f6ff";
+      ctx.fillStyle = arenaColors[b.arenaFlavor] || "#baf8ff";
+      ctx.shadowBlur = b.arenaFlavor ? 18 : 10;
       ctx.beginPath();
       ctx.arc(0, 0, b.r, 0, Math.PI * 2);
     }
