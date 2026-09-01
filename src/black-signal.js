@@ -47,6 +47,7 @@ export function blackSignalOffers(player, random = Math.random) {
 export function acceptBlackSignal(player, offer) {
   offer.terms.apply(player);
   applyModule(player, offer.module);
+  player.blackSignalContracts = (player.blackSignalContracts || 0) + 1;
   recordContract();
   return { id: offer.terms.id, module: offer.module.id };
 }

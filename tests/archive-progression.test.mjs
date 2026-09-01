@@ -12,8 +12,11 @@ import {
   resetArchive,
 } from "../src/discovery.js";
 import {
+  moduleById,
+  moduleEligibleForPool,
   modulePool,
   modulePoolForLevel,
+  moduleWeight,
   randomModules,
 } from "../src/module-catalog.js";
 
@@ -73,7 +76,19 @@ test("Black Signal contracts apply a permanent price and reward", () => {
   assert.ok(ship.maxHp < 100);
   assert.ok(ship.damage > 20);
   assert.equal(ship.items.has(accepted.module), true);
+  assert.equal(ship.blackSignalContracts, 1);
   assert.equal(loadArchive().contracts, 1);
+});
+
+test("Dead God Circuit is a committed Black Signal jackpot", () => {
+  const deadGod = moduleById("dead-god-circuit"),
+    ordinary = player(),
+    committed = { ...player(), blackSignalContracts: 2 };
+  assert.equal(moduleEligibleForPool(deadGod, "salvage", ordinary), false);
+  assert.equal(moduleEligibleForPool(deadGod, "boss", ordinary), false);
+  assert.equal(moduleEligibleForPool(deadGod, "black", ordinary), false);
+  assert.equal(moduleEligibleForPool(deadGod, "black", committed), true);
+  assert.ok(moduleWeight(deadGod) < moduleWeight(moduleById("funeral-star")));
 });
 
 test("the archive persists discoveries, completion marks and run history", () => {
