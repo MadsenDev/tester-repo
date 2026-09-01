@@ -1,7 +1,7 @@
 import { SPECIAL_MODULES } from "./special-modules.js";
 
 const names =
-  `Hot Core|Cold Forge|Redline Coil|Pulse Divider|Rail Accelerator|Dense Slug|Split Bus|Trident Relay|Phase Jacket|Ghost Bore|Lucky Circuit|Loaded Die|Guidance Kernel|Arc Imprint|Nova Imprint|Gravity Anchor|Prism Imprint|Glass Reactor|Gyro Stabilizer|Ion Choke|Reinforced Hull|Titanium Ribs|Emergency Foam|Repair Nanites|Reactive Plating|Ablative Shell|Vector Thrusters|Afterburner|Slipstream|Gravity Well|Signal Harvest|Black Box|Combat Medic|Thin Skin|Heavy Frame|Razor Orbit|Aegis Halo|Ember Familiar|Void Wisp|Gundrone|Saw Moon|Needle Satellite|Halo Shard|Mirror Moon|Storm Sprite|Seeker Sprite|Nova Mote|Gravity Mote|Phase Drone|Fork Drone|Mercury Switch|Copper Heart|Ceramic Fuse|Blue Capacitor|Gold Capacitor|Fat Capacitor|Long Barrel|Short Barrel|Warped Lens|Dead Channel|Live Channel|Spare Bulkhead|Field Rations|Mag Clamp|Data Leech|Hot Wiring|Coolant Loop|Overpressure|Needle Rounds|Soft Rounds|Salvage Map|Combat Telemetry|Shock Mount|Drive Belt|Ballast|Razor Wire|Bright Powder|Dark Powder|Fast Clock|Slow Clock|Spare Reactor|Dirty Reactor|Clean Reactor|Twin Pump|Wide Nozzle|Pinpoint Nozzle|Hunter Array|Surveyor|Vacuum Scoop|Learning Core|Blood Battery|Revenge Relay|Last Bulkhead|Kill Switch|Scrap Feast|Critical Reboot|Phase Memory|Terminal Velocity|Big Bang Board|Echo Chamber|Fork Tax|Ghost Protocol|Arc Battery|Prism Mirror|Anchor Clock|Homing Instinct|Second Opinion|Orbital Foundry|Mutual Defense|Crowded Orbit|Black Sun|White Noise|Needle Storm|Glass Needle|Heavy Phase|Bright Ghost|Seeking Splitter|Storm Lens|Gravity Prism|Nova Guidance|Phase Anchor|Critical Arc|Razor Payload|Razor Velocity|Ember Arc|Wisp Anchor|Drone Fork|Aegis Nova|Familiar Guidance|Orbital Prism|Saint Elmo|Funeral Star|Choir Engine|Event Horizon Chip|Recursive Bus|Prism Rail|Critical Mass Cell|Guardian Network|Moon Court|Dead God Circuit|Rusted Key|Lucky Bolt|Warm Seat|Red Tape|Blue Tape|Green Tape|Spare Spring|Tiny Magnet|Training Manual|Polished Casing`.split(
+  `Hot Core|Cold Forge|Redline Coil|Pulse Divider|Rail Accelerator|Dense Slug|Split Bus|Trident Relay|Phase Jacket|Ghost Bore|Lucky Circuit|Loaded Die|Guidance Kernel|Arc Imprint|Nova Imprint|Gravity Anchor|Prism Imprint|Glass Reactor|Gyro Stabilizer|Ion Choke|Reinforced Hull|Titanium Ribs|Emergency Foam|Repair Nanites|Reactive Plating|Ablative Shell|Vector Thrusters|Afterburner|Slipstream|Gravity Well|Signal Harvest|Black Box|Combat Medic|Thin Skin|Heavy Frame|Razor Orbit|Aegis Halo|Ember Familiar|Void Wisp|Gundrone|Saw Moon|Needle Satellite|Halo Shard|Mirror Moon|Storm Sprite|Seeker Sprite|Nova Mote|Gravity Mote|Phase Drone|Fork Drone|Mercury Switch|Copper Heart|Ceramic Fuse|Blue Capacitor|Gold Capacitor|Fat Capacitor|Long Barrel|Short Barrel|Warped Lens|Dead Channel|Live Channel|Spare Bulkhead|Field Rations|Mag Clamp|Data Leech|Hot Wiring|Coolant Loop|Overpressure|Needle Rounds|Soft Rounds|Salvage Map|Combat Telemetry|Shock Mount|Drive Belt|Ballast|Razor Wire|Bright Powder|Dark Powder|Fast Clock|Slow Clock|Spare Reactor|Dirty Reactor|Clean Reactor|Twin Pump|Wide Nozzle|Pinpoint Nozzle|Hunter Array|Surveyor|Vacuum Scoop|Learning Core|Blood Battery|Revenge Relay|Last Bulkhead|Kill Switch|Scrap Feast|Critical Reboot|Phase Memory|Terminal Velocity|Big Bang Board|Echo Chamber|Fork Tax|Ghost Protocol|Arc Battery|Prism Mirror|Anchor Clock|Homing Instinct|Second Opinion|Orbital Foundry|Mutual Defense|Crowded Orbit|Black Sun|White Noise|Needle Storm|Glass Needle|Heavy Phase|Bright Ghost|Seeking Splitter|Storm Lens|Gravity Prism|Nova Guidance|Phase Anchor|Critical Arc|Razor Payload|Razor Velocity|Ember Arc|Wisp Anchor|Drone Fork|Aegis Nova|Familiar Guidance|Orbital Prism|Saint Elmo|Funeral Star|Choir Engine|Event Horizon Chip|Recursive Bus|Prism Rail|Critical Mass Cell|Guardian Network|Moon Court|Dead God Circuit|Rusted Key|Lucky Bolt|Warm Seat|Red Tape|Blue Tape|Green Tape|Wrecking Node|Tiny Magnet|Training Manual|Polished Casing`.split(
     "|",
   );
 if (names.length !== 150)
@@ -31,6 +31,7 @@ const core = {
   "Ember Familiar": { companion: "ember", tags: ["familiar"] },
   "Void Wisp": { companion: "wisp", tags: ["familiar", "nova"] },
   Gundrone: { companion: "drone", tags: ["familiar", "pierce"] },
+  "Wrecking Node": { companion: "wrecking", tags: ["familiar", "impact"] },
 };
 const templates = [
   { damage: 1.14, tags: ["damage"] },
@@ -61,6 +62,7 @@ const passiveTags = {
   "ember-familiar": "familiar",
   "wisp-familiar": "familiar",
   "drone-familiar": "familiar",
+  "wrecking-familiar": "familiar",
 };
 const companionPassives = {
   blade: "razor-orbit",
@@ -68,6 +70,7 @@ const companionPassives = {
   ember: "ember-familiar",
   wisp: "wisp-familiar",
   drone: "drone-familiar",
+  wrecking: "wrecking-familiar",
 };
 const descriptions = {
   damage: "Damage up.",
@@ -88,6 +91,7 @@ const descriptions = {
   prism: "Adds prism behavior.",
   orbital: "Adds an orbital system.",
   familiar: "Adds a familiar system.",
+  impact: "Movement builds momentum into heavy contact damage.",
 };
 export const MODULES = names.map((name, i) => {
   const definition = SPECIAL_MODULES[name],

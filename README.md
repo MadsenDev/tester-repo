@@ -64,6 +64,12 @@ Every run begins with the blaster. Level-up choices can unlock and improve five 
 
 The module pool contains 150 upgrades, including 50 authored special modules. Specials now change the rules of a run instead of merely carrying a rarity label: **Last Bulkhead** prevents one lethal hit, **Echo Chamber** repeats every sixth volley, **Prism Mirror** fires beams backwards, and companion modules can fork drone fire, electrify Ember shots, or turn Wisp pulses into gravity anchors.
 
+Companions have distinct active jobs. Razor orbitals launch out to cut distant
+targets, Aegis turns toward incoming fire and spends rechargeable interceptions,
+and the **Wrecking Node** trails the ship on a spring-like tether. Sharp movement
+slings the node through enemies, with damage driven by its real momentum; kills
+grow its mass during the run, while Ballast and Razor Wire alter its impact.
+
 Nine apex modules complete named multi-trait builds such as **Seeking Storm**, **Event Horizon**, **Recursive Violence**, **Thunder Choir**, and **Guardian Swarm**. The rare **Dead God Circuit** activates the entire apex network at once, with an appropriately unstable annihilation aura.
 
 Five showcase apexes now manifest physically. Seeking Storm grows conductor fins and electrifies guided rounds; Recursive Violence exposes projectile generations; Event Horizon installs a dark gravity core; Thunder Choir synchronizes Ember and Wisp into periodic multi-target discharges; Guardian Swarm forms a defensive network that intercepts ordinary hostile shots while leaving telegraphed boss attacks intact. Every first activation receives a dedicated combat banner, palette and synthesized audio sting.

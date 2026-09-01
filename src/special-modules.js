@@ -270,7 +270,7 @@ export const SPECIAL_MODULES = Object.freeze({
       damage: 1.12,
       fireRate: 0.92,
       flags: ["missile", "arc", "nova", "mines", "beam"],
-      companions: ["blade", "shield", "ember", "wisp", "drone"],
+      companions: ["blade", "shield", "ember", "wisp", "drone", "wrecking"],
       passives: ["multishot", "pierce", "size", "crit", "bullet"],
       transforms: [
         "storm",
