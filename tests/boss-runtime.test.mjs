@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  captureEnemyHealth,
   createBossRuntime,
   recentPlayerDps,
+  recordEnemyHealthDelta,
   recordPlayerDamage,
   spawnDirectedBoss,
 } from "../src/boss-runtime.js";
@@ -24,6 +26,17 @@ test("rolling damage telemetry forgets stale damage", () => {
   recordPlayerDamage(runtime, 80, 8);
   assert.ok(recentPlayerDps(runtime, 8) > 20);
   assert.equal(recentPlayerDps(runtime, 20), 0);
+});
+
+test("frame health snapshots measure effective damage from every player system", () => {
+  const runtime = createBossRuntime(),
+    a = { hp: 100 },
+    b = { hp: 80 },
+    snapshot = captureEnemyHealth([a, b]);
+  a.hp = 55;
+  b.hp = -30;
+  assert.equal(recordEnemyHealthDelta(runtime, snapshot, 4), 125);
+  assert.equal(recentPlayerDps(runtime, 4), 125);
 });
 
 test("directed spawning uses controlled selection instead of minute roster order", () => {
