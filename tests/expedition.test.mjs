@@ -12,7 +12,11 @@ import {
   persistExpeditionRoom,
   takeExpeditionDoor,
 } from "../src/expedition.js";
-import { drawExpedition, layoutExpeditionObjects } from "../src/expedition-render.js";
+import {
+  drawExpedition,
+  expeditionRoomEntryPosition,
+  layoutExpeditionObjects,
+} from "../src/expedition-render.js";
 import { applyModule, moduleById } from "../src/module-catalog.js";
 import { MODES, objectiveFor, runLimit } from "../src/modes.js";
 
@@ -208,4 +212,19 @@ test("edge exits and the minimap remain restrained on a narrow mobile arena", ()
     },
   );
   assert.doesNotThrow(() => drawExpedition(ctx, state, 1, 360, 700));
+});
+
+test("entering a room cannot immediately collide with its return exit", () => {
+  const W = 360, H = 700, radius = 12;
+  for (const direction of ["n", "e", "s", "w"]) {
+    const state = createExpeditionState("normal", {}, seeded(19));
+    const opposite = { n: "s", e: "w", s: "n", w: "e" }[direction];
+    state.doors = [{ type: "room", direction: opposite, color: "#78ebff" }];
+    layoutExpeditionObjects(state, W, H);
+    const spawn = expeditionRoomEntryPosition(direction, W, H, radius), door = state.doors[0];
+    const touching =
+      Math.abs(spawn.x - door.x) < door.w / 2 + radius &&
+      Math.abs(spawn.y - door.y) < door.h / 2 + radius;
+    assert.equal(touching, false, `${direction} entry overlaps ${opposite} return exit`);
+  }
 });

@@ -2,6 +2,11 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.42.1] - 2026-09-01
+
+- Move Expedition room-entry spawn points safely inside the arena so north, south and side transitions cannot immediately collide with their return exits.
+- Add four-direction regression coverage and advance the PWA cache version.
+
 ## [0.42.0] - 2026-09-01
 
 - Replace Expedition's linear choice chain with connected, controlled-randomized sector maps.

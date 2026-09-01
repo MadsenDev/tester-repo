@@ -11,9 +11,27 @@ const MAP_SYMBOLS = Object.freeze({
   black: "×",
 });
 
-function arenaBounds(W, H) {
+export function expeditionArenaBounds(W, H) {
   const top = Math.max(182, Math.min(250, H * 0.18));
   return { left: 18, right: W - 18, top, bottom: H - 42 };
+}
+
+export function expeditionRoomEntryPosition(direction, W, H, radius = 12) {
+  const bounds = expeditionArenaBounds(W, H), inset = Math.max(48, radius + 36);
+  return {
+    x:
+      direction === "e"
+        ? bounds.left + inset
+        : direction === "w"
+          ? bounds.right - inset
+          : W / 2,
+    y:
+      direction === "s"
+        ? bounds.top + inset
+        : direction === "n"
+          ? bounds.bottom - inset
+          : (bounds.top + bounds.bottom) / 2,
+  };
 }
 
 function roundRect(ctx, x, y, w, h, r = 12) {
@@ -22,7 +40,7 @@ function roundRect(ctx, x, y, w, h, r = 12) {
 }
 
 export function layoutExpeditionObjects(state, W, H) {
-  const bounds = arenaBounds(W, H), middleY = (bounds.top + bounds.bottom) / 2;
+  const bounds = expeditionArenaBounds(W, H), middleY = (bounds.top + bounds.bottom) / 2;
   for (const door of state.doors) {
     if (door.direction === "n" || door.direction === "s") {
       door.x = W / 2;
@@ -47,7 +65,7 @@ export function layoutExpeditionObjects(state, W, H) {
 }
 
 function drawRoomFrame(ctx, state, W, H, time) {
-  const meta = EXPEDITION_ROOM_TYPES[state.roomType], bounds = arenaBounds(W, H);
+  const meta = EXPEDITION_ROOM_TYPES[state.roomType], bounds = expeditionArenaBounds(W, H);
   ctx.save();
   ctx.strokeStyle = meta.color;
   ctx.globalAlpha = 0.12;
@@ -136,7 +154,7 @@ function drawMinimap(ctx, state, W, H) {
     mapW = (maxX - minX) * scale + 12,
     mapH = (maxY - minY) * scale + 10,
     originX = W - 28 - mapW,
-    originY = arenaBounds(W, H).top + 28,
+    originY = expeditionArenaBounds(W, H).top + 28,
     byId = new Map(nodes.map((node) => [node.id, node]));
   const point = (node) => ({
     x: originX + (node.x - minX) * scale + 6,
@@ -231,7 +249,7 @@ export function drawExpedition(ctx, state, time, W, H) {
   for (const door of state.doors) drawDoor(ctx, door, time);
   for (const pedestal of state.pedestals) drawPedestal(ctx, pedestal, time, state.credits);
   if (state.messageTime > 0) {
-    const meta = EXPEDITION_ROOM_TYPES[state.roomType], y = arenaBounds(W, H).top + 76;
+    const meta = EXPEDITION_ROOM_TYPES[state.roomType], y = expeditionArenaBounds(W, H).top + 76;
     ctx.save(); ctx.globalAlpha = Math.min(1, state.messageTime);
     ctx.fillStyle = "rgba(2,7,13,.68)"; ctx.fillRect(0, y - 24, W, 48);
     ctx.fillStyle = meta.color; ctx.textAlign = "center"; ctx.textBaseline = "middle";
