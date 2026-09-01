@@ -101,6 +101,7 @@ import {
   persistExpeditionRoom,
   takeExpeditionDoor,
 } from "./expedition.js";
+import { expeditionRoomEntryPosition } from "./expedition-render.js";
 import {
   syncManifestations,
   updateManifestations,
@@ -721,19 +722,9 @@ function grantExpeditionRoomReward() {
 }
 
 function positionPlayerForRoom(entryDirection) {
-  const margin = player.r + 48;
-  player.x =
-    entryDirection === "e"
-      ? margin
-      : entryDirection === "w"
-        ? W - margin
-        : W / 2;
-  player.y =
-    entryDirection === "s"
-      ? Math.max(270, margin + 190)
-      : entryDirection === "n"
-        ? H - margin
-        : H / 2;
+  const position = expeditionRoomEntryPosition(entryDirection, W, H, player.r);
+  player.x = position.x;
+  player.y = position.y;
   player.vx = player.vy = 0;
 }
 
