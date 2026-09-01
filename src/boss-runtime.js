@@ -46,30 +46,9 @@ export function captureEnemyHealth(enemies = []) {
   );
 }
 
-export function recordEnemyHealthDelta(runtime, snapshot, nowSeconds) {
-  if (!runtime || !(snapshot instanceof Map)) return 0;
-  let dealt = 0;
-  for (const [enemy, before] of snapshot) {
-    if (!Number.isFinite(before) || !Number.isFinite(enemy?.hp)) continue;
-    dealt += Math.max(0, before - Math.max(0, enemy.hp));
-  }
-  recordPlayerDamage(runtime, dealt, nowSeconds);
-  return dealt;
-}
-
-export function recentPlayerDps(runtime, nowSeconds) {
-  if (!runtime?.damage?.length) return 0;
-  const now = Number.isFinite(nowSeconds) ? nowSeconds : 0,
-    cutoff = now - WINDOW_SECONDS,
-    samples = runtime.damage.filter((sample) => sample.at >= cutoff),
-    total = samples.reduce((sum, sample) => sum + sample.amount, 0),
-    oldest = samples[0]?.at ?? now,
-    span = Math.max(1, Math.min(WINDOW_SECONDS, now - oldest));
-  return total / span;
-}
-
 export function recordBossDefeat(runtime, boss, nowSeconds) {
-  if (!runtime || !boss?.boss) return null;
+  if (!runtime || !boss?.boss || boss.directorDefeatRecorded) return null;
+  boss.directorDefeatRecorded = true;
   const now = Number.isFinite(nowSeconds) ? nowSeconds : 0,
     spawnedAt = Number.isFinite(boss.directorSpawnedAt) ? boss.directorSpawnedAt : now,
     ttk = Math.max(0.1, now - spawnedAt),
@@ -89,6 +68,29 @@ export function recordBossDefeat(runtime, boss, nowSeconds) {
   runtime.bossResults.push(result);
   if (runtime.bossResults.length > 6) runtime.bossResults.shift();
   return result;
+}
+
+export function recordEnemyHealthDelta(runtime, snapshot, nowSeconds) {
+  if (!runtime || !(snapshot instanceof Map)) return 0;
+  let dealt = 0;
+  for (const [enemy, before] of snapshot) {
+    if (!Number.isFinite(before) || !Number.isFinite(enemy?.hp)) continue;
+    dealt += Math.max(0, before - Math.max(0, enemy.hp));
+    if (enemy.boss && enemy.hp <= 0) recordBossDefeat(runtime, enemy, nowSeconds);
+  }
+  recordPlayerDamage(runtime, dealt, nowSeconds);
+  return dealt;
+}
+
+export function recentPlayerDps(runtime, nowSeconds) {
+  if (!runtime?.damage?.length) return 0;
+  const now = Number.isFinite(nowSeconds) ? nowSeconds : 0,
+    cutoff = now - WINDOW_SECONDS,
+    samples = runtime.damage.filter((sample) => sample.at >= cutoff),
+    total = samples.reduce((sum, sample) => sum + sample.amount, 0),
+    oldest = samples[0]?.at ?? now,
+    span = Math.max(1, Math.min(WINDOW_SECONDS, now - oldest));
+  return total / span;
 }
 
 function syntheticBossTime(kind, progressionTime) {
