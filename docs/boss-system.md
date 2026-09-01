@@ -18,23 +18,25 @@ Bosses should feel like encounters, not inflated enemies. The long-term target i
 
 The director assigns an encounter tier, builds an eligible pool and avoids recently used bosses. This gives Expedition sector pools, Last Stand/Endless time-based pools and Boss Rush escalation without maintaining four unrelated boss schedulers.
 
+`src/boss-runtime.js` owns per-run director state and rolling combat telemetry. `spawnDirectedBoss()` is the integration boundary for every real mode: it selects a catalog entry, delegates construction to the existing boss factory, then applies bounded adaptive tuning. This keeps selection policy out of the already-large attack loop and gives all modes the same machinery.
+
 The first implementation uses three broad tiers. This is intentionally coarse while the roster is still only ten bosses. Once the roster grows, pools can become authored per-sector/per-depth groups with overlap rather than rigid tiers.
 
 ## Adaptive build pressure
 
-Boss scaling should consider:
+Boss scaling considers:
 
 - direct weapon DPS: damage, shots, crit and fire rate
-- recent measured effective DPS when telemetry is available
+- recent measured effective DPS
 - secondary weapon investment
 - companion count
 - module count
 - survivability, as a small factor only
 - run depth
 
-Recent effective DPS is the most important future signal. Static build-score systems are easy to fool: a build can look terrifying on paper while spending half its damage shooting walls, orbiting empty space or waiting for a conditional trigger.
+The runtime keeps an eight-second rolling damage window. Damage older than the window is discarded, so one ancient burst does not convince the director that the player is still producing absurd damage several rooms later. Effective DPS is deliberately weighted more heavily than static build score.
 
-The current director foundation caps adaptive scaling at approximately:
+The current director caps adaptive scaling at approximately:
 
 - +72% boss HP
 - +16% attack tempo
@@ -123,9 +125,9 @@ Boss Rush should have the widest encounter variety. Early picks remain approacha
 
 ## Implementation sequence
 
-1. Shared boss director, depth pools and bounded build-pressure model.
-2. Route all four real modes through the shared selector.
-3. Capture rolling effective player DPS for adaptive spawn tuning.
+1. Shared boss director, depth pools and bounded build-pressure model. **Done.**
+2. Add the shared per-run runtime and rolling effective-DPS telemetry. **Done.**
+3. Route all four real mode spawn sites through `spawnDirectedBoss()` and feed actual player damage into the runtime.
 4. Expand the roster in small groups, starting with segmented, paired and burrow archetypes.
 5. Add authored third phases/desperation states to selected existing bosses.
 6. Add boss variants only after base encounters are distinct enough to justify them.
