@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.39.2] - 2026-09-01
+
+- Restore the original spinning hexagon around the player ship as an in-combat force shield.
+- Let armor strengthen the field and incoming hits briefly expand, brighten and fill it.
+- Keep the authored chassis visible inside the shield and advance the PWA cache version.
+
 ## [0.39.1] - 2026-09-01
 
 - Restore a rotating hexagonal force shield behind the active chassis on the flight deck.
