@@ -9,6 +9,7 @@ export const BOSS_UNLOCK_TIER = Object.freeze({
   brood: 2,
   mirror: 2,
   architect: 2,
+  spine: 2,
   leviathan: 3,
   lastlight: 3,
 });
