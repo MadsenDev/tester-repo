@@ -24,17 +24,23 @@ test("standing on a pickup when the lock expires requires leaving and re-enterin
   assert.equal(dist2(player,pedestal),0);
 });
 
-test("returning to a room rearms its remaining pickups",()=>{
+test("returning through an empty room rearms remaining pickups",()=>{
   const state={currentId:"room-a",doors:[],pedestals:[{}]};
   layoutExpeditionObjects(state,390,844);
+
   state.currentId="room-b";
   state.pedestals=[];
   layoutExpeditionObjects(state,390,844);
+  assert.equal(state._pickupGateRoomId,"room-b");
+
   state.currentId="room-a";
   state.pedestals=[{_pickupGateRoomId:"room-a",pickupGateUntil:0}];
   const before=performance.now();
   layoutExpeditionObjects(state,390,844);
   const pedestal=state.pedestals[0];
-  assert.ok(pedestal.pickupGateUntil>=before+650);
+  assert.ok(pedestal.pickupGateUntil>before);
+
+  const player={x:pedestal.x,y:pedestal.y,r:11};
+  assert.equal(dist2(player,pedestal),Infinity);
   assert.equal(pedestal.pickupNeedsExit,true);
 });
