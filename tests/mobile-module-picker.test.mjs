@@ -24,5 +24,5 @@ test("the updated mobile stylesheet bypasses the deployed cache", async () => {
     "utf8",
   );
 
-  assert.match(html, /mobile-design\.css\?v=4/);
+  assert.match(html, /mobile-design\.css\?v=5/);
 });
