@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.43.7] - 2026-09-01
+
+- Raise Normal and Intense boss baseline pressure so existing encounters survive longer and reach their dangerous phases more reliably.
+- Add a shared, mode-agnostic boss director foundation for controlled-random depth pools across Expedition, Last Stand, Endless and Boss Rush.
+- Add bounded build-pressure estimation for future adaptive boss HP, tempo, projectile speed and phase timing without scaling enemy damage aggressively.
+- Document the 18–20 boss roster target, encounter archetypes, phase philosophy and rollout plan in `docs/boss-system.md`.
+
 ## [0.43.6] - 2026-09-01
 
 - Fix Execution Mark losing its target lifecycle across Endless boss roster swaps.
