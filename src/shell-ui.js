@@ -10,6 +10,8 @@ const nav = [...document.querySelectorAll("[data-nav]")];
 const shipButton = document.querySelector("#shipSelect");
 const modeButton = document.querySelector("#modeSelect");
 const difficulty = document.querySelector("#difficultySetting");
+const homeDifficulty = document.querySelector("#homeDifficulty");
+const difficultyDesc = document.querySelector("#difficultyDesc");
 const launchSummary = document.querySelector("#launchSummary");
 const shipArt = document.querySelector("#shipArt");
 const shipName = document.querySelector("#shipHeroName");
@@ -18,6 +20,11 @@ const coreHome = document.querySelector("#homeCoreShards");
 const coreLevel = document.querySelector("#homeCoreLevel");
 const bestHome = document.querySelector("#homeBest");
 const hangarTrack = document.querySelector("#hangarTrack");
+const DIFFICULTY_COPY = {
+  chill: "Simple bosses · generous drops",
+  normal: "Harder bosses · clean arenas",
+  intense: "Full swarms · scarce recovery",
+};
 const gameplayPanels = new Set([
   "pause",
   "route",
@@ -38,7 +45,15 @@ function syncOverlayMode() {
 function show(id) {
   panels.forEach((p) => p.classList.toggle("hidden", p.id !== id));
   overlay.classList.add("show");
-  nav.forEach((b) => b.classList.toggle("active", b.dataset.nav === id));
+  const navTarget = ["stats", "settings", "playground"].includes(id)
+    ? "more"
+    : id;
+  nav.forEach((b) => {
+    const active = b.dataset.nav === navTarget;
+    b.classList.toggle("active", active);
+    if (active) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
   syncOverlayMode();
   if (id === "hangar") renderHangar();
   if (id === "menu") renderHome();
@@ -63,6 +78,12 @@ function renderHome() {
     Number(localStorage.getItem("orbital-best") || 0),
   );
   launchSummary.innerHTML = `<b>${mode.name}</b><span>${settings.difficulty.toUpperCase()}</span>`;
+  homeDifficulty.querySelector("b").textContent =
+    settings.difficulty.toUpperCase();
+  difficultyDesc.textContent = DIFFICULTY_COPY[settings.difficulty];
+  const moreVersion = document.querySelector("#moreVersion");
+  if (moreVersion)
+    moreVersion.textContent = `VERSION ${globalThis.ORBITAL_APP_VERSION || "DEV"}`;
 }
 function renderHangar() {
   const stats = loadStats(),
@@ -102,9 +123,22 @@ document
 shipButton?.addEventListener("click", () => show("hangar"));
 modeButton?.addEventListener("click", () => setTimeout(renderHome, 0));
 difficulty?.addEventListener("click", () => setTimeout(renderHome, 0));
+homeDifficulty?.addEventListener("click", () => {
+  settings = loadSettings();
+  settings.difficulty =
+    settings.difficulty === "normal"
+      ? "intense"
+      : settings.difficulty === "intense"
+        ? "chill"
+        : "normal";
+  saveSettings(settings);
+  renderHome();
+});
 document
   .querySelectorAll(".back,.core-back")
-  .forEach((b) => b.addEventListener("click", () => show("menu")));
+  .forEach((b) =>
+    b.addEventListener("click", () => show(b.dataset.back || "menu")),
+  );
 document.addEventListener("orbital:show-panel", (e) => show(e.detail));
 for (const panel of panels)
   new MutationObserver(syncOverlayMode).observe(panel, {

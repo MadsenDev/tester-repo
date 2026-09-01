@@ -134,7 +134,7 @@ const ui = {
   statKills: document.querySelector("#statKills"),
   statBest: document.querySelector("#statBest"),
   shipSelect: document.querySelector("#shipSelect"),
-  shipDesc: document.querySelector("#shipDesc"),
+  shipDesc: document.querySelector("#shipHeroDesc"),
   modeSelect: document.querySelector("#modeSelect"),
   modeDesc: document.querySelector("#modeDesc"),
   nextUnlock: document.querySelector("#nextUnlock"),
@@ -286,7 +286,7 @@ function refreshShip() {
     saveSettings(settings);
   }
   const ship = shipById(settings.ship);
-  ui.shipSelect.querySelector("b").textContent = ship.name;
+  ui.shipSelect.querySelector("[data-ship-name]").textContent = ship.name;
   ui.shipDesc.textContent = ship.desc;
 }
 function refreshMode() {
@@ -307,12 +307,6 @@ refreshMode();
 document.querySelector("#start").onclick = () => start();
 document.querySelector("#restart").onclick = () => start();
 document.querySelector("#victoryRestart").onclick = () => start();
-document.querySelector("#openSettings").onclick = () => showPanel(ui.settings);
-document.querySelector("#openStats").onclick = () => {
-  refreshStats();
-  showPanel(ui.stats);
-};
-document.querySelectorAll(".back").forEach((b) => (b.onclick = showMenu));
 document
   .querySelector("#fatalRestart")
   ?.addEventListener("click", () => location.reload());
@@ -336,16 +330,6 @@ ui.sound.onclick = () => {
   audio.muted = !settings.sound;
   saveSettings(settings);
   refreshSettings();
-};
-ui.shipSelect.onclick = () => {
-  const available = unlockedShips(stats),
-    i = Math.max(
-      0,
-      available.findIndex((s) => s.id === settings.ship),
-    );
-  settings.ship = available[(i + 1) % available.length].id;
-  saveSettings(settings);
-  refreshShip();
 };
 ui.modeSelect.onclick = () => {
   const available = unlockedModes(stats),
@@ -401,6 +385,7 @@ function freshPlayer() {
 }
 function start() {
   try {
+    settings = loadSettings();
     try {
       audio.ensure();
     } catch (err) {

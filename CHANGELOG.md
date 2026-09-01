@@ -2,6 +2,14 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.39.0] - 2026-09-01
+
+- Rebuild the mobile flight deck around one active-chassis hero, a compact mission and threat configuration block, and a first-viewport launch action.
+- Reduce the primary navigation from six cramped destinations to five focused tabs.
+- Add a More directory for records, the build playground, device settings, offline status and the installed version.
+- Make the current chassis card open the hangar and ensure every launch reads the latest saved ship, mode and difficulty.
+- Improve keyboard focus, active-navigation semantics, touch targets and small-screen menu readability.
+
 ## [0.38.1] - 2026-09-01
 
 - Rotate every chassis around an authored center-of-mass pivot instead of its visual bounding-box center.
