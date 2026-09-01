@@ -15,8 +15,21 @@ export function isInViewport(e, pad = 0) {
 export const dist2 = (a, b) => {
   if (b?.targetable === false) return Infinity;
   const x = a.x - b.x,
-    y = a.y - b.y;
-  return x * x + y * y;
+    y = a.y - b.y,
+    distance = x * x + y * y;
+  if (Number.isFinite(b?.pickupGateUntil)) {
+    const radius = (a.r || 0) + (b.r || 0),
+      inside = distance < radius * radius;
+    if (performance.now() < b.pickupGateUntil) {
+      if (inside) b.pickupNeedsExit = true;
+      return Infinity;
+    }
+    if (b.pickupNeedsExit) {
+      if (!inside) b.pickupNeedsExit = false;
+      return Infinity;
+    }
+  }
+  return distance;
 };
 export const ARCHETYPES = [
   {
