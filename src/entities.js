@@ -60,7 +60,7 @@ export const ARCHETYPES = [
     hp: 96,
     d: 20,
     v: 30,
-    behavior: "chase",
+    behavior: "bulwark",
     color: "#ff5f74",
   },
   {
@@ -151,6 +151,39 @@ export const ARCHETYPES = [
     behavior: "phaser",
     color: "#d8a0ff",
   },
+  {
+    kind: "anchor",
+    unlock: 190,
+    r: 17,
+    s: 36,
+    hp: 118,
+    d: 16,
+    v: 48,
+    behavior: "anchor",
+    color: "#a77cff",
+  },
+  {
+    kind: "relay",
+    unlock: 310,
+    r: 13,
+    s: 58,
+    hp: 86,
+    d: 13,
+    v: 46,
+    behavior: "relay",
+    color: "#62f4d0",
+  },
+  {
+    kind: "burrower",
+    unlock: 430,
+    r: 15,
+    s: 74,
+    hp: 112,
+    d: 19,
+    v: 58,
+    behavior: "burrower",
+    color: "#ff986b",
+  },
 ];
 export const ELITE_TRAITS = {
   armored: {
@@ -206,7 +239,7 @@ function activeSummoner() {
   const a = globalThis.__orbitalBossArena;
   return a && a.summoner && performance.now() - a.at < 140;
 }
-export function spawnEnemy(w, h, time, eliteBonus = 0, forceElite = false) {
+export function spawnEnemy(w, h, time, eliteBonus = 0, forceElite = false, forcedKind = null) {
   const pos = edgeSpawn(w, h),
     summoned = activeSummoner(),
     available = summoned
@@ -216,7 +249,7 @@ export function spawnEnemy(w, h, time, eliteBonus = 0, forceElite = false) {
         )
       : ARCHETYPES.filter((a) => time >= a.unlock),
     pool = available.length ? available : [ARCHETYPES[0]],
-    base = pool[Math.floor(Math.random() * pool.length)],
+    base = ARCHETYPES.find((archetype) => archetype.kind === forcedKind) || pool[Math.floor(Math.random() * pool.length)],
     elite =
       !summoned &&
       time > 105 &&
@@ -255,7 +288,7 @@ export function spawnEnemy(w, h, time, eliteBonus = 0, forceElite = false) {
   Object.defineProperty(enemy, "targetable", {
     enumerable: false,
     get() {
-      return isInViewport(this);
+      return !this.submerged && isInViewport(this);
     },
   });
   return enemy;

@@ -56,6 +56,19 @@ openings at the arena edges lead in their actual map directions. The restrained
 minimap records explored rooms, supports full backtracking and keeps special
 room labels readable without turning the arena into a navigation overlay.
 
+Combat rooms also have controlled encounter identities rather than sharing one
+empty arena. Early sectors introduce Open Intercepts and Shield Lines. Later
+maps add projectile-bending Gravity Knots, alternating Crossfire beams,
+damage-sharing Relay Webs and moving Breach Fields with readable safe gaps.
+Encounter selection avoids immediate repeats and never stacks several major
+room hazards together.
+
+Signature enemies reinforce those spaces: Bulwarks protect nearby hostiles,
+Anchors control an area with radial fire, Relays redistribute incoming damage,
+and Burrowers disappear before a telegraphed rush. Remaining wave enemies still
+come from a sector-appropriate pool, so rooms vary without losing a readable
+central idea.
+
 - **Module Vaults** contain one permanent item
 - **Forked Signals** present mutually exclusive companion-focused choices
 - **Scrap Exchanges** sell up to three modules and permit multiple purchases
