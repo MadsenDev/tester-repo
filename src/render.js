@@ -12,6 +12,7 @@ import {
 import { friendlyThreatAlpha } from "./combat-readability.js";
 import { drawBossCounterplay } from "./boss-counterplay.js";
 import { drawArenaModules } from "./arena-module-render.js";
+import { drawPlayerShip } from "./ship-render.js";
 function polygon(ctx, x, y, r, n, rot = 0) {
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
@@ -480,8 +481,8 @@ export function renderScene(ctx, view, world) {
     ctx.shadowBlur = 0;
     ctx.save();
     ctx.translate(player.x, player.y);
-    ctx.rotate(time * 0.8);
     drawManifestationAura(ctx, player, time);
+    ctx.restore();
     const baseColor = player.shipColor || "#78ebff",
       glow = player.nullified
         ? "#79ffd2"
@@ -490,23 +491,10 @@ export function renderScene(ctx, view, world) {
           : player.invuln > 0
             ? "#fff"
             : baseColor;
-    ctx.shadowBlur = player.overdrive > 0 ? 30 : 22;
-    ctx.shadowColor = glow;
-    ctx.fillStyle =
-      player.invuln > 0 && Math.floor(time * 20) % 2 ? "#fff" : baseColor;
-    polygon(ctx, 0, 0, player.r, player.shipSides || 3, -Math.PI / 2);
-    ctx.fill();
-    ctx.strokeStyle = glow;
-    ctx.lineWidth = 2;
-    polygon(
-      ctx,
-      0,
-      0,
-      player.r + 7,
-      Math.max(5, (player.shipSides || 3) + 3),
-      time * -1.5,
-    );
-    ctx.stroke();
+    drawPlayerShip(ctx, player, time, glow);
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate((player.facing ?? -Math.PI / 2) + Math.PI / 2);
     drawManifestationHull(ctx, player, time);
     ctx.restore();
   }

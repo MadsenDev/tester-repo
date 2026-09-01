@@ -2,6 +2,14 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.38.0] - 2026-09-01
+
+- Expand the playable roster from four to eight chassis with Wraith, Lancer, Relay and Halo.
+- Give every chassis an authored silhouette, accent pattern, canopy and engine layout shared by the hangar and combat renderer.
+- Make the active ship steer smoothly toward its movement direction and retain its heading while stationary.
+- Add distinct hitbox sizes and starting combat profiles, including piercing, twin-shot and orbital-carrier builds.
+- Surface each ship's role and headline stats directly in the hangar.
+
 ## [0.37.0] - 2026-09-01
 
 - Expand the module catalog from 150 to 160 entries and the authored special set from 50 to 60.

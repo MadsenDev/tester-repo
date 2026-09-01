@@ -29,7 +29,13 @@ import {
 import { createHazardState, updateHazards } from "./hazards.js";
 import { onCompanionProjectileHit } from "./companions.js";
 import { createEventState, updateEvents, eventModifiers } from "./events.js";
-import { SHIPS, unlockedShips, shipById, applyShip } from "./ships.js";
+import {
+  SHIPS,
+  unlockedShips,
+  shipById,
+  applyShip,
+  updateShipHeading,
+} from "./ships.js";
 import {
   MODES,
   unlockedModes,
@@ -732,6 +738,7 @@ function update(dt) {
     margin = player.r + 4;
   player.vx = dx * sp;
   player.vy = dy * sp;
+  updateShipHeading(player, dx, dy, dt);
   player.x = clamp(player.x + dx * sp * dt, margin, W - margin);
   player.y = clamp(player.y + dy * sp * dt, margin, H - margin);
   player.fireCd -= dt;

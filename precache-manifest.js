@@ -54,6 +54,7 @@ globalThis.ORBITAL_PRECACHE = Object.freeze([
   "./src/sector-routes.js",
   "./src/selector-feedback.js",
   "./src/shell-ui.js",
+  "./src/ship-render.js",
   "./src/ships.js",
   "./src/special-modules.js",
   "./src/synergies.js",
