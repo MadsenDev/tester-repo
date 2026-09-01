@@ -2,6 +2,22 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.44.1] - 2026-09-02
+
+- Rework Expedition generation around explicit critical-path and optional-branch topology rules.
+- Make the boss the deepest terminal room and prohibit shops, Module Vaults, Forked Signals, Rest Bays and Elite Intercepts from gating progression.
+- Keep shops, module rooms and choice rooms terminal while preserving a guaranteed optional Elite Intercept branch.
+- Replace the guaranteed Quiet Dock with a rare 12% Rest Bay recovery opportunity that may not appear for several runs.
+- Validate generated layouts at runtime and add seeded regression coverage for special-room placement.
+- Document the Expedition placement contract in `docs/expedition-layout.md`.
+
+## [0.44.0] - 2026-09-01
+
+- Add The Spine, a new tier-two segmented boss shared by Expedition, Last Stand, Endless and Boss Rush.
+- Give The Spine five visible armor plates that absorb damage, break across health bands and expose an increasingly aggressive core.
+- Keep segmentation compatible with overpowered builds by avoiding scripted invulnerability stops.
+- Expand the shared boss roster and document the segmented-encounter design direction.
+
 ## [0.43.8] - 2026-09-01
 
 - Route Expedition, Last Stand, Endless and Boss Rush boss spawns through the shared controlled-random boss director.

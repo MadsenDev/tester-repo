@@ -2,6 +2,7 @@ import { assignExpeditionEncounters, encounterById } from "./expedition-encounte
 
 export const EXPEDITION_SECTORS = 5;
 export const EXPEDITION_ROOMS = 9;
+export const EXPEDITION_REST_CHANCE = 0.12;
 
 export const EXPEDITION_ROOM_TYPES = Object.freeze({
   combat: { name: "HOSTILE GRID", short: "", color: "#78ebff", danger: "COMBAT" },
@@ -9,7 +10,7 @@ export const EXPEDITION_ROOM_TYPES = Object.freeze({
   item: { name: "MODULE VAULT", short: "MODULE", color: "#8dffcf", danger: "REWARD" },
   choice: { name: "FORKED SIGNAL", short: "CHOICE", color: "#c994ff", danger: "CHOICE" },
   shop: { name: "SCRAP EXCHANGE", short: "SHOP", color: "#ffe27b", danger: "SHOP" },
-  repair: { name: "QUIET DOCK", short: "REPAIR", color: "#79ffb2", danger: "RECOVERY" },
+  repair: { name: "REST BAY", short: "REST", color: "#79ffb2", danger: "RECOVERY" },
   secret: { name: "NULL CHAMBER", short: "SECRET", color: "#ff74ad", danger: "SECRET" },
   black: { name: "BLACK SIGNAL", short: "BLACK", color: "#ff5c93", danger: "CONTRACT" },
   boss: { name: "SECTOR WARDEN", short: "BOSS", color: "#ff665f", danger: "BOSS" },
@@ -65,16 +66,6 @@ function growConnectedMap(count, random) {
     nodes.push(node);
     occupied.set(key(node.x, node.y), node);
     connect(parent, node, direction);
-    if (random() < 0.3) {
-      for (const extraDirection of shuffled(Object.keys(EXPEDITION_DIRECTIONS), random)) {
-        const extra = EXPEDITION_DIRECTIONS[extraDirection],
-          neighbor = occupied.get(key(node.x + extra.dx, node.y + extra.dy));
-        if (neighbor && neighbor !== parent && !node.links[extraDirection]) {
-          connect(node, neighbor, extraDirection);
-          break;
-        }
-      }
-    }
   }
   while (nodes.length < count) {
     const parent = nodes[nodes.length - 1],
@@ -92,13 +83,36 @@ function distancesFromStart(nodes) {
     queue = ["r0"];
   while (queue.length) {
     const id = queue.shift(), node = byId.get(id);
-    for (const next of Object.values(node.links))
+    for (const next of Object.values(node.links)) {
       if (!distance.has(next)) {
         distance.set(next, distance.get(id) + 1);
         queue.push(next);
       }
+    }
   }
   return distance;
+}
+
+function pathTo(nodes, targetId) {
+  const byId = new Map(nodes.map((node) => [node.id, node])),
+    parent = new Map([["r0", null]]),
+    queue = ["r0"];
+  while (queue.length && !parent.has(targetId)) {
+    const id = queue.shift();
+    for (const next of Object.values(byId.get(id).links)) {
+      if (!parent.has(next)) {
+        parent.set(next, id);
+        queue.push(next);
+      }
+    }
+  }
+  const result = [];
+  for (let id = targetId; id; id = parent.get(id)) result.unshift(id);
+  return result;
+}
+
+function leaves(nodes) {
+  return nodes.filter((node) => node.id !== "r0" && Object.keys(node.links).length === 1);
 }
 
 function attachLeaf(nodes, occupied, anchor, type, id, random) {
@@ -111,7 +125,7 @@ function attachLeaf(nodes, occupied, anchor, type, id, random) {
       y: anchor.y + dir.dy,
       type,
       links: {},
-      hidden: true,
+      hidden: ["secret", "black"].includes(type),
       locked: type === "black",
     };
   nodes.push(node);
@@ -120,40 +134,92 @@ function attachLeaf(nodes, occupied, anchor, type, id, random) {
   return node;
 }
 
+function growLayout(random) {
+  let result;
+  for (let i = 0; i < 80; i++) {
+    result = growConnectedMap(EXPEDITION_ROOMS, random);
+    if (leaves(result.nodes).length >= 4) return result;
+  }
+  return result;
+}
+
+export function validateExpeditionLayout(map) {
+  const byId = new Map(map.nodes.map((node) => [node.id, node])),
+    critical = new Set(map.criticalPath || []),
+    errors = [];
+  for (const type of ["item", "choice", "shop", "repair"]) {
+    for (const node of map.nodes.filter((candidate) => candidate.type === type)) {
+      if (Object.keys(node.links).length !== 1) errors.push(`${type} must be terminal`);
+      if (critical.has(node.id)) errors.push(`${type} cannot be on critical path`);
+    }
+  }
+  for (const node of map.nodes.filter((candidate) => candidate.type === "elite")) {
+    if (critical.has(node.id)) errors.push("elite cannot be on critical path");
+  }
+  const boss = byId.get(map.bossId);
+  if (!boss) errors.push("missing boss");
+  for (const id of map.criticalPath || []) {
+    const type = byId.get(id)?.type;
+    if (id !== map.bossId && type !== "combat") errors.push(`${type} cannot gate boss`);
+  }
+  return errors;
+}
+
 export function generateExpeditionMap(sector = 1, random = Math.random, player = {}) {
-  const { nodes, occupied } = growConnectedMap(EXPEDITION_ROOMS, random),
-    distance = distancesFromStart(nodes),
-    bossCandidates = nodes.filter(
-      (node) => node.id !== "r0" && freeDirections(node, occupied, random).length,
-    ),
-    boss = [...(bossCandidates.length ? bossCandidates : nodes.filter((node) => node.id !== "r0"))]
-      .sort((a, b) => distance.get(b.id) - distance.get(a.id))[0];
+  const { nodes, occupied } = growLayout(random), distance = distancesFromStart(nodes);
+  const terminal = leaves(nodes).sort((a, b) => distance.get(b.id) - distance.get(a.id));
+  const boss = terminal.shift();
   boss.type = "boss";
-  const assignments = shuffled(
-      ["item", "choice", "shop", "repair", "elite", "combat", "combat"],
-      random,
+  const criticalPath = pathTo(nodes, boss.id), critical = new Set(criticalPath);
+  const specialLeaves = shuffled(terminal, random);
+  const item = specialLeaves.shift(), shop = specialLeaves.shift(), choice = specialLeaves.shift();
+  if (item) item.type = "item";
+  if (shop) shop.type = "shop";
+  if (choice) choice.type = "choice";
+  const restCandidate = specialLeaves.shift();
+  const rest = restCandidate && random() < EXPEDITION_REST_CHANCE ? restCandidate : null;
+  if (rest) rest.type = "repair";
+
+  const eliteCandidates = shuffled(
+    nodes.filter(
+      (node) => node.id !== "r0" && node !== boss && !critical.has(node.id) && node.type === "combat",
     ),
-    ordinary = shuffled(
-      nodes.filter((node) => node.id !== "r0" && node !== boss),
+    random,
+  );
+  let elite = eliteCandidates[0] || null;
+  if (elite) elite.type = "elite";
+  if (!elite) {
+    const eliteAnchors = shuffled(
+      nodes.filter((node) => node.type === "combat" && node !== boss),
       random,
-    );
-  ordinary.forEach((node, index) => (node.type = assignments[index] || "combat"));
+    ).filter((node) => freeDirections(node, occupied, random).length);
+    elite = eliteAnchors[0]
+      ? attachLeaf(nodes, occupied, eliteAnchors[0], "elite", "elite", random)
+      : null;
+  }
+
   assignExpeditionEncounters(nodes, sector, random);
-  const leafAnchors = shuffled(
-    nodes.filter((node) => node.id !== "r0" && node !== boss),
+  const secretAnchors = shuffled(
+    nodes.filter(
+      (node) =>
+        node.id !== "r0" &&
+        node !== boss &&
+        !["item", "choice", "shop", "repair"].includes(node.type),
+    ),
     random,
   ).filter((node) => freeDirections(node, occupied, random).length);
-  const secret = leafAnchors.length
-    ? attachLeaf(nodes, occupied, leafAnchors[0], "secret", "secret", random)
+  const secret = secretAnchors[0]
+    ? attachLeaf(nodes, occupied, secretAnchors[0], "secret", "secret", random)
     : null;
-  const secondAnchor = leafAnchors.find(
-    (node) => node.id !== secret?.id && freeDirections(node, occupied, random).length,
+  const secondAnchor = secretAnchors.find(
+    (node) => node !== secretAnchors[0] && freeDirections(node, occupied, random).length,
   );
   const secondSecret =
     secondAnchor && random() < (player.expeditionSecretChance || 0)
       ? attachLeaf(nodes, occupied, secondAnchor, "secret", "secret-2", random)
       : null;
   const black = attachLeaf(nodes, occupied, boss, "black", "black", random);
+
   for (const node of nodes) {
     node.visited = false;
     node.discovered = node.id === "r0";
@@ -163,14 +229,20 @@ export function generateExpeditionMap(sector = 1, random = Math.random, player =
     node.pedestalsInitialized = false;
     node.rewardGranted = false;
   }
-  return {
+  const map = {
     sector,
     nodes,
     startId: "r0",
     bossId: boss.id,
+    criticalPath,
     secretIds: [secret?.id, secondSecret?.id].filter(Boolean),
     blackId: black?.id,
+    restId: rest?.id,
+    eliteId: elite?.id,
   };
+  const errors = validateExpeditionLayout(map);
+  if (errors.length) throw new Error(`Invalid Expedition layout: ${errors.join(", ")}`);
+  return map;
 }
 
 export function currentExpeditionNode(state) {
@@ -238,11 +310,7 @@ export function persistExpeditionRoom(state) {
   return state;
 }
 
-export function createExpeditionState(
-  difficulty = "normal",
-  player = {},
-  random = Math.random,
-) {
+export function createExpeditionState(difficulty = "normal", player = {}, random = Math.random) {
   const map = generateExpeditionMap(1, random, player),
     state = {
       active: true,
@@ -316,9 +384,7 @@ export function expeditionDoorChoices(state, player = {}) {
     });
   }
   if (node.type === "boss" && node.cleared) {
-    const exitDirection = ["s", "e", "w", "n"].find(
-      (direction) => !node.links[direction],
-    ) || "s";
+    const exitDirection = ["s", "e", "w", "n"].find((direction) => !node.links[direction]) || "s";
     doors.push({
       type: state.sector >= EXPEDITION_SECTORS ? "victory" : "descend",
       direction: exitDirection,
@@ -376,7 +442,17 @@ export function expeditionPedestalSpec(state, player = {}) {
 }
 
 export function expeditionRoomReward(state) {
-  const rewards = { combat: 3 + state.sector, elite: 7 + state.sector * 2, repair: 2, item: 1, choice: 1, shop: 0, secret: 4, black: 0, boss: 8 + state.sector * 2 };
+  const rewards = {
+    combat: 3 + state.sector,
+    elite: 7 + state.sector * 2,
+    repair: 2,
+    item: 1,
+    choice: 1,
+    shop: 0,
+    secret: 4,
+    black: 0,
+    boss: 8 + state.sector * 2,
+  };
   return rewards[state.roomType] || 0;
 }
 
