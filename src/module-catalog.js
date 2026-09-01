@@ -91,7 +91,7 @@ const descriptions = {
   prism: "Adds prism behavior.",
   orbital: "Adds an orbital system.",
   familiar: "Adds a familiar system.",
-  impact: "Movement builds momentum into heavy contact damage.",
+  impact: "Auto-slings into threats; movement charges heavier impacts.",
 };
 export const MODULES = names.map((name, i) => {
   const definition = SPECIAL_MODULES[name],

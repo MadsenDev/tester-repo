@@ -367,11 +367,17 @@ export function drawCompanions(ctx, p, time) {
   if (c.wrecking && p.companionState?.wrecking) {
     const node = p.companionState.wrecking,
       speedGlow = Math.min(1, (node.speed || 0) / 420),
+      charge = node.charge || 0,
+      slinging = node.mode === "outbound" || node.mode === "return",
       radius = node.radius || 10;
     ctx.save();
-    ctx.strokeStyle = `rgba(210,145,255,${0.36 + speedGlow * 0.46})`;
-    ctx.lineWidth = 2 + speedGlow * 2;
-    ctx.setLineDash([7, 6]);
+    ctx.strokeStyle = slinging
+      ? `rgba(120,235,255,${0.62 + speedGlow * 0.3})`
+      : `rgba(210,145,255,${0.36 + charge * 0.42})`;
+    ctx.shadowColor = slinging ? "#78ebff" : "#c991ff";
+    ctx.shadowBlur = slinging ? 12 : 5 + charge * 8;
+    ctx.lineWidth = 2 + speedGlow * 2 + (c.wrecking >= 2 ? 1 : 0);
+    if (!slinging) ctx.setLineDash([7, 6]);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     ctx.lineTo(node.x, node.y);
@@ -380,8 +386,8 @@ export function drawCompanions(ctx, p, time) {
     ctx.translate(node.x, node.y);
     ctx.rotate(time * (1.6 + speedGlow * 5));
     ctx.shadowColor = node.flash > 0 ? "#ffffff" : "#c991ff";
-    ctx.shadowBlur = 14 + speedGlow * 22;
-    ctx.fillStyle = node.flash > 0 ? "#ffffff" : "#c991ff";
+    ctx.shadowBlur = 14 + speedGlow * 22 + charge * 10;
+    ctx.fillStyle = node.flash > 0 ? "#ffffff" : slinging ? "#8ef4ff" : "#c991ff";
     ctx.beginPath();
     for (let i = 0; i < 10; i++) {
       const a = (i * Math.PI * 2) / 10,
@@ -396,6 +402,16 @@ export function drawCompanions(ctx, p, time) {
     ctx.beginPath();
     ctx.arc(0, 0, Math.max(3, radius * 0.36), 0, Math.PI * 2);
     ctx.fill();
+    if (charge > 0.08) {
+      ctx.rotate(-time * (1.6 + speedGlow * 5));
+      ctx.strokeStyle = `rgba(255,230,128,${0.25 + charge * 0.7})`;
+      ctx.lineWidth = 1.5 + charge * 2;
+      ctx.shadowColor = "#ffe680";
+      ctx.shadowBlur = 8 + charge * 12;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius + 5 + charge * 4, -Math.PI / 2, -Math.PI / 2 + charge * Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.restore();
   }
   const fam = [
