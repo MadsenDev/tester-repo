@@ -27,12 +27,14 @@ test("standing on a pickup when the lock expires requires leaving and re-enterin
 test("returning to a room rearms its remaining pickups",()=>{
   const state={currentId:"room-a",doors:[],pedestals:[{}]};
   layoutExpeditionObjects(state,390,844);
-  const first=state.pedestals[0].pickupGateUntil;
   state.currentId="room-b";
   state.pedestals=[];
   layoutExpeditionObjects(state,390,844);
   state.currentId="room-a";
   state.pedestals=[{_pickupGateRoomId:"room-a",pickupGateUntil:0}];
+  const before=performance.now();
   layoutExpeditionObjects(state,390,844);
-  assert.ok(state.pedestals[0].pickupGateUntil>=first);
+  const pedestal=state.pedestals[0];
+  assert.ok(pedestal.pickupGateUntil>=before+650);
+  assert.equal(pedestal.pickupNeedsExit,true);
 });
