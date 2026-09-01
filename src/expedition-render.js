@@ -58,27 +58,24 @@ export function layoutExpeditionObjects(state, W, H) {
   const count = state.pedestals.length;
   if (!count) return;
 
-  if (W < 620 && count > 1) {
-    const arenaHeight = bounds.bottom - bounds.top,
-      step = Math.min(168, Math.max(104, (arenaHeight - 188) / (count - 1))),
-      startY = middleY - (step * (count - 1)) / 2,
-      cardWidth = Math.min(184, W - 72);
-    state.pedestals.forEach((pedestal, index) => {
-      pedestal.x = W / 2;
-      pedestal.y = startY + index * step;
-      pedestal.w = cardWidth;
-      pedestal.r = 24;
-    });
-    return;
-  }
+  const compact = W < 620,
+    gap = compact ? 12 : 16,
+    cardWidth = compact
+      ? count >= 3
+        ? 84
+        : count === 2
+          ? 112
+          : 118
+      : Math.min(132, Math.max(108, (W - 120 - (count - 1) * gap) / count)),
+    total = count * cardWidth + (count - 1) * gap,
+    startX = W / 2 - total / 2 + cardWidth / 2;
 
-  const cardWidth = Math.min(168, (W - 32) / Math.max(1, count));
   state.pedestals.forEach((pedestal, index) => {
-    const total = count * cardWidth + (count - 1) * 8;
-    pedestal.x = W / 2 - total / 2 + cardWidth / 2 + index * (cardWidth + 8);
-    pedestal.y = bounds.top + (bounds.bottom - bounds.top) * 0.52;
-    pedestal.w = cardWidth - 8;
-    pedestal.r = 24;
+    pedestal.x = startX + index * (cardWidth + gap);
+    pedestal.y = middleY;
+    pedestal.w = cardWidth;
+    pedestal.h = compact ? 100 : 112;
+    pedestal.r = compact ? 14 : 17;
   });
 }
 
@@ -238,31 +235,40 @@ function drawPedestal(ctx, pedestal, time, credits) {
     name = module?.name || pedestal.name || "UNKNOWN MODULE",
     desc = module?.desc || pedestal.desc || "Signal awaiting contact.",
     affordable = !pedestal.cost || credits >= pedestal.cost,
-    color = pedestal.color || "#8dffcf";
+    color = pedestal.color || "#8dffcf",
+    height = pedestal.h || 100,
+    halfH = height / 2,
+    narrow = pedestal.w <= 90;
   ctx.save();
   ctx.globalAlpha = affordable ? 1 : 0.42;
   ctx.translate(pedestal.x, pedestal.y);
-  ctx.shadowBlur = 20; ctx.shadowColor = color; ctx.strokeStyle = color;
-  ctx.fillStyle = "rgba(4,11,18,.92)"; ctx.lineWidth = 2;
-  roundRect(ctx, -pedestal.w / 2, -76, pedestal.w, 152, 12); ctx.fill(); ctx.stroke();
+  ctx.shadowBlur = 14; ctx.shadowColor = color; ctx.strokeStyle = color;
+  ctx.fillStyle = "rgba(4,11,18,.92)"; ctx.lineWidth = 1.5;
+  roundRect(ctx, -pedestal.w / 2, -halfH, pedestal.w, height, 9); ctx.fill(); ctx.stroke();
+  ctx.save();
+  ctx.translate(0, -8);
   ctx.rotate(time * 0.9); ctx.beginPath();
+  const orbitRadius = narrow ? 12 : 14;
   for (let i = 0; i < 6; i++) {
     const angle = (i * Math.PI * 2) / 6,
-      x = Math.cos(angle) * (19 + Math.sin(time * 3) * 2),
-      y = Math.sin(angle) * (19 + Math.sin(time * 3) * 2);
+      pulse = orbitRadius + Math.sin(time * 3) * 1.5,
+      x = Math.cos(angle) * pulse,
+      y = Math.sin(angle) * pulse;
     i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
   }
-  ctx.closePath(); ctx.stroke(); ctx.rotate(-time * 0.9);
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
   ctx.fillStyle = "#f3f7ff"; ctx.shadowBlur = 0; ctx.textAlign = "center"; ctx.textBaseline = "top";
-  ctx.font = "700 11px Chakra Petch, sans-serif"; ctx.fillText(name, 0, 32, pedestal.w - 12);
-  ctx.fillStyle = "#91a0b8"; ctx.font = "500 8px IBM Plex Mono, monospace";
-  wrap(ctx, desc, 0, 48, pedestal.w - 14, 10, 2);
+  ctx.font = `700 ${narrow ? 9 : 10}px Chakra Petch, sans-serif`;
+  wrap(ctx, name, 0, 11, pedestal.w - 10, narrow ? 9 : 10, 2);
+  ctx.fillStyle = "#91a0b8"; ctx.font = `500 ${narrow ? 6.5 : 7}px IBM Plex Mono, monospace`;
+  wrap(ctx, desc, 0, narrow ? 31 : 34, pedestal.w - 10, 8, 2);
   if (pedestal.cost) {
     ctx.fillStyle = affordable ? "#ffe27b" : "#ff6688";
-    ctx.font = "700 9px IBM Plex Mono, monospace"; ctx.fillText(`${pedestal.cost} SCRAP`, 0, -65);
+    ctx.font = "700 7px IBM Plex Mono, monospace"; ctx.fillText(`${pedestal.cost} SCRAP`, 0, -halfH + 7);
   } else if (pedestal.kind === "black") {
-    ctx.fillStyle = "#ff74ad"; ctx.font = "700 9px IBM Plex Mono, monospace";
-    ctx.fillText("PERMANENT COST", 0, -65);
+    ctx.fillStyle = "#ff74ad"; ctx.font = "700 7px IBM Plex Mono, monospace";
+    ctx.fillText("PERMANENT COST", 0, -halfH + 7);
   }
   ctx.restore();
 }

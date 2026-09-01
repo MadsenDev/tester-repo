@@ -2,6 +2,17 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.43.3] - 2026-09-01
+
+- Replace tall mobile reward columns with a compact centered pedestal cluster.
+- Shrink physical pickup radii so entering a reward room cannot accidentally select a module.
+- Keep module cards readable at the smaller scale and add centered-layout regression coverage.
+
+## [0.43.2] - 2026-09-01
+
+- Move mobile Expedition reward pedestals away from cardinal entry spawn points.
+- Add entry-clearance regression coverage for north, east, south and west transitions.
+
 ## [0.43.1] - 2026-09-01
 
 - Move south-edge Expedition labels farther into the arena so the mobile loadout bar cannot cover them.
