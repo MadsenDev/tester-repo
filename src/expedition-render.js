@@ -54,9 +54,27 @@ export function layoutExpeditionObjects(state, W, H) {
       door.h = 92;
     }
   }
-  const cardWidth = Math.min(168, (W - 32) / Math.max(1, state.pedestals.length));
+
+  const count = state.pedestals.length;
+  if (!count) return;
+
+  if (W < 620 && count > 1) {
+    const arenaHeight = bounds.bottom - bounds.top,
+      step = Math.min(168, Math.max(104, (arenaHeight - 188) / (count - 1))),
+      startY = middleY - (step * (count - 1)) / 2,
+      cardWidth = Math.min(184, W - 72);
+    state.pedestals.forEach((pedestal, index) => {
+      pedestal.x = W / 2;
+      pedestal.y = startY + index * step;
+      pedestal.w = cardWidth;
+      pedestal.r = 24;
+    });
+    return;
+  }
+
+  const cardWidth = Math.min(168, (W - 32) / Math.max(1, count));
   state.pedestals.forEach((pedestal, index) => {
-    const total = state.pedestals.length * cardWidth + (state.pedestals.length - 1) * 8;
+    const total = count * cardWidth + (count - 1) * 8;
     pedestal.x = W / 2 - total / 2 + cardWidth / 2 + index * (cardWidth + 8);
     pedestal.y = bounds.top + (bounds.bottom - bounds.top) * 0.52;
     pedestal.w = cardWidth - 8;
