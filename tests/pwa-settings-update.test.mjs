@@ -15,8 +15,8 @@ test("Settings exposes a manual service-worker update check", () => {
   assert.match(pwa, /UPDATE NOW/);
 });
 
-test("0.43.6 records the Endless mark fix and settings updater", () => {
-  assert.match(version, /0\.43\.6/);
+test("the updater release remains documented as versions advance", () => {
+  assert.match(version, /ORBITAL_APP_VERSION = "\d+\.\d+\.\d+"/);
   assert.match(changelog, /## \[0\.43\.6\]/);
   assert.match(changelog, /Execution Mark/);
   assert.match(changelog, /Check for updates/);
