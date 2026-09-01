@@ -66,9 +66,11 @@ The module pool contains 150 upgrades, including 50 authored special modules. Sp
 
 Companions have distinct active jobs. Razor orbitals launch out to cut distant
 targets, Aegis turns toward incoming fire and spends rechargeable interceptions,
-and the **Wrecking Node** trails the ship on a spring-like tether. Sharp movement
-slings the node through enemies, with damage driven by its real momentum; kills
-grow its mass during the run, while Ballast and Razor Wire alter its impact.
+and the **Wrecking Node** automatically winds up, slings into distant targets,
+ricochets and returns on its spring-like tether. The tether cuts enemies caught
+across it, successful impacts grow the Node during the run, and sharp movement
+charges harder launches. Ballast, Razor Wire and Familiar Guidance each reshape
+that attack loop without being required to make the familiar useful.
 
 Nine apex modules complete named multi-trait builds such as **Seeking Storm**, **Event Horizon**, **Recursive Violence**, **Thunder Choir**, and **Guardian Swarm**. The rare **Dead God Circuit** activates the entire apex network at once, with an appropriately unstable annihilation aura.
 

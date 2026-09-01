@@ -1,2 +1,1 @@
-globalThis.ORBITAL_APP_VERSION = "0.36.0";
-
+globalThis.ORBITAL_APP_VERSION = "0.36.1";
