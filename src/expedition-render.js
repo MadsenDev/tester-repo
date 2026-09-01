@@ -1,19 +1,30 @@
 import { EXPEDITION_ROOM_TYPES } from "./expedition.js";
 
 const MAP_SYMBOLS = Object.freeze({ item: "M", choice: "◇", shop: "$", repair: "+", elite: "!", boss: "B", secret: "?", black: "×" });
+const PICKUP_ENTRY_LOCK_MS = 700;
 
 export function expeditionArenaBounds(W,H){const top=Math.max(182,Math.min(250,H*.18));return{left:18,right:W-18,top,bottom:H-42}}
 export function expeditionRoomEntryPosition(direction,W,H,radius=12){const b=expeditionArenaBounds(W,H),i=Math.max(48,radius+36);return{x:direction==="e"?b.left+i:direction==="w"?b.right-i:W/2,y:direction==="s"?b.top+i:direction==="n"?b.bottom-i:(b.top+b.bottom)/2}}
 function roundRect(ctx,x,y,w,h,r=12){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
 function moduleFromPedestal(p){return p.module||p.offer?.module}
 function wrapPickup(p,state){if(p._pickupToastWrapped||!p.module?.apply)return;const apply=p.module.apply,module=p.module,color=p.color||"#8dffcf";p.module.apply=(player)=>{const result=apply(player);state.pickupNotice={name:module.name||"UNKNOWN MODULE",desc:module.desc||"Module integrated.",color,expiresAt:Date.now()+2400};return result};p._pickupToastWrapped=true}
+function armPickupGate(p,state,now,roomChanged){
+  if(!state.currentId)return;
+  if(roomChanged||p._pickupGateRoomId!==state.currentId){
+    p._pickupGateRoomId=state.currentId;
+    p.pickupGateUntil=now+PICKUP_ENTRY_LOCK_MS;
+    p.pickupNeedsExit=false;
+  }
+}
 
 export function layoutExpeditionObjects(state,W,H){
   const b=expeditionArenaBounds(W,H),middleY=(b.top+b.bottom)/2;
   for(const door of state.doors){if(door.direction==="n"||door.direction==="s"){door.x=W/2;door.y=door.direction==="n"?b.top:b.bottom;door.w=92;door.h=34}else{door.x=door.direction==="w"?b.left:b.right;door.y=middleY;door.w=34;door.h=92}}
+  const now=performance.now(),roomChanged=state._pickupGateRoomId!==state.currentId;
+  if(roomChanged)state._pickupGateRoomId=state.currentId;
   const count=state.pedestals.length;if(!count)return;
   const compact=W<620,gap=compact?8:14,labelWidth=compact?(count>=3?72:count===2?88:104):Math.min(118,Math.max(96,(W-140-(count-1)*gap)/count)),total=count*labelWidth+(count-1)*gap,startX=W/2-total/2+labelWidth/2;
-  state.pedestals.forEach((p,index)=>{p.x=startX+index*(labelWidth+gap);p.y=middleY;p.w=labelWidth;p.h=compact?60:70;p.r=compact?12:15;wrapPickup(p,state)})
+  state.pedestals.forEach((p,index)=>{p.x=startX+index*(labelWidth+gap);p.y=middleY;p.w=labelWidth;p.h=compact?60:70;p.r=compact?12:15;armPickupGate(p,state,now,roomChanged);wrapPickup(p,state)})
 }
 
 function drawRoomFrame(ctx,state,W,H,time){const meta=EXPEDITION_ROOM_TYPES[state.roomType],b=expeditionArenaBounds(W,H);ctx.save();ctx.strokeStyle=meta.color;ctx.globalAlpha=.12;ctx.lineWidth=1.5;ctx.setLineDash([10,15]);ctx.strokeRect(b.left,b.top,b.right-b.left,b.bottom-b.top);ctx.setLineDash([]);ctx.globalAlpha=.055+Math.sin(time*2)*.018;ctx.fillStyle=meta.color;ctx.fillRect(b.left,b.top,b.right-b.left,3);ctx.fillRect(b.left,b.bottom-3,b.right-b.left,3);ctx.restore()}
