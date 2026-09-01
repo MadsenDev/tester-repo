@@ -24,6 +24,25 @@ export function recordPlayerDamage(runtime, amount, nowSeconds) {
     runtime.damage.shift();
 }
 
+export function captureEnemyHealth(enemies = []) {
+  return new Map(
+    enemies
+      .filter((enemy) => enemy && Number.isFinite(enemy.hp) && enemy.hp > 0)
+      .map((enemy) => [enemy, enemy.hp]),
+  );
+}
+
+export function recordEnemyHealthDelta(runtime, snapshot, nowSeconds) {
+  if (!runtime || !(snapshot instanceof Map)) return 0;
+  let dealt = 0;
+  for (const [enemy, before] of snapshot) {
+    if (!Number.isFinite(before) || !Number.isFinite(enemy?.hp)) continue;
+    dealt += Math.max(0, before - Math.max(0, enemy.hp));
+  }
+  recordPlayerDamage(runtime, dealt, nowSeconds);
+  return dealt;
+}
+
 export function recentPlayerDps(runtime, nowSeconds) {
   if (!runtime?.damage?.length) return 0;
   const now = Number.isFinite(nowSeconds) ? nowSeconds : 0,
@@ -39,25 +58,36 @@ function syntheticBossTime(kind, progressionTime) {
   const index = Math.max(0, BOSSES.findIndex((boss) => boss.kind === kind));
   // spawnBoss still owns construction/legacy durability. Preserve progression scale
   // while selecting the requested catalog entry by moving within catalog cycles.
-  const cycle = Math.max(0, Math.floor(Math.max(0, progressionTime - 1) / (BOSSES.length * 60)));
+  const cycle = Math.max(
+    0,
+    Math.floor(Math.max(0, progressionTime - 1) / (BOSSES.length * 60)),
+  );
   return cycle * BOSSES.length * 60 + (index + 1) * 60;
 }
 
-export function spawnDirectedBoss(runtime, {
-  w,
-  h,
-  time = 60,
-  difficulty = "normal",
-  mode = "campaign",
-  sector = 1,
-  bossCount = 0,
-  player,
-  random = Math.random,
-} = {}) {
+export function spawnDirectedBoss(
+  runtime,
+  {
+    w,
+    h,
+    time = 60,
+    difficulty = "normal",
+    mode = "campaign",
+    sector = 1,
+    bossCount = 0,
+    player,
+    random = Math.random,
+  } = {},
+) {
   if (!runtime) throw new Error("Boss runtime is required");
   const context = { mode, time, sector, bossCount },
     selected = selectBoss(BOSSES, runtime.director, context, random),
-    boss = spawnBoss(w, h, syntheticBossTime(selected.kind, time), difficulty),
+    boss = spawnBoss(
+      w,
+      h,
+      syntheticBossTime(selected.kind, time),
+      difficulty,
+    ),
     telemetry = { recentDps: recentPlayerDps(runtime, time) };
   runtime.totalBosses += 1;
   boss.directorKind = selected.kind;
