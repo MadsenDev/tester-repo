@@ -10,13 +10,23 @@ test("fresh-run HUD does not require a legacy upgrades array", () => {
 });
 
 test("HUD counts the actual item loadout and highlights apex synergies", () => {
-  const player = { shipName: "STRIDER", items: [{}, {}, {}] };
+  const player = {
+    shipName: "STRIDER",
+    items: new Set(Array.from({ length: 19 }, (_, index) => `module-${index}`)),
+  };
   assert.equal(
     compactArsenalLabel(player, [{ apex: true, name: "PRISMATIC RAZOR" }], "BLASTER"),
-    "STRIDER · 3 MODULES · PRISMATIC RAZOR",
+    "STRIDER · 19 MODULES · PRISMATIC RAZOR",
   );
   assert.equal(
     compactArsenalLabel(player, [{ apex: true }, { apex: true }], "BLASTER"),
-    "STRIDER · 3 MODULES · 2 APEX SYNERGIES",
+    "STRIDER · 19 MODULES · 2 APEX SYNERGIES",
+  );
+});
+
+test("HUD still accepts legacy array-backed loadouts", () => {
+  assert.equal(
+    compactArsenalLabel({ shipName: "STRIDER", items: [{}, {}, {}] }, [], "BLASTER"),
+    "STRIDER · 3 MODULES · BLASTER",
   );
 });
