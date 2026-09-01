@@ -20,9 +20,9 @@ function armPickupGate(p,state,now,roomChanged){
 export function layoutExpeditionObjects(state,W,H){
   const b=expeditionArenaBounds(W,H),middleY=(b.top+b.bottom)/2;
   for(const door of state.doors){if(door.direction==="n"||door.direction==="s"){door.x=W/2;door.y=door.direction==="n"?b.top:b.bottom;door.w=92;door.h=34}else{door.x=door.direction==="w"?b.left:b.right;door.y=middleY;door.w=34;door.h=92}}
-  const count=state.pedestals.length;if(!count)return;
   const now=performance.now(),roomChanged=state._pickupGateRoomId!==state.currentId;
   if(roomChanged)state._pickupGateRoomId=state.currentId;
+  const count=state.pedestals.length;if(!count)return;
   const compact=W<620,gap=compact?8:14,labelWidth=compact?(count>=3?72:count===2?88:104):Math.min(118,Math.max(96,(W-140-(count-1)*gap)/count)),total=count*labelWidth+(count-1)*gap,startX=W/2-total/2+labelWidth/2;
   state.pedestals.forEach((p,index)=>{p.x=startX+index*(labelWidth+gap);p.y=middleY;p.w=labelWidth;p.h=compact?60:70;p.r=compact?12:15;armPickupGate(p,state,now,roomChanged);wrapPickup(p,state)})
 }
