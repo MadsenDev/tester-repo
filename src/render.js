@@ -495,6 +495,8 @@ export function renderScene(ctx, view, world) {
     ctx.save();
     ctx.translate(player.x, player.y);
     ctx.rotate((player.facing ?? -Math.PI / 2) + Math.PI / 2);
+    const pivot = player.shipVisual?.pivot || [0, 0];
+    ctx.translate(-pivot[0] * player.r, -pivot[1] * player.r);
     drawManifestationHull(ctx, player, time);
     ctx.restore();
   }
