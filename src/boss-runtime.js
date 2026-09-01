@@ -7,6 +7,7 @@ import {
 } from "./boss-director.js";
 
 const WINDOW_SECONDS = 8;
+const EXPECTED_BOSS_TTK = 18;
 const THE_SPINE = Object.freeze({
   kind: "spine",
   name: "THE SPINE",
@@ -23,6 +24,8 @@ export function createBossRuntime() {
     director: createBossDirectorState(),
     damage: [],
     totalBosses: 0,
+    bossPressure: 0,
+    bossResults: [],
   };
 }
 
@@ -63,6 +66,29 @@ export function recentPlayerDps(runtime, nowSeconds) {
     oldest = samples[0]?.at ?? now,
     span = Math.max(1, Math.min(WINDOW_SECONDS, now - oldest));
   return total / span;
+}
+
+export function recordBossDefeat(runtime, boss, nowSeconds) {
+  if (!runtime || !boss?.boss) return null;
+  const now = Number.isFinite(nowSeconds) ? nowSeconds : 0,
+    spawnedAt = Number.isFinite(boss.directorSpawnedAt) ? boss.directorSpawnedAt : now,
+    ttk = Math.max(0.1, now - spawnedAt),
+    ratio = EXPECTED_BOSS_TTK / ttk,
+    fastKill = Math.max(0, Math.min(1, (ratio - 1) / 4)),
+    slowKill = Math.max(0, Math.min(1, (1 - ratio) / 0.65));
+  runtime.bossPressure = Math.max(
+    0,
+    Math.min(1, runtime.bossPressure * 0.72 + fastKill * 0.5 - slowKill * 0.18),
+  );
+  const result = {
+    kind: boss.directorKind || boss.kind,
+    ttk,
+    fastKill,
+    pressure: runtime.bossPressure,
+  };
+  runtime.bossResults.push(result);
+  if (runtime.bossResults.length > 6) runtime.bossResults.shift();
+  return result;
 }
 
 function syntheticBossTime(kind, progressionTime) {
@@ -155,9 +181,13 @@ export function spawnDirectedBoss(
     boss = selected.kind === "spine"
       ? spawnSpine(w, h, time, difficulty, random)
       : spawnBoss(w, h, syntheticBossTime(selected.kind, time), difficulty),
-    telemetry = { recentDps: recentPlayerDps(runtime, time) };
+    telemetry = {
+      recentDps: recentPlayerDps(runtime, time),
+      bossPressure: runtime.bossPressure,
+    };
   runtime.totalBosses += 1;
   boss.directorKind = selected.kind;
   boss.directorSequence = runtime.director.sequence;
+  boss.directorSpawnedAt = time;
   return applyAdaptiveBossScaling(boss, player, telemetry, context);
 }
