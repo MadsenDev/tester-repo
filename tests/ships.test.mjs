@@ -109,6 +109,23 @@ test("the active chassis turns toward movement and holds its last heading", () =
   near(held, player.facing);
 });
 
+test("each hull rotates around an authored center-of-mass pivot", () => {
+  for (const ship of SHIPS) {
+    const [x, y] = ship.visual.pivot;
+    assert.ok(Math.abs(x) <= 0.1);
+    assert.ok(y >= 0 && y <= 0.3);
+  }
+  assert.ok(
+    shipById("lancer").visual.pivot[1] >
+      shipById("strider").visual.pivot[1],
+  );
+  assert.ok(
+    shipById("strider").visual.pivot[1] >
+      shipById("bulwark").visual.pivot[1],
+  );
+  assert.match(shipSvgMarkup("lancer"), /fill="#05070e"/);
+});
+
 test("heading interpolation takes the shortest turn across the angle seam", () => {
   const player = { facing: 3.1 };
   updateShipHeading(player, Math.cos(-3.1), Math.sin(-3.1), 1 / 60);

@@ -23,6 +23,9 @@ rounds, Relay starts with a twin-shot volley, and Halo enters with armor and two
 orbitals. Every chassis has its own vector silhouette, accent pattern, engine
 layout and collision radius. The selected ship is rendered consistently in the
 hangar and arena, where it smoothly faces the direction it is moving.
+Each hull rotates around its own slightly aft center-of-mass pivot rather than
+the center of its bounding box. A small illuminated combat core marks that
+pivot and the real collision center, keeping dense dodging predictable.
 
 Difficulty changes the shape of boss encounters rather than only adjusting global numbers. **Chill** clears regular enemies and uses slower, simpler bosses. **Normal** also creates a clean duel, but bosses gain more durability, faster phases and predictive aim. **Intense** keeps the swarm active while bosses use their strongest tuning.
 

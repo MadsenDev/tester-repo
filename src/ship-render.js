@@ -37,6 +37,7 @@ export function drawPlayerShip(ctx, player, time, glow) {
   ctx.save();
   ctx.translate(player.x, player.y);
   ctx.rotate((player.facing ?? -Math.PI / 2) + Math.PI / 2);
+  ctx.translate(-profile.pivot[0] * scale, -profile.pivot[1] * scale);
   ctx.shadowColor = glow;
   ctx.shadowBlur = player.overdrive > 0 ? 30 : 22;
   drawTrail(ctx, profile.engines, scale, profile.color, time, thrust);
@@ -64,6 +65,15 @@ export function drawPlayerShip(ctx, player, time, glow) {
   ctx.beginPath();
   ctx.arc(cx * scale, cy * scale, Math.max(1.8, scale * 0.14), 0, Math.PI * 2);
   ctx.fill();
+  const [px, py] = profile.pivot;
+  ctx.shadowBlur = 9;
+  ctx.fillStyle = "rgba(3,8,14,.9)";
+  ctx.strokeStyle = profile.accent;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(px * scale, py * scale, Math.max(1.7, scale * 0.11), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -73,6 +83,7 @@ const svgPoints = (points) =>
 export function shipSvgMarkup(shipOrId) {
   const ship = typeof shipOrId === "string" ? shipById(shipOrId) : shipOrId,
     profile = ship.visual,
-    [cx, cy] = profile.canopy;
-  return `<svg class="ship-svg" viewBox="-58 -78 116 148" role="img" aria-label="${ship.name} chassis"><g style="filter:drop-shadow(0 0 8px ${profile.color})"><polygon points="${svgPoints(profile.points)}" fill="${profile.color}" stroke="${profile.accent}" stroke-width="2"/>${profile.details.map((line) => `<polyline points="${svgPoints(line)}" fill="none" stroke="${profile.accent}" stroke-width="1.6" opacity=".78"/>`).join("")}<circle cx="${(cx * 48).toFixed(1)}" cy="${(cy * 48).toFixed(1)}" r="5" fill="${profile.accent}"/></g></svg>`;
+    [cx, cy] = profile.canopy,
+    [px, py] = profile.pivot;
+  return `<svg class="ship-svg" viewBox="-58 -78 116 148" role="img" aria-label="${ship.name} chassis"><g style="filter:drop-shadow(0 0 8px ${profile.color})"><polygon points="${svgPoints(profile.points)}" fill="${profile.color}" stroke="${profile.accent}" stroke-width="2"/>${profile.details.map((line) => `<polyline points="${svgPoints(line)}" fill="none" stroke="${profile.accent}" stroke-width="1.6" opacity=".78"/>`).join("")}<circle cx="${(cx * 48).toFixed(1)}" cy="${(cy * 48).toFixed(1)}" r="5" fill="${profile.accent}"/><circle cx="${(px * 48).toFixed(1)}" cy="${(py * 48).toFixed(1)}" r="3.5" fill="#05070e" stroke="${profile.accent}" stroke-width="1.4"/></g></svg>`;
 }
