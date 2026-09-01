@@ -119,3 +119,26 @@ test("the archive persists discoveries, completion marks and run history", () =>
   assert.equal(archive.synergies.includes("seekingStorm"), true);
   assert.equal(run.newly.length, 6);
 });
+
+test("Expedition paths persist without polluting route discoveries", () => {
+  storage.clear();
+  resetArchive();
+  const run = recordArchiveRun({
+    won: true,
+    ship: "strider",
+    mode: "expedition",
+    score: 9000,
+    routes: [],
+    expedition: {
+      sector: 5,
+      rooms: 25,
+      secrets: 2,
+      scrap: 7,
+      path: ["S1:combat", "S1:item", "S1:boss"],
+    },
+  });
+  const archive = loadArchive();
+  assert.equal(archive.routes.length, 0);
+  assert.equal(archive.completion.strider.expedition.wins, 1);
+  assert.deepEqual(run.expedition.path, ["S1:combat", "S1:item", "S1:boss"]);
+});

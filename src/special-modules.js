@@ -63,8 +63,20 @@ export const SPECIAL_MODULES = Object.freeze({
     passives: ["missile"],
   }),
   "Second Opinion": entry(
-    "Level-up transmissions offer four modules instead of three.",
-    { xpGain: 1.05 },
+    "Module vaults reveal one additional pedestal; Last Stand transmissions offer four choices.",
+    { xpGain: 1.05, expeditionChoices: 1 },
+  ),
+  "Rusted Key": entry(
+    "Reveals hidden Null Chamber doors and makes them substantially more common.",
+    { expeditionSecretChance: 0.32, revealExpeditionSecrets: true },
+  ),
+  "Lucky Bolt": entry(
+    "Module Vaults and Forked Signals reveal one additional pedestal.",
+    { expeditionChoices: 1, crit: 0.04 },
+  ),
+  "Warm Seat": entry(
+    "Scrap Exchange prices fall by 30% and Quiet Docks repair more hull.",
+    { expeditionShopDiscount: 0.3, expeditionRepairBonus: 0.25 },
   ),
   "Orbital Foundry": entry("Fabricates one Razor orbital and one Gundrone.", {
     companions: ["blade", "drone"],

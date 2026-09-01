@@ -13,6 +13,7 @@ import { friendlyThreatAlpha } from "./combat-readability.js";
 import { drawBossCounterplay } from "./boss-counterplay.js";
 import { drawArenaModules } from "./arena-module-render.js";
 import { drawPlayerShield, drawPlayerShip } from "./ship-render.js";
+import { drawExpedition } from "./expedition-render.js";
 function polygon(ctx, x, y, r, n, rot = 0) {
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
@@ -367,8 +368,10 @@ export function renderScene(ctx, view, world) {
       powerups,
       hazards,
       events,
+      expedition,
+      sectorTime = time,
     } = world,
-    sector = sectorAt(time);
+    sector = sectorAt(sectorTime);
   ctx.save();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
@@ -376,6 +379,7 @@ export function renderScene(ctx, view, world) {
     sy = (Math.random() - 0.5) * shake;
   ctx.translate(sx, sy);
   drawBackdrop(ctx, W, H, time, sector);
+  if (expedition) drawExpedition(ctx, expedition, time, W, H);
   if (hazards) drawHazards(ctx, hazards, time, W, H);
   drawBlastZones(ctx, enemies, time);
   drawBossCounterplay(ctx, enemies, time, W, H);

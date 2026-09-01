@@ -39,12 +39,15 @@ function render(panel, run = lastArchiveRun()) {
     modules = run.modules.map(moduleName),
     routes = run.routes.map(routeName),
     synergies = run.synergies.map(synergyName),
-    discoveries = run.newly || [];
+    discoveries = run.newly || [],
+    routeSummary = run.expedition
+      ? `${run.expedition.rooms} ROOMS · ${run.expedition.secrets} SECRET${run.expedition.secrets === 1 ? "" : "S"} · ${run.expedition.scrap} SCRAP`
+      : routes.join(" → ") || "UNCHARTED";
   debrief.innerHTML = `
     <div class="debrief-heading"><span>FINAL LOADOUT</span><b>${modules.length} MODULE${modules.length === 1 ? "" : "S"}</b></div>
     <p class="debrief-build">${modules.slice(0, 8).join(" · ") || "BLASTER ONLY"}${modules.length > 8 ? ` · +${modules.length - 8} MORE` : ""}</p>
     ${synergies.length ? `<div class="debrief-synergies">${synergies.map((name) => `<span>${name}</span>`).join("")}</div>` : ""}
-    <dl><div><dt>ROUTE</dt><dd>${routes.join(" → ") || "UNCHARTED"}</dd></div><div><dt>BLACK SIGNALS</dt><dd>${run.contracts.length}</dd></div></dl>
+    <dl><div><dt>${run.expedition ? "EXPEDITION" : "ROUTE"}</dt><dd>${routeSummary}</dd></div><div><dt>BLACK SIGNALS</dt><dd>${run.contracts.length}</dd></div></dl>
     ${discoveries.length ? `<p class="debrief-new">NEW ARCHIVE DATA · ${discoveries.length} SIGNAL${discoveries.length === 1 ? "" : "S"}</p>` : ""}`;
 }
 

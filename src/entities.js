@@ -206,7 +206,7 @@ function activeSummoner() {
   const a = globalThis.__orbitalBossArena;
   return a && a.summoner && performance.now() - a.at < 140;
 }
-export function spawnEnemy(w, h, time, eliteBonus = 0) {
+export function spawnEnemy(w, h, time, eliteBonus = 0, forceElite = false) {
   const pos = edgeSpawn(w, h),
     summoned = activeSummoner(),
     available = summoned
@@ -220,7 +220,8 @@ export function spawnEnemy(w, h, time, eliteBonus = 0) {
     elite =
       !summoned &&
       time > 105 &&
-      Math.random() < Math.min(0.32, 0.025 + time / 3000 + eliteBonus * 0.65),
+      (forceElite ||
+        Math.random() < Math.min(0.32, 0.025 + time / 3000 + eliteBonus * 0.65)),
     trait = elite
       ? Object.keys(ELITE_TRAITS)[
           Math.floor(Math.random() * Object.keys(ELITE_TRAITS).length)

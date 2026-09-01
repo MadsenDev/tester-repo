@@ -100,6 +100,9 @@ export function recordArchiveRun(run) {
     bosses: [...(run.bosses || [])],
     synergies: [...(run.synergies || [])],
     contracts: [...(run.contracts || [])],
+    expedition: run.expedition
+      ? { ...run.expedition, path: [...(run.expedition.path || [])] }
+      : null,
     newly: [...(run.newly || []), ...newly].filter(
       (item, index, all) =>
         all.findIndex(

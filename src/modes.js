@@ -1,8 +1,15 @@
 export const MODES = [
   {
+    id: "expedition",
+    name: "EXPEDITION",
+    desc: "Clear rooms, uncover secrets and carry rare modules through five sectors.",
+    unlock: "Available",
+    minWins: 0,
+  },
+  {
     id: "campaign",
-    name: "CAMPAIGN",
-    desc: "Cross five sectors and survive ten minutes.",
+    name: "LAST STAND",
+    desc: "The original ten-minute survival run. Fast levels, huge builds.",
     unlock: "Available",
     minWins: 0,
   },
@@ -45,8 +52,10 @@ export function modeById(id) {
     : MODES.find((m) => m.id === id) || MODES[0];
 }
 export function objectiveFor(id) {
-  return id === "campaign"
-    ? "SURVIVE TO 10:00"
+  return id === "expedition"
+    ? "CLEAR THE CURRENT ROOM"
+    : id === "campaign"
+      ? "SURVIVE TO 10:00"
     : id === "endless"
       ? "SURVIVE AS LONG AS POSSIBLE"
       : id === "playground"
@@ -57,10 +66,10 @@ export function runLimit(id) {
   return id === "campaign" ? 600 : Infinity;
 }
 export function allowsRegularEnemies(id) {
-  return id !== "bossrush";
+  return id !== "bossrush" && id !== "expedition";
 }
 export function bossInterval(id) {
-  return id === "bossrush" ? 12 : id === "playground" ? Infinity : 60;
+  return id === "bossrush" ? 12 : id === "playground" || id === "expedition" ? Infinity : 60;
 }
 function playgroundBuild() {
   try {
@@ -107,6 +116,7 @@ function activeBossArena() {
 }
 export function spawnPressure(id, time) {
   if (id === "bossrush") return 0;
+  if (id === "expedition") return 0;
   if (id === "playground") return 0.48;
   const arena = activeBossArena();
   if (arena?.suppressRegulars) {
