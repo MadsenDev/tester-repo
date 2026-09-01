@@ -2,6 +2,24 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.43.6] - 2026-09-01
+
+- Fix Execution Mark losing its target lifecycle across Endless boss roster swaps.
+- Add a manual Check for updates action to Settings with live checking, downloading, ready, offline and up-to-date states.
+- Keep the existing automatic service-worker update checks and update prompt.
+
+## [0.43.5] - 2026-09-01
+
+- Add a short Expedition room-entry pickup lock so freshly entered reward rooms cannot immediately collect a module.
+- Require the player to move off any pedestal overlapped during the lock before it becomes collectible again.
+- Rearm the pickup gate when backtracking into rooms with uncollected rewards.
+
+## [0.43.4] - 2026-09-01
+
+- Replace Expedition reward cards with compact centered module icons and names.
+- Move module descriptions into a short non-pausing pickup notification shown after collection.
+- Keep shop prices and Black Signal costs visible without restoring the oversized reward frames.
+
 ## [0.43.3] - 2026-09-01
 
 - Replace tall mobile reward columns with a compact centered pedestal cluster.
