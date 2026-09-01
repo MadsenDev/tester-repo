@@ -98,17 +98,16 @@ export function adaptiveBossTuning(player, telemetry = {}, context = {}) {
       1,
     ),
     performance = clamp(telemetry.bossPressure || 0, 0, 1),
-    pressure = clamp(power * 0.62 + depth * 0.14 + performance * 0.42, 0, 1),
-    performanceHp = 1 + performance * 0.95;
+    pressure = clamp(power * 0.82 + depth * 0.18, 0, 1);
   return Object.freeze({
     power,
     pressure,
     performance,
-    hp: (1 + pressure * 0.78) * performanceHp,
-    tempo: 1 + pressure * 0.18 + performance * 0.08,
-    projectileSpeed: 1 + pressure * 0.08,
-    projectileDamage: 1 + pressure * 0.02,
-    phaseThresholdBonus: pressure * 0.14,
+    hp: (1 + pressure * 0.72) * (1 + performance * 0.95),
+    tempo: 1 + pressure * 0.16 + performance * 0.08,
+    projectileSpeed: 1 + pressure * 0.07 + performance * 0.025,
+    projectileDamage: 1 + pressure * 0.025,
+    phaseThresholdBonus: pressure * 0.12 + performance * 0.06,
   });
 }
 
