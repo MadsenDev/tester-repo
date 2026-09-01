@@ -22,7 +22,7 @@ The director assigns an encounter tier, builds an eligible pool and avoids recen
 
 Every new run creates a fresh runtime. Expedition boss rooms and timed survival/Boss Rush spawns now use the same directed spawn path, so recent-boss history and adaptive scaling cannot silently diverge by mode.
 
-The first implementation uses three broad tiers. This is intentionally coarse while the roster is still only ten bosses. Once the roster grows, pools can become authored per-sector/per-depth groups with overlap rather than rigid tiers.
+The first implementation uses three broad tiers. This is intentionally coarse while the roster is still small. Once the roster grows, pools can become authored per-sector/per-depth groups with overlap rather than rigid tiers.
 
 ## Adaptive build pressure
 
@@ -52,7 +52,15 @@ Those ceilings are deliberate. A god build should still be able to delete a boss
 
 ## Boss roster expansion
 
-The roster target is roughly 18–20. New bosses should add encounter shapes that the current ten do not cover well.
+The roster target is roughly 18–20. New bosses should add encounter shapes that the current roster does not cover well.
+
+### The Spine
+
+The first expansion encounter is **The Spine**, a tier-two break-apart boss shared by every directed mode.
+
+It begins wrapped in five visible armor plates. The plates are tied to broad health bands rather than scripted timers, so extremely high damage can rip through several layers at once instead of being forced to watch five invulnerability cutscenes. While most of the shell remains, incoming damage is partially absorbed. Every broken plate removes some of that protection, accelerates the boss and forces its next volley sooner. The final exposed core takes full damage.
+
+This is intentionally the first version of the segmented idea: the encounter demonstrates visible structural loss, changing durability and changing tempo without adding five independent enemy objects to the arena. Future segmented bosses may use individually targetable sections where that creates a genuinely different decision rather than extra bookkeeping.
 
 ### Priority archetypes
 
@@ -132,7 +140,7 @@ Boss Rush should have the widest encounter variety. Early picks remain approacha
 1. Shared boss director, depth pools and bounded build-pressure model. **Done.**
 2. Add the shared per-run runtime and rolling effective-DPS telemetry. **Done.**
 3. Route all four real mode spawn sites through `spawnDirectedBoss()` and feed actual player damage into the runtime. **Done.**
-4. Expand the roster in small groups, starting with segmented, paired and burrow archetypes.
+4. Expand the roster in small groups, starting with segmented, paired and burrow archetypes. **In progress: The Spine added.**
 5. Add authored third phases/desperation states to selected existing bosses.
 6. Add boss variants only after base encounters are distinct enough to justify them.
 7. Rebalance pools and adaptive ceilings using real run data and mobile playtests.

@@ -19,8 +19,8 @@ test("new runs reset boss history and live damage telemetry is sampled", () => {
   assert.match(game, /recordEnemyHealthDelta\(bossRuntime, damageSnapshot, time\)/);
 });
 
-test("0.43.8 documents the live boss director rollout", () => {
-  assert.match(version, /0\.43\.8/);
+test("the live boss director rollout remains documented as versions advance", () => {
+  assert.match(version, /ORBITAL_APP_VERSION = "\d+\.\d+\.\d+"/);
   assert.match(changelog, /## \[0\.43\.8\]/);
   assert.match(changelog, /Last Stand, Endless and Boss Rush/);
 });
