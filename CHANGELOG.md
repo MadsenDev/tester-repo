@@ -2,6 +2,11 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.36.2] - 2026-09-01
+
+- Fix the combat HUD reporting zero modules for the Set-backed live loadout.
+- Preserve compatibility with legacy array-backed loadout summaries.
+
 ## [0.36.1] - 2026-09-01
 
 - Rebuild the Wrecking Node around automatic targeted slings, ricochets, and returns.
