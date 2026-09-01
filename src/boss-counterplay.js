@@ -14,8 +14,16 @@ export function beginBossPhaseGate(boss) {
   boss.phaseGate = counterplayProfile(boss.bossDifficulty).phaseGate;
 }
 
+function spineSegmentCount(boss) {
+  const ratio = clamp((boss.hp || 0) / Math.max(1, boss.hpMax || 1), 0, 1);
+  return ratio > 0.8 ? 5 : ratio > 0.6 ? 4 : ratio > 0.4 ? 3 : ratio > 0.2 ? 2 : 1;
+}
+
 export function bossDamageMultiplier(boss) {
-  return boss?.boss && boss.phaseGate > 0 ? 0 : 1;
+  if (!boss?.boss || boss.phaseGate > 0) return boss?.boss ? 0 : 1;
+  if (boss.kind !== "spine") return 1;
+  const segments = spineSegmentCount(boss);
+  return segments >= 4 ? 0.72 : segments === 3 ? 0.82 : segments === 2 ? 0.92 : 1;
 }
 
 export function queuePositionTest(boss, player, random = Math.random) {
@@ -32,10 +40,28 @@ export function queuePositionTest(boss, player, random = Math.random) {
   return boss.positionTests.at(-1);
 }
 
+function updateSpine(boss, dt) {
+  if (boss.kind !== "spine") return;
+  const segments = spineSegmentCount(boss),
+    previous = boss.spineSegments ?? 5;
+  boss.spineBreakFlash = Math.max(0, (boss.spineBreakFlash || 0) - dt);
+  if (segments < previous) {
+    boss.spineSegments = segments;
+    boss.spineBroken = 5 - segments;
+    boss.spineBreakFlash = 0.55;
+    boss.shootCd = Math.min(boss.shootCd ?? 1, 0.18);
+    boss.phaseFlash = Math.max(boss.phaseFlash || 0, 0.45);
+  } else boss.spineSegments = segments;
+  const base = boss.baseSpineSpeed || 30,
+    difficultyMovement = boss.bossTuning?.movement || 1;
+  boss.s = base * difficultyMovement * (1 + (5 - segments) * 0.12);
+}
+
 export function updateBossCounterplay(boss, dt, player, onHazard = () => {}, onShake = () => {}) {
   boss.phaseGate = Math.max(0, (boss.phaseGate || 0) - dt);
   boss.positionTests ??= [];
   boss.positionTestCd ??= counterplayProfile(boss.bossDifficulty).cooldown;
+  updateSpine(boss, dt);
   if (["architect", "lastlight"].includes(boss.kind) && boss.bossPhase === 2) {
     boss.positionTestCd -= dt;
     if (boss.positionTestCd <= 0 && boss.positionTests.length === 0) {
@@ -58,8 +84,42 @@ export function updateBossCounterplay(boss, dt, player, onHazard = () => {}, onS
   boss.positionTests = boss.positionTests.filter((test) => !test.fired || test.life > 0);
 }
 
+function drawSpineArmor(ctx, boss, time) {
+  if (boss.kind !== "spine") return;
+  const alive = boss.spineSegments ?? 5,
+    radius = boss.r + 27,
+    flash = boss.spineBreakFlash || 0;
+  ctx.save();
+  ctx.translate(boss.x, boss.y);
+  ctx.rotate(-time * 0.5);
+  for (let index = 0; index < 5; index++) {
+    const angle = (index * Math.PI * 2) / 5,
+      x = Math.cos(angle) * radius,
+      y = Math.sin(angle) * radius,
+      active = index < alive;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle + Math.PI / 4);
+    ctx.globalAlpha = active ? 0.9 : 0.12 + flash * 0.35;
+    ctx.fillStyle = active ? (flash > 0 ? "#fff1f5" : "#ff9ab2") : "#5f2638";
+    ctx.strokeStyle = active ? "#ffe2ea" : "#9b455d";
+    ctx.lineWidth = active ? 2.5 : 1;
+    ctx.fillRect(-8, -8, 16, 16);
+    ctx.strokeRect(-8, -8, 16, 16);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 0.28 + flash * 0.55;
+  ctx.strokeStyle = "#ffb6c8";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function drawBossCounterplay(ctx, enemies, time, width, height) {
   for (const boss of enemies) {
+    drawSpineArmor(ctx, boss, time);
     if (boss.phaseGate > 0) {
       ctx.save();
       ctx.strokeStyle = `rgba(124,246,200,${0.45 + Math.sin(time * 18) * 0.18})`;
