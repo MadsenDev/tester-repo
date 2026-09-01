@@ -2,6 +2,15 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.42.0] - 2026-09-01
+
+- Replace Expedition's linear choice chain with connected, controlled-randomized sector maps.
+- Guarantee every sector has a reachable distant boss, core utility rooms, an elite encounter, optional branches and a hidden Null Chamber.
+- Add cardinal arena-edge exits, understated special-room labels and a compact discovered-room minimap.
+- Support full backtracking with persistent room clears, purchases and uncollected module pedestals.
+- Move Black Signals into optional rooms unlocked beside defeated wardens while leaving the descent available.
+- Advance the PWA version and game cache key so installed copies receive the map update.
+
 ## [0.41.0] - 2026-09-01
 
 - Add Expedition as the new primary room-based mode while preserving the original ten-minute game as Last Stand.

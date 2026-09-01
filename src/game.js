@@ -89,14 +89,16 @@ import { bossDamageMultiplier } from "./boss-counterplay.js";
 import { compactArsenalLabel } from "./hud-summary.js";
 import {
   createExpeditionState,
+  currentExpeditionNode,
   expeditionDoorChoices,
   expeditionObjective,
-  expeditionOffersBlackSignal,
   expeditionPedestalSpec,
   expeditionRoomReward,
   expeditionShopCost,
   expeditionWavePlan,
+  markExpeditionRoomCleared,
   markExpeditionWaveSpawned,
+  persistExpeditionRoom,
   takeExpeditionDoor,
 } from "./expedition.js";
 import {
@@ -418,7 +420,7 @@ function start() {
     routes = createRouteState();
     expedition =
       settings.mode === "expedition"
-        ? createExpeditionState(settings.difficulty)
+        ? createExpeditionState(settings.difficulty, player)
         : null;
     updateRouteBadge(routeUi, routes);
     time =
@@ -473,7 +475,7 @@ function finish(victory = false) {
     expedition: expedition
       ? {
           sector: expedition.sector,
-          rooms: expedition.history.length,
+          rooms: expedition.roomsCleared,
           path: [...expedition.history],
           secrets: expedition.secretsFound,
           scrap: expedition.credits,
@@ -659,13 +661,8 @@ function awardKill(e, mods) {
   if (e.boss) {
     defeatedBosses.push(e.kind);
     noteDiscovery("bosses", e.kind);
-    if (
-      expeditionOffersBlackSignal(expedition) ||
-      shouldOfferBlackSignal(defeatedBosses.length)
-    ) {
-      if (expedition) expedition.blackSignalDue = true;
-      else pendingBlackSignal = true;
-    }
+    if (!expedition && shouldOfferBlackSignal(defeatedBosses.length))
+      pendingBlackSignal = true;
   }
   combo = comboTimer > 0 ? combo + 1 : 1;
   comboTimer = 2.8;
@@ -720,22 +717,34 @@ function grantExpeditionRoomReward() {
   if (!expedition || expedition.rewardGranted) return;
   expedition.credits += expeditionRoomReward(expedition);
   expedition.rewardGranted = true;
+  persistExpeditionRoom(expedition);
 }
 
-function positionPlayerForRoom() {
-  player.x = W / 2;
-  player.y = Math.max(H * 0.7, H - 170);
+function positionPlayerForRoom(entryDirection) {
+  const margin = player.r + 48;
+  player.x =
+    entryDirection === "e"
+      ? margin
+      : entryDirection === "w"
+        ? W - margin
+        : W / 2;
+  player.y =
+    entryDirection === "s"
+      ? Math.max(270, margin + 190)
+      : entryDirection === "n"
+        ? H - margin
+        : H / 2;
   player.vx = player.vy = 0;
 }
 
-function clearExpeditionArena() {
+function clearExpeditionArena(entryDirection) {
   enemies = [];
   bullets = [];
   enemyBullets = [];
   gems = [];
   powerups = [];
   hazards = createHazardState();
-  positionPlayerForRoom();
+  positionPlayerForRoom(entryDirection);
 }
 
 function openExpeditionDoors() {
@@ -744,6 +753,7 @@ function openExpeditionDoors() {
 }
 
 function createExpeditionPedestals() {
+  if (expedition.pedestalsInitialized) return true;
   const spec = expeditionPedestalSpec(expedition, player);
   if (!spec) return false;
   const offers = randomChoices(player, spec.count, spec.pool);
@@ -762,13 +772,15 @@ function createExpeditionPedestals() {
     cost: expedition.roomType === "shop" ? baseCost : 0,
     exclusive: spec.exclusive,
   }));
+  expedition.pedestalsInitialized = true;
   expedition.phase = "reward";
+  persistExpeditionRoom(expedition);
   return true;
 }
 
 function createBlackSignalPedestals() {
+  if (expedition.pedestalsInitialized) return;
   const offers = blackSignalOffers(player);
-  expedition.blackSignalDue = false;
   expedition.pedestals = offers.map((offer) => ({
     offer,
     module: {
@@ -780,22 +792,23 @@ function createBlackSignalPedestals() {
     cost: 0,
     exclusive: true,
   }));
-  expedition.doors = [
-    { type: "decline", label: "SEVER CONNECTION", color: "#77849a" },
-  ];
+  expedition.pedestalsInitialized = true;
   expedition.phase = "reward";
   expedition.message = "BLACK SIGNAL // THE PRICE IS PERMANENT";
   expedition.messageTime = 2.4;
+  persistExpeditionRoom(expedition);
 }
 
 function completeExpeditionRoom() {
   if (!expedition || expedition.phase !== "combat") return;
   enemyBullets = [];
   bullets = [];
+  markExpeditionRoomCleared(expedition);
   grantExpeditionRoomReward();
   if (expedition.roomType === "boss") {
     createExpeditionPedestals();
-    expedition.message = "WARDEN DESTROYED // CLAIM ONE RELIC";
+    openExpeditionDoors();
+    expedition.message = "WARDEN DESTROYED // RELIC MAY BE LEFT BEHIND";
     expedition.messageTime = 2.5;
     return;
   }
@@ -804,35 +817,31 @@ function completeExpeditionRoom() {
   expedition.messageTime = 1.8;
 }
 
-function prepareExpeditionRoom() {
-  clearExpeditionArena();
-  if (expedition.phase !== "reward") return;
-  if (expedition.roomType === "repair") {
+function prepareExpeditionRoom(entryDirection) {
+  clearExpeditionArena(entryDirection);
+  if (expedition.phase === "combat") return;
+  const node = currentExpeditionNode(expedition);
+  if (!node.cleared) markExpeditionRoomCleared(expedition);
+  if (expedition.roomType === "repair" && !expedition.rewardGranted) {
     const ratio = 0.32 + (player.expeditionRepairBonus || 0);
     player.hp = Math.min(player.maxHp, player.hp + player.maxHp * ratio);
-    openExpeditionDoors();
     expedition.message = "QUIET DOCK // HULL RESTORED";
     expedition.messageTime = 2.2;
-  } else {
+  } else if (expedition.roomType === "black") {
+    createBlackSignalPedestals();
+  } else if (["item", "choice", "shop", "secret"].includes(expedition.roomType)) {
     createExpeditionPedestals();
-    if (expedition.roomType === "shop") openExpeditionDoors();
   }
+  openExpeditionDoors();
 }
 
-function enterExpeditionDoor(type) {
-  if (type === "victory") {
+function enterExpeditionDoor(door) {
+  if (door.type === "victory") {
     finish(true);
     return;
   }
-  if (type === "decline") {
-    expedition.pedestals = [];
-    expeditionDoorChoices(expedition, player);
-    expedition.message = "CONNECTION SEVERED";
-    expedition.messageTime = 1.5;
-    return;
-  }
-  takeExpeditionDoor(expedition, type, settings.difficulty);
-  prepareExpeditionRoom();
+  takeExpeditionDoor(expedition, door, settings.difficulty);
+  prepareExpeditionRoom(door.direction);
   audio.level();
 }
 
@@ -857,17 +866,8 @@ function collectExpeditionPedestal(pedestal) {
   shake = Math.max(shake, 10);
   if (pedestal.exclusive) expedition.pedestals = [];
   else expedition.pedestals = expedition.pedestals.filter((p) => p !== pedestal);
-  if (pedestal.kind === "black") {
-    expedition.pedestals = [];
-    expeditionDoorChoices(expedition, player);
-  } else if (expedition.roomType === "boss") {
-    expedition.bossRewardTaken = true;
-    if (expedition.blackSignalDue) createBlackSignalPedestals();
-    else expeditionDoorChoices(expedition, player);
-  } else if (pedestal.exclusive) {
-    grantExpeditionRoomReward();
-    expeditionDoorChoices(expedition, player);
-  }
+  persistExpeditionRoom(expedition);
+  expeditionDoorChoices(expedition, player);
   updateUI();
 }
 
@@ -920,7 +920,7 @@ function updateExpedition(dt) {
       Math.abs(player.x - door.x) < door.w / 2 + player.r &&
       Math.abs(player.y - door.y) < door.h / 2 + player.r
     ) {
-      enterExpeditionDoor(door.type);
+      enterExpeditionDoor(door);
       break;
     }
   }

@@ -44,10 +44,17 @@ Hostile projectile pressure follows the same philosophy. Chill and Normal use vi
 
 ## Expedition rooms
 
-Expedition replaces continuous spawning with authored encounter boundaries.
-Combat doors lock until every finite wave is destroyed, and later sectors add
-more enemies rather than silently accelerating an endless spawn timer. At each
-clear, two readable doors normally offer different risks and rewards:
+Expedition replaces continuous spawning with five controlled-randomized sector
+maps. Every sector is connected and guarantees a distant warden, a Module
+Vault, Forked Signal, Scrap Exchange, Quiet Dock, Elite Intercept and at least
+one hidden Null Chamber. Room placement, branches, loops and routes vary from
+run to run without producing unreachable objectives or progress-blocking dead
+ends.
+
+Combat exits lock until every finite wave is destroyed. Afterward, subtle
+openings at the arena edges lead in their actual map directions. The restrained
+minimap records explored rooms, supports full backtracking and keeps special
+room labels readable without turning the arena into a navigation overlay.
 
 - **Module Vaults** contain one permanent item
 - **Forked Signals** present mutually exclusive companion-focused choices
@@ -57,9 +64,11 @@ clear, two readable doors normally offer different risks and rewards:
 - **Null Chambers** hide behind faint optional signals and contain boss-class rewards
 - **Sector Wardens** leave one guaranteed relic before the descent
 
-Rusted Key, Lucky Bolt, Second Opinion and Warm Seat now manipulate secrets,
-pedestal counts, choices and shop prices. Expedition Black Signals appear in
-the arena after each warden and can be declined through a physical exit. A
+All pedestal modules remain physically in their rooms until collected, so the
+player can leave an item behind and return for it later. Rusted Key, Lucky Bolt,
+Second Opinion and Warm Seat manipulate secrets, pedestal counts, choices and
+shop prices. Defeating a warden unlocks an optional adjacent Black Signal room
+as well as the next-sector exit; both its relic and contract can be ignored. A
 completed Expedition normally produces a much smaller, more legible build than
 Last Stand, leaving the rare rule-breaking combinations genuinely exceptional.
 
