@@ -2,6 +2,7 @@ import { loadSettings, saveSettings, loadStats } from "./meta.js";
 import { SHIPS, unlockedShips, shipById } from "./ships.js";
 import { MODES, unlockedModes, modeById } from "./modes.js";
 import { loadCore, CORE_UPGRADES } from "./core.js";
+import { shipSvgMarkup } from "./ship-render.js";
 
 const overlay = document.querySelector("#overlay");
 const panels = [...document.querySelectorAll(".panel")];
@@ -54,18 +55,7 @@ function renderHome() {
     core = loadCore();
   shipName.textContent = ship.name;
   shipDesc.textContent = ship.desc;
-  shipArt.dataset.sides =
-    ship.id === "bulwark" ? "4" : ship.id === "harvester" ? "6" : "3";
-  shipArt.style.setProperty(
-    "--ship-color",
-    ship.id === "bulwark"
-      ? "#8fffc3"
-      : ship.id === "volt"
-        ? "#ffe47a"
-        : ship.id === "harvester"
-          ? "#c994ff"
-          : "#78ebff",
-  );
+  shipArt.innerHTML = shipSvgMarkup(ship);
   coreHome.textContent = core.shards;
   coreLevel.textContent = coreTotal();
   bestHome.textContent = Math.max(
@@ -85,7 +75,7 @@ function renderHangar() {
       "hangar-card" +
       (settings.ship === ship.id ? " selected" : "") +
       (unlocked ? "" : " locked");
-    card.innerHTML = `<div class="mini-ship" data-ship="${ship.id}"></div><span class="hangar-state">${unlocked ? (settings.ship === ship.id ? "EQUIPPED" : "AVAILABLE") : "LOCKED"}</span><strong>${ship.name}</strong><small>${ship.desc}</small><em>${unlocked ? "TAP TO EQUIP" : ship.unlock}</em>`;
+    card.innerHTML = `<div class="mini-ship" data-ship="${ship.id}">${shipSvgMarkup(ship)}</div><span class="hangar-state">${unlocked ? (settings.ship === ship.id ? "EQUIPPED" : "AVAILABLE") : "LOCKED"}</span><strong>${ship.name}</strong><span class="hangar-role">${ship.role}</span><div class="ship-statline">${ship.stats.map((stat) => `<b>${stat}</b>`).join("")}</div><small>${ship.desc}</small><em>${unlocked ? "TAP TO EQUIP" : ship.unlock}</em>`;
     card.disabled = !unlocked;
     card.onclick = () => {
       settings.ship = ship.id;

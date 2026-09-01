@@ -15,6 +15,15 @@ Survive for **10 minutes** while crossing five increasingly hostile sectors. You
 
 Move with **WASD**, the **arrow keys**, or **touch-drag on mobile**. **P** pauses and **M** toggles sound.
 
+Eight playable chassis turn the opening choice into a real build decision.
+Strider is the balanced baseline; Bulwark is a wide armored tank; Volt is a
+fragile rapid-fire needle; and Harvester accelerates collection and XP. Wraith
+trades hull for a tiny hitbox and speed, Lancer opens with heavy piercing
+rounds, Relay starts with a twin-shot volley, and Halo enters with armor and two
+orbitals. Every chassis has its own vector silhouette, accent pattern, engine
+layout and collision radius. The selected ship is rendered consistently in the
+hangar and arena, where it smoothly faces the direction it is moving.
+
 Difficulty changes the shape of boss encounters rather than only adjusting global numbers. **Chill** clears regular enemies and uses slower, simpler bosses. **Normal** also creates a clean duel, but bosses gain more durability, faster phases and predictive aim. **Intense** keeps the swarm active while bosses use their strongest tuning.
 
 Difficulty also controls the recovery economy. Chill produces more frequent, stronger and longer-lived repair drops; Normal keeps recovery dependable without making it constant; Intense makes every recovery opportunity more deliberate. Missing hull increases the chance and repair bias, bosses rescue critically damaged ships, and a kill-based pity rule prevents extreme dry spells. Powerups attract from farther away on easier settings so healing does not require diving back into the worst part of the swarm.

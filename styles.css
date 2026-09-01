@@ -30,3 +30,11 @@ button{appearance:none;border:0;border-radius:16px;padding:14px 16px;background:
 
 @media (min-width:760px){.screen-stack{padding:28px 24px 105px}.panel{padding:28px}.home-screen{display:grid;grid-template-columns:1.15fr .85fr;gap:0 18px}.deck-header{grid-column:1/-1}.ship-hero{grid-row:2/8;min-height:430px;margin-right:4px}.compact-select,.unlock-note,.launch-card,.home-meta{grid-column:2}.launch-card{align-self:end}.bottom-nav{left:50%;right:auto;width:min(720px,calc(100% - 30px));transform:translateX(-50%);bottom:12px;border:1px solid rgba(123,233,255,.12);border-radius:18px;padding:7px}.hangar-card{flex-basis:300px}.core-grid{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:680px),(pointer:coarse){.screen-stack{display:block;padding:max(10px,env(safe-area-inset-top)) 10px calc(78px + env(safe-area-inset-bottom));overflow:auto}.panel{min-height:calc(100dvh - 92px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:17px;border-radius:20px}.deck-header h1{font-size:31px}.ship-hero{min-height:215px;margin-top:14px}.orbit-ring{width:145px;height:145px}.ship-art{width:66px;height:80px}.ship-copy h2{font-size:23px}.core-grid{grid-template-columns:1fr}.core-upgrade{min-height:82px}.screen-heading h2{font-size:32px}.hangar-card{flex-basis:84vw}.bottom-nav{padding-bottom:max(7px,env(safe-area-inset-bottom))}#levelup{min-height:auto;max-height:calc(100dvh - 20px);padding:14px}#levelup h2{font-size:23px;margin-bottom:8px}#choices{grid-template-columns:1fr;gap:6px}.choice{min-height:76px;padding:10px 12px}.choice b{margin-bottom:3px;font-size:13px}.choice small{font-size:10px}.hud-secondary{font-size:7px}.arsenal{font-size:7px}}
+
+/* Shared vector chassis art keeps hangar and in-run silhouettes identical. */
+.ship-art:before,.ship-art:after,.mini-ship:before{display:none!important}
+.ship-art,.mini-ship{display:grid;place-items:center}
+.ship-svg{display:block;width:100%;height:100%;overflow:visible}
+.hangar-role{margin-top:2px;color:#718d9e;font-size:8px;font-weight:900;letter-spacing:.15em}
+.ship-statline{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 3px}
+.ship-statline b{padding:4px 6px;border:1px solid rgba(126,229,255,.14);color:#82eafa;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.05em}
