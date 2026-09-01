@@ -1,3 +1,5 @@
+import { assignExpeditionEncounters, encounterById } from "./expedition-encounters.js";
+
 export const EXPEDITION_SECTORS = 5;
 export const EXPEDITION_ROOMS = 9;
 
@@ -136,6 +138,7 @@ export function generateExpeditionMap(sector = 1, random = Math.random, player =
       random,
     );
   ordinary.forEach((node, index) => (node.type = assignments[index] || "combat"));
+  assignExpeditionEncounters(nodes, sector, random);
   const leafAnchors = shuffled(
     nodes.filter((node) => node.id !== "r0" && node !== boss),
     random,
@@ -204,6 +207,8 @@ function loadNode(state, node, difficulty, firstVisit = false) {
   discoverNeighbors(state, node);
   state.currentId = node.id;
   state.roomType = node.type;
+  state.encounterId = node.encounterId;
+  state.encounterName = node.encounterId ? encounterById(node.encounterId).name : "";
   state.phase = node.phase;
   state.wave = node.wave;
   state.waves = node.waves;
@@ -246,6 +251,8 @@ export function createExpeditionState(
       currentId: map.startId,
       room: 1,
       roomType: "combat",
+      encounterId: null,
+      encounterName: "",
       phase: "combat",
       wave: 0,
       waves: 0,
@@ -385,7 +392,7 @@ export function expeditionObjective(state) {
   if (state.phase === "combat")
     return state.roomType === "boss"
       ? `DEFEAT SECTOR ${state.sector} WARDEN`
-      : `CLEAR WAVE ${Math.min(state.wave + 1, state.waves)}/${state.waves}`;
+      : `${state.encounterName || "HOSTILE GRID"} · WAVE ${Math.min(state.wave + 1, state.waves)}/${state.waves}`;
   if (state.pedestals.length) return "MODULES MAY BE LEFT FOR LATER";
   return "EXPLORE THE SECTOR";
 }

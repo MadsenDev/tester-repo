@@ -103,6 +103,12 @@ import {
 } from "./expedition.js";
 import { expeditionRoomEntryPosition } from "./expedition-render.js";
 import {
+  createExpeditionEncounterRuntime,
+  damageExpeditionEnemy,
+  expeditionEnemyKind,
+  updateExpeditionEncounter,
+} from "./expedition-encounters.js";
+import {
   syncManifestations,
   updateManifestations,
 } from "./manifestations.js";
@@ -423,6 +429,13 @@ function start() {
       settings.mode === "expedition"
         ? createExpeditionState(settings.difficulty, player)
         : null;
+    if (expedition)
+      expedition.encounterRuntime = createExpeditionEncounterRuntime(
+        expedition.encounterId,
+        W,
+        H,
+        expedition.random,
+      );
     updateRouteBadge(routeUi, routes);
     time =
       score =
@@ -794,6 +807,10 @@ function completeExpeditionRoom() {
   if (!expedition || expedition.phase !== "combat") return;
   enemyBullets = [];
   bullets = [];
+  if (expedition.encounterRuntime) {
+    expedition.encounterRuntime.active = false;
+    expedition.encounterRuntime.beam = null;
+  }
   markExpeditionRoomCleared(expedition);
   grantExpeditionRoomReward();
   if (expedition.roomType === "boss") {
@@ -810,7 +827,14 @@ function completeExpeditionRoom() {
 
 function prepareExpeditionRoom(entryDirection) {
   clearExpeditionArena(entryDirection);
+  expedition.encounterRuntime = createExpeditionEncounterRuntime(
+    expedition.encounterId,
+    W,
+    H,
+    expedition.random,
+  );
   if (expedition.phase === "combat") return;
+  expedition.encounterRuntime.active = false;
   const node = currentExpeditionNode(expedition);
   if (!node.cleared) markExpeditionRoomCleared(expedition);
   if (expedition.roomType === "repair" && !expedition.rewardGranted) {
@@ -872,6 +896,7 @@ function spawnExpeditionWave() {
         plan.syntheticTime,
         plan.eliteBonus,
         expedition.roomType === "elite" && i === 0,
+        expeditionEnemyKind(expedition, i, expedition.random),
       ),
     );
   markExpeditionWaveSpawned(expedition);
@@ -1052,6 +1077,16 @@ function update(dt) {
     player.y = clamp(player.y, margin, H - margin);
     if (dist2(player, e) < (player.r + e.r) ** 2) hurt(e.d);
   }
+  if (expedition)
+    updateExpeditionEncounter(expedition.encounterRuntime, dt, {
+      player,
+      bullets,
+      enemyBullets,
+      enemies,
+      hurt,
+      W,
+      H,
+    });
   if (settings.mode !== "bossrush" && settings.mode !== "expedition")
     updateHazards(hazards, dt, {
       time,
@@ -1073,7 +1108,9 @@ function update(dt) {
       if (e.hp <= 0 || b.hit.has(e)) continue;
       if (dist2(b, e) < (b.r + e.r) ** 2) {
         b.hit.add(e);
-        e.hp -= b.damage * bossDamageMultiplier(e);
+        const damage = b.damage * bossDamageMultiplier(e);
+        if (expedition) damageExpeditionEnemy(e, damage, enemies);
+        else e.hp -= damage;
         e.flash = 0.06;
         onCompanionProjectileHit(b, e, enemies, player.weaponFx);
         b.pierce--;

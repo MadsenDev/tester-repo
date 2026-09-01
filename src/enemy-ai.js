@@ -65,7 +65,37 @@ export function moveEnemy(e, dt, { player, enemyBullets, particles, time }) {
   e.shootCd -= dt;
   e.chargeCd -= dt;
 
-  if (e.behavior === "leech") {
+  if (e.behavior === "anchor") {
+    const desired = 185, radial = d > desired + 25 ? 1 : d < desired - 25 ? -0.45 : 0;
+    e.x += nx * radial * e.s * dt;
+    e.y += ny * radial * e.s * dt;
+    if (e.shootCd <= 0 && isInViewport(e)) {
+      for (let i = 0; i < 8; i++)
+        enemyBullets.push(spawnEnemyProjectile(e.x, e.y, (i * Math.PI * 2) / 8 + e.phase, 125, 9, 4, 6));
+      e.shootCd = 2.65;
+    }
+  } else if (e.behavior === "relay") {
+    const desired = 215, radial = d > desired + 25 ? 1 : d < desired - 25 ? -0.7 : 0;
+    e.x += (nx * radial - ny * 0.7) * e.s * dt;
+    e.y += (ny * radial + nx * 0.7) * e.s * dt;
+    if (e.shootCd <= 0 && isInViewport(e)) {
+      enemyBullets.push(spawnEnemyProjectile(e.x, e.y, Math.atan2(dy, dx), 205, 11, 4, 5));
+      e.shootCd = 1.6;
+    }
+  } else if (e.behavior === "burrower") {
+    e.burrowCycle = (e.burrowCycle || 0) + dt;
+    e.submerged = e.burrowCycle < 1.15;
+    const speed = e.submerged ? 1.85 : e.burrowCycle < 1.65 ? 2.6 : 0.72;
+    e.x += nx * e.s * speed * dt;
+    e.y += ny * e.s * speed * dt;
+    if (e.burrowCycle >= 3.1) e.burrowCycle = 0;
+    if (!e.submerged && e.burrowCycle < 1.3)
+      for (let i = 0; i < 2; i++) particles.push(particle(e.x, e.y, "volatile"));
+  } else if (e.behavior === "bulwark") {
+    const desired = 145, radial = d > desired + 25 ? 1 : d < desired - 20 ? -0.5 : 0;
+    e.x += nx * radial * e.s * dt;
+    e.y += ny * radial * e.s * dt;
+  } else if (e.behavior === "leech") {
     const desired = 135,
       radial = d > desired + 24 ? 1 : d < desired - 20 ? -0.7 : 0,
       tangent = Math.sin(e.phase * 1.7) > 0 ? 0.42 : -0.42;

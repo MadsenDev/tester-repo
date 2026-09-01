@@ -14,6 +14,7 @@ import { drawBossCounterplay } from "./boss-counterplay.js";
 import { drawArenaModules } from "./arena-module-render.js";
 import { drawPlayerShield, drawPlayerShip } from "./ship-render.js";
 import { drawExpedition } from "./expedition-render.js";
+import { drawExpeditionEncounter } from "./expedition-encounters.js";
 function polygon(ctx, x, y, r, n, rot = 0) {
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
@@ -180,6 +181,22 @@ function drawEliteIdentity(ctx, e, time) {
   }
   ctx.restore();
 }
+function drawEnemySupportLinks(ctx, enemies, time) {
+  ctx.save();
+  for (const enemy of enemies) {
+    if (enemy.hp <= 0) continue;
+    if (enemy.kind === "bulwark") {
+      ctx.strokeStyle = "#ff8ca0"; ctx.globalAlpha = 0.1 + Math.sin(time * 4 + enemy.phase) * 0.025;
+      ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(enemy.x, enemy.y, 155, 0, Math.PI * 2); ctx.stroke();
+    }
+    if (enemy.kind === "relay" && enemy.relayPartner?.hp > 0) {
+      ctx.strokeStyle = "#72ffd8"; ctx.globalAlpha = 0.32; ctx.lineWidth = 2; ctx.setLineDash([5, 7]);
+      ctx.beginPath(); ctx.moveTo(enemy.x, enemy.y); ctx.lineTo(enemy.relayPartner.x, enemy.relayPartner.y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  ctx.restore();
+}
 function drawEnemy(ctx, e, time) {
   if (e.kind === "leviathan") {
     drawLeviathan(ctx, e, time);
@@ -196,12 +213,14 @@ function drawEnemy(ctx, e, time) {
       ? 3
       : e.kind === "wisp"
         ? 4
-        : ["spitter", "sniper", "sentinel"].includes(e.kind)
+        : ["spitter", "sniper", "sentinel", "anchor"].includes(e.kind)
           ? 6
           : e.kind === "swarm" || e.kind === "phaser"
             ? 3
-            : e.kind === "orbiter"
+            : e.kind === "orbiter" || e.kind === "relay"
               ? 7
+              : e.kind === "burrower"
+                ? 4
               : e.boss
                 ? 8
                 : e.r > 18
@@ -232,6 +251,22 @@ function drawEnemy(ctx, e, time) {
     polygon(ctx, 0, 0, e.r + 9, 3, -0.2);
     ctx.stroke();
     ctx.globalAlpha = 1;
+  } else if (e.kind === "anchor") {
+    ctx.strokeStyle = "#eadcff"; ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate(Math.PI / 2); ctx.beginPath(); ctx.moveTo(e.r * 0.6, 0); ctx.lineTo(e.r + 9, 0); ctx.stroke();
+    }
+  } else if (e.kind === "relay") {
+    ctx.strokeStyle = "#d8fff5"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, 0, e.r + 7, 0, Math.PI * 1.5); ctx.stroke();
+  } else if (e.kind === "burrower") {
+    ctx.globalAlpha = e.submerged ? 0.2 : 0.75;
+    ctx.strokeStyle = "#ffd1bc"; ctx.lineWidth = 2; ctx.setLineDash([4, 5]);
+    ctx.beginPath(); ctx.arc(0, 0, e.r + 8, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  }
+  if (e.shielded) {
+    ctx.globalAlpha = 0.6; ctx.strokeStyle = "#ffb2bf"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, 0, e.r + 6, -0.8, Math.PI + 0.8); ctx.stroke();
   }
   if (e.elite && !e.boss) {
     ctx.strokeStyle = e.eliteColor || "#ffe895";
@@ -379,6 +414,7 @@ export function renderScene(ctx, view, world) {
     sy = (Math.random() - 0.5) * shake;
   ctx.translate(sx, sy);
   drawBackdrop(ctx, W, H, time, sector);
+  if (expedition) drawExpeditionEncounter(ctx, expedition.encounterRuntime, time, W, H);
   if (expedition) drawExpedition(ctx, expedition, time, W, H);
   if (hazards) drawHazards(ctx, hazards, time, W, H);
   drawBlastZones(ctx, enemies, time);
@@ -424,6 +460,7 @@ export function renderScene(ctx, view, world) {
     ctx.fillText(symbols[p.kind], 0, 0.5);
     ctx.restore();
   }
+  drawEnemySupportLinks(ctx, enemies, time);
   for (const e of enemies) drawEnemy(ctx, e, time);
   drawSideWarnings(ctx, enemies, time, W);
   if (player) drawArenaModules(ctx, player, time, W, H);

@@ -2,6 +2,16 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.43.0] - 2026-09-01
+
+- Add six controlled Expedition encounter layouts with sector-based unlocks and anti-repeat selection.
+- Give Shield Line, Gravity Knot, Crossfire, Relay Web and Breach Field distinct geometry, hazards and combat rules.
+- Add Anchor, Relay and Burrower enemies with radial suppression, damage-sharing links and telegraphed submerged attacks.
+- Turn Bulwarks into support enemies that visibly protect nearby hostiles instead of acting as oversized chasers.
+- Give each specialized room a signature enemy while keeping the rest of its wave sector-appropriate.
+- Add mobile rendering and behavior coverage for every encounter, support interaction and new enemy role.
+- Advance the offline PWA manifest and version so installed copies receive the encounter system.
+
 ## [0.42.1] - 2026-09-01
 
 - Move Expedition room-entry spawn points safely inside the arena so north, south and side transitions cannot immediately collide with their return exits.
