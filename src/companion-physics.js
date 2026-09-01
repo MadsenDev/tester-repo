@@ -16,6 +16,7 @@ const nearestThreat = (x, y, candidates, range, excluded = null) => {
     )
       continue;
     const distance = (candidate.x - x) ** 2 + (candidate.y - y) ** 2;
+    if (candidate.arenaMarked && distance < bestDistance) return candidate;
     if (distance < bestDistance) {
       best = candidate;
       bestDistance = distance;
@@ -339,7 +340,13 @@ export function interceptAegisProjectiles(
         state.shieldCharges--;
         state.shieldRecharge = Math.max(0.32, 0.92 - level * 0.08);
         state.shieldFlash = 0.16;
-        intercepted.push({ x: bullet.x, y: bullet.y });
+        intercepted.push({
+          x: bullet.x,
+          y: bullet.y,
+          damage: bullet.damage,
+          vx: bullet.vx,
+          vy: bullet.vy,
+        });
       }
     }
   }

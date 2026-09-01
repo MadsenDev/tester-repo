@@ -15,6 +15,8 @@ globalThis.ORBITAL_PRECACHE = Object.freeze([
   "./mobile-design.css",
   "./sector-routes.css",
   "./src/archive-ui.js",
+  "./src/arena-module-render.js",
+  "./src/arena-modules.js",
   "./src/audio.js",
   "./src/black-signal.js",
   "./src/boss-counterplay.js",

@@ -3,6 +3,7 @@ import {
   interceptAegisProjectiles,
   stepWreckingNode,
 } from "./companion-physics.js";
+import { captureAegisProjectile } from "./arena-modules.js";
 
 const nearest = (x, y, enemies, range = Infinity) => {
   let best = null,
@@ -10,6 +11,7 @@ const nearest = (x, y, enemies, range = Infinity) => {
   for (const e of enemies) {
     if ((e.hp != null && e.hp <= 0) || e.targetable === false) continue;
     const d = (e.x - x) ** 2 + (e.y - y) ** 2;
+    if (e.arenaMarked && d < bd) return e;
     if (d < bd) {
       bd = d;
       best = e;
@@ -130,8 +132,9 @@ export function updateCompanions(
         dt,
         enemies,
         enemyBullets,
-      );
+    );
     for (const hit of intercepted) {
+      captureAegisProjectile(p, hit);
       const radius = 44 + c.shield * 5 + (nova ? 20 : 0),
         damage =
           p.damage *

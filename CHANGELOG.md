@@ -2,6 +2,14 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.37.0] - 2026-09-01
+
+- Expand the module catalog from 150 to 160 entries and the authored special set from 50 to 60.
+- Add Constellation Engine, Reversal Chamber, Aegis Reservoir, Orbit Loom and Broadside Protocol.
+- Add Grave Echo, Split Horizon, Devouring Moon, Pulse Heart and Execution Mark.
+- Introduce shared arena-module lifecycle and rendering systems for persistent geometry, captured fire and temporary allies.
+- Preserve combat readability with gold/white constructed effects and distinct friendly projectile palettes.
+
 ## [0.36.2] - 2026-09-01
 
 - Fix the combat HUD reporting zero modules for the Set-backed live loadout.

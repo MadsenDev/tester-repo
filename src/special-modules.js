@@ -264,6 +264,46 @@ export const SPECIAL_MODULES = Object.freeze({
     passives: ["size", "mines", "nova", "wisp-familiar"],
     transforms: ["singularity-court"],
   }),
+  "Constellation Engine": entry(
+    "Expired rounds become stars; every three connect into a damaging constellation.",
+    { damage: 1.05, flags: ["beam"], passives: ["beam"] },
+  ),
+  "Reversal Chamber": entry(
+    "Rounds reverse in flight, returning through the arena with more damage and piercing.",
+    { bulletSpeed: 1.08, pierce: 1, passives: ["bullet", "pierce"] },
+  ),
+  "Aegis Reservoir": entry(
+    "Aegis stores intercepted hostile rounds and retaliates with their captured energy.",
+    { companions: ["shield"], passives: ["aegis-orbit"] },
+  ),
+  "Orbit Loom": entry(
+    "Companions weave damaging energy threads through the space between them.",
+    { companions: ["blade", "wisp"], passives: ["razor-orbit", "wisp-familiar"] },
+  ),
+  "Broadside Protocol": entry(
+    "Friendly cannons periodically occupy both arena edges and fire across three lanes.",
+    { damage: 1.08, bulletSize: 1.08 },
+  ),
+  "Grave Echo": entry(
+    "Elites, bosses and every tenth kill leave temporary ghosts that fire for the ship.",
+    { crit: 0.05 },
+  ),
+  "Split Horizon": entry(
+    "Friendly rounds leaving the arena wrap through the opposite edge once.",
+    { bulletSpeed: 1.1, passives: ["bullet"] },
+  ),
+  "Devouring Moon": entry(
+    "A dark familiar consumes friendly rounds and releases their damage as a colossal lance.",
+    { bulletSize: 1.12, passives: ["size"] },
+  ),
+  "Pulse Heart": entry(
+    "Periodically gathers nearby rounds into orbit before releasing them as a spiral.",
+    { fireRate: 0.94 },
+  ),
+  "Execution Mark": entry(
+    "Marks one target for familiar focus; its death detonates the mark and passes it onward.",
+    { companions: ["ember", "drone"], passives: ["ember-familiar", "drone-familiar"] },
+  ),
   "Dead God Circuit": entry(
     "Activates every apex transformation and an annihilation aura.",
     {
