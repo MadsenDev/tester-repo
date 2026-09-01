@@ -2,12 +2,17 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.38.1] - 2026-09-01
+
+- Rotate every chassis around an authored center-of-mass pivot instead of its visual bounding-box center.
+- Mark the stable collision coordinate with a subtle combat core and align manifestation hull details to it.
+- Advance the PWA cache version so installed clients receive the pivot renderer.
+
 ## [0.38.0] - 2026-09-01
 
 - Expand the playable roster from four to eight chassis with Wraith, Lancer, Relay and Halo.
 - Give every chassis an authored silhouette, accent pattern, canopy and engine layout shared by the hangar and combat renderer.
 - Make the active ship steer smoothly toward its movement direction and retain its heading while stationary.
-- Rotate each hull around an authored center-of-mass pivot and mark that collision core on the chassis.
 - Add distinct hitbox sizes and starting combat profiles, including piercing, twin-shot and orbital-carrier builds.
 - Surface each ship's role and headline stats directly in the hangar.
 
