@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.39.1] - 2026-09-01
+
+- Restore a rotating hexagonal force shield behind the active chassis on the flight deck.
+- Intensify the shield while the chassis selector is focused or pressed and respect reduced-motion preferences.
+- Advance the PWA cache version so installed clients receive the restored animation.
+
 ## [0.39.0] - 2026-09-01
 
 - Rebuild the mobile flight deck around one active-chassis hero, a compact mission and threat configuration block, and a first-viewport launch action.

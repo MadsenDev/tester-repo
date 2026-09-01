@@ -23,6 +23,15 @@ test("the flight deck avoids duplicate chassis selectors", () => {
   assert.doesNotMatch(html, /class="home-card compact-select"/);
 });
 
+test("the active chassis keeps its animated force shield", () => {
+  const html = read("index.html");
+  const css = read("mobile-design.css");
+  assert.match(html, /class="shield-field"/);
+  assert.equal((html.match(/shield-field-(?:plane|edge|core)/g) || []).length, 3);
+  assert.match(css, /@keyframes shield-spin/);
+  assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
+});
+
 test("secondary destinations live in the More directory", () => {
   const html = read("index.html");
   const more = html.match(/<section id="more"[\s\S]*?<\/section>/)?.[0] || "";
