@@ -1,4 +1,5 @@
 import { BOSSES, spawnBoss } from "./bosses.js";
+import { applyBossDifficulty } from "./boss-difficulty.js";
 import {
   applyAdaptiveBossScaling,
   createBossDirectorState,
@@ -6,6 +7,16 @@ import {
 } from "./boss-director.js";
 
 const WINDOW_SECONDS = 8;
+const THE_SPINE = Object.freeze({
+  kind: "spine",
+  name: "THE SPINE",
+  color: "#ff7f9d",
+  r: 44,
+  s: 30,
+  hp: 1680,
+  d: 34,
+});
+export const DIRECTED_BOSSES = Object.freeze([...BOSSES, THE_SPINE]);
 
 export function createBossRuntime() {
   return {
@@ -56,13 +67,72 @@ export function recentPlayerDps(runtime, nowSeconds) {
 
 function syntheticBossTime(kind, progressionTime) {
   const index = Math.max(0, BOSSES.findIndex((boss) => boss.kind === kind));
-  // spawnBoss still owns construction/legacy durability. Preserve progression scale
-  // while selecting the requested catalog entry by moving within catalog cycles.
   const cycle = Math.max(
     0,
     Math.floor(Math.max(0, progressionTime - 1) / (BOSSES.length * 60)),
   );
   return cycle * BOSSES.length * 60 + (index + 1) * 60;
+}
+
+function edgeSpawn(w, h, random) {
+  const side = Math.floor(random() * 4),
+    margin = 80;
+  if (side === 0) return { x: random() * w, y: -margin };
+  if (side === 1) return { x: w + margin, y: random() * h };
+  if (side === 2) return { x: random() * w, y: h + margin };
+  return { x: -margin, y: random() * h };
+}
+
+function spawnSpine(w, h, time, difficulty, random) {
+  const minute = Math.max(1, Math.floor(time / 60)),
+    scale = 1 + Math.min(1.35, (minute - 1) * 0.13),
+    hp = THE_SPINE.hp * scale,
+    pos = edgeSpawn(w, h, random);
+  return applyBossDifficulty(
+    {
+      ...pos,
+      px: pos.x,
+      py: pos.y,
+      ...THE_SPINE,
+      hp,
+      hpMax: hp,
+      boss: true,
+      bossName: THE_SPINE.name,
+      bossOrder: DIRECTED_BOSSES.length,
+      behavior: "boss",
+      v: 320 + minute * 28,
+      flash: 0,
+      phase: random() * 6.28,
+      shootCd: 0.55,
+      chargeCd: 1.7,
+      telegraph: 0,
+      dashTime: 0,
+      dashVx: 0,
+      dashVy: 0,
+      elite: false,
+      bossPhase: 1,
+      phaseFlash: 0,
+      blastCd: 2.6,
+      blastZones: [],
+      arenaW: w,
+      arenaH: h,
+      sideWarnings: [],
+      sideVolleyCd: 1.1,
+      railCd: 2.8,
+      sideFlip: random() < 0.5 ? -1 : 1,
+      summonCd: 2.4,
+      summonBurst: 0,
+      phaseGate: 0,
+      positionTests: [],
+      positionTestCd: 3.6,
+      positionTestFlip: false,
+      spineSegments: 5,
+      spineBroken: 0,
+      baseSpineSpeed: THE_SPINE.s,
+      spineBreakFlash: 0,
+    },
+    difficulty,
+  );
 }
 
 export function spawnDirectedBoss(
@@ -81,13 +151,10 @@ export function spawnDirectedBoss(
 ) {
   if (!runtime) throw new Error("Boss runtime is required");
   const context = { mode, time, sector, bossCount },
-    selected = selectBoss(BOSSES, runtime.director, context, random),
-    boss = spawnBoss(
-      w,
-      h,
-      syntheticBossTime(selected.kind, time),
-      difficulty,
-    ),
+    selected = selectBoss(DIRECTED_BOSSES, runtime.director, context, random),
+    boss = selected.kind === "spine"
+      ? spawnSpine(w, h, time, difficulty, random)
+      : spawnBoss(w, h, syntheticBossTime(selected.kind, time), difficulty),
     telemetry = { recentDps: recentPlayerDps(runtime, time) };
   runtime.totalBosses += 1;
   boss.directorKind = selected.kind;
