@@ -181,8 +181,10 @@ export function applyModule(p, m) {
   for (const tag of m.tags || []) p.passives[tag] = (p.passives[tag] || 0) + 1;
   return true;
 }
-const weight = (m) =>
-  m.rarity === "COMMON"
+export const moduleWeight = (m) =>
+  m.id === "dead-god-circuit"
+    ? 0.12
+    : m.rarity === "COMMON"
     ? 8
     : m.rarity === "UNCOMMON"
       ? 5
@@ -220,18 +222,23 @@ export function modulePool(module) {
   if (module.effect.special) return "boss";
   return "salvage";
 }
-function poolCandidates(pool) {
+export function moduleEligibleForPool(module, pool, player = {}) {
+  const blackSignal = BLACK_SIGNAL_MODULES.has(module.id);
   if (pool === "black")
-    return MODULES.filter((module) => BLACK_SIGNAL_MODULES.has(module.id));
+    return (
+      blackSignal &&
+      (module.id !== "dead-god-circuit" ||
+        (player.blackSignalContracts || 0) >= 2)
+    );
+  if (blackSignal) return false;
   if (pool === "companion")
-    return MODULES.filter((module) =>
-      module.tags.some((tag) => tag === "orbital" || tag === "familiar"),
-    );
+    return module.tags.some((tag) => tag === "orbital" || tag === "familiar");
   if (pool === "boss")
-    return MODULES.filter(
-      (module) => module.effect.special || module.rarity === "RARE",
-    );
-  return MODULES.filter((module) => module.rarity !== "SPECIAL");
+    return module.effect.special || module.rarity === "RARE";
+  return module.rarity !== "SPECIAL";
+}
+function poolCandidates(pool, player) {
+  return MODULES.filter((module) => moduleEligibleForPool(module, pool, player));
 }
 export function randomModules(
   player,
@@ -240,13 +247,19 @@ export function randomModules(
   random = Math.random,
 ) {
   const owned = player.items || new Set();
-  let candidates = poolCandidates(pool).filter(
+  let candidates = poolCandidates(pool, player).filter(
     (module) => !owned.has(module.id),
   );
   if (candidates.length < n)
-    candidates = MODULES.filter((module) => !owned.has(module.id));
+    candidates = MODULES.filter(
+      (module) =>
+        !owned.has(module.id) &&
+        (pool === "black"
+          ? moduleEligibleForPool(module, "black", player)
+          : !BLACK_SIGNAL_MODULES.has(module.id)),
+    );
   return candidates
-    .map((m) => ({ m, k: random() ** (1 / weight(m)) }))
+    .map((m) => ({ m, k: random() ** (1 / moduleWeight(m)) }))
     .sort((a, b) => b.k - a.k)
     .slice(0, n)
     .map((x) => x.m);

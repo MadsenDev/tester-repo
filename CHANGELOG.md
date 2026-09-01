@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.40.0] - 2026-09-01
+
+- Keep Black Signal modules out of ordinary Salvage, Companion and Boss Relic transmissions.
+- Require two accepted Black Signal contracts before Dead God Circuit becomes eligible and make its selection exceptionally rare.
+- Reduce the expected completed-campaign Dead God Circuit offer rate from roughly one in two runs to about six percent.
+- Advance the PWA cache version for the new module economy.
+
 ## [0.39.2] - 2026-09-01
 
 - Restore the original spinning hexagon around the player ship as an in-combat force shield.
