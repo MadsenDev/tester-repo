@@ -7,7 +7,7 @@ import {
   unlockedShips,
   updateShipHeading,
 } from "../src/ships.js";
-import { shipSvgMarkup } from "../src/ship-render.js";
+import { playerShieldVisual, shipSvgMarkup } from "../src/ship-render.js";
 
 globalThis.localStorage = {
   getItem: () => null,
@@ -131,4 +131,16 @@ test("heading interpolation takes the shortest turn across the angle seam", () =
   updateShipHeading(player, Math.cos(-3.1), Math.sin(-3.1), 1 / 60);
   assert.ok(player.facing > 3.1);
   assert.equal(shipById("missing").id, "strider");
+});
+
+test("the original spinning hexagon remains as a responsive combat shield", () => {
+  const resting = playerShieldVisual({ r: 11, armor: 0, invuln: 0 }, 2);
+  const armored = playerShieldVisual({ r: 11, armor: 0.5, invuln: 0 }, 2);
+  const hit = playerShieldVisual({ r: 11, armor: 0.5, invuln: 0.22 }, 2);
+  assert.equal(resting.sides, 6);
+  assert.equal(resting.radius, 18);
+  assert.equal(resting.rotation, -3);
+  assert.ok(armored.alpha > resting.alpha);
+  assert.ok(hit.radius > armored.radius);
+  assert.ok(hit.lineWidth > armored.lineWidth);
 });

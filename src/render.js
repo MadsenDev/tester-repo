@@ -12,7 +12,7 @@ import {
 import { friendlyThreatAlpha } from "./combat-readability.js";
 import { drawBossCounterplay } from "./boss-counterplay.js";
 import { drawArenaModules } from "./arena-module-render.js";
-import { drawPlayerShip } from "./ship-render.js";
+import { drawPlayerShield, drawPlayerShip } from "./ship-render.js";
 function polygon(ctx, x, y, r, n, rot = 0) {
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
@@ -491,6 +491,7 @@ export function renderScene(ctx, view, world) {
           : player.invuln > 0
             ? "#fff"
             : baseColor;
+    drawPlayerShield(ctx, player, time, glow);
     drawPlayerShip(ctx, player, time, glow);
     ctx.save();
     ctx.translate(player.x, player.y);

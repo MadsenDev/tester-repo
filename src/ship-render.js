@@ -28,6 +28,46 @@ function drawTrail(ctx, engines, scale, color, time, thrust) {
   ctx.globalAlpha = 1;
 }
 
+export function playerShieldVisual(player, time) {
+  const impact = Math.min(1, Math.max(0, (player.invuln || 0) / 0.22)),
+    armor = Math.min(1, Math.max(0, (player.armor || 0) / 0.65));
+  return {
+    sides: 6,
+    radius: player.r + 7 + impact * 3,
+    rotation: time * -1.5,
+    alpha: 0.5 + armor * 0.16 + impact * 0.3,
+    lineWidth: 1.4 + armor * 0.7 + impact * 1.2,
+    impact,
+  };
+}
+
+export function drawPlayerShield(ctx, player, time, glow) {
+  const visual = playerShieldVisual(player, time);
+  ctx.save();
+  ctx.translate(player.x, player.y);
+  ctx.rotate(visual.rotation);
+  ctx.globalAlpha = visual.alpha;
+  ctx.shadowColor = glow;
+  ctx.shadowBlur = 12 + visual.impact * 18;
+  ctx.fillStyle = glow;
+  ctx.strokeStyle = glow;
+  ctx.lineWidth = visual.lineWidth;
+  ctx.beginPath();
+  for (let i = 0; i < visual.sides; i++) {
+    const angle = -Math.PI / 2 + (i * Math.PI * 2) / visual.sides,
+      x = Math.cos(angle) * visual.radius,
+      y = Math.sin(angle) * visual.radius;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+  if (visual.impact > 0) {
+    ctx.globalAlpha = visual.impact * 0.1;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 export function drawPlayerShip(ctx, player, time, glow) {
   const ship = shipById(player.shipId),
     profile = player.shipVisual || ship.visual,
