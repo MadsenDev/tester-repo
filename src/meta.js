@@ -2,7 +2,7 @@ import {awardCore} from "./core.js";
 const SETTINGS_KEY="orbital-settings-v1";
 const STATS_KEY="orbital-stats-v1";
 const DEV_KEY="orbital-dev-godmode";
-const DEFAULT_SETTINGS={difficulty:"normal",shake:true,sound:true,ship:"strider",mode:"campaign"};
+const DEFAULT_SETTINGS={difficulty:"normal",shake:true,sound:true,ship:"strider",mode:"expedition"};
 const DEFAULT_STATS={runs:0,wins:0,kills:0,best:0};
 export function loadSettings(){try{return{...DEFAULT_SETTINGS,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||"{}")}}catch{return{...DEFAULT_SETTINGS}}}
 export function saveSettings(settings){localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))}

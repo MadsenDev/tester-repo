@@ -151,6 +151,20 @@ export function applyModule(p, m) {
   if (e.crit) p.crit = Math.min(0.75, p.crit + e.crit);
   if (e.armor) p.armor = Math.max(0, Math.min(0.65, p.armor + e.armor));
   if (e.regen) p.regen = Math.max(0, p.regen + e.regen);
+  if (e.expeditionChoices)
+    p.expeditionChoiceBonus = (p.expeditionChoiceBonus || 0) + e.expeditionChoices;
+  if (e.expeditionSecretChance)
+    p.expeditionSecretChance =
+      (p.expeditionSecretChance || 0) + e.expeditionSecretChance;
+  if (e.revealExpeditionSecrets) p.revealExpeditionSecrets = true;
+  if (e.expeditionShopDiscount)
+    p.expeditionShopDiscount = Math.min(
+      0.7,
+      (p.expeditionShopDiscount || 0) + e.expeditionShopDiscount,
+    );
+  if (e.expeditionRepairBonus)
+    p.expeditionRepairBonus =
+      (p.expeditionRepairBonus || 0) + e.expeditionRepairBonus;
   if (e.flags)
     for (const id of e.flags) {
       p.passives ??= {};

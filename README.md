@@ -1,6 +1,6 @@
 # Orbital Last Stand
 
-A zero-asset browser arena-survival game built entirely from code.
+A zero-asset browser action roguelite built entirely from code.
 
 - Vanilla JavaScript
 - HTML5 Canvas
@@ -11,7 +11,16 @@ A zero-asset browser arena-survival game built entirely from code.
 
 ## Play
 
-Survive for **10 minutes** while crossing five increasingly hostile sectors. Your ship fires automatically and the run grows from simple pursuit enemies into elites, snipers, orbiters, enemy fire and boss encounters.
+The primary **Expedition** mode crosses five sectors as a deliberate room-based
+run. Enter a room, clear its finite enemy waves, collect scrap and physically
+fly into the door for the next encounter. Module Vaults, Forked Signals, Scrap
+Exchanges, Quiet Docks, elite fights and hidden Null Chambers sit between five
+sector wardens. Bosses leave exactly one physical relic in the arena before the
+route continues.
+
+**Last Stand** preserves the original game as its own mode: survive for ten
+minutes while levels, routes, enemies and bosses arrive at high speed. Endless,
+Boss Rush and Playground remain available alongside both core formats.
 
 Move with **WASD**, the **arrow keys**, or **touch-drag on mobile**. **P** pauses and **M** toggles sound.
 
@@ -33,7 +42,28 @@ Difficulty also controls the recovery economy. Chill produces more frequent, str
 
 Hostile projectile pressure follows the same philosophy. Chill and Normal use viewport-aware limits to stop late runs from becoming unreadable walls of stale shots, retiring off-screen and distant projectiles first while preserving nearby threats and telegraphed rail or blast attacks. Intense keeps the complete bullet hell.
 
-## World
+## Expedition rooms
+
+Expedition replaces continuous spawning with authored encounter boundaries.
+Combat doors lock until every finite wave is destroyed, and later sectors add
+more enemies rather than silently accelerating an endless spawn timer. At each
+clear, two readable doors normally offer different risks and rewards:
+
+- **Module Vaults** contain one permanent item
+- **Forked Signals** present mutually exclusive companion-focused choices
+- **Scrap Exchanges** sell up to three modules and permit multiple purchases
+- **Quiet Docks** repair the hull without adding another permanent item
+- **Elite Intercepts** guarantee an elite threat and pay additional scrap
+- **Null Chambers** hide behind faint optional signals and contain boss-class rewards
+- **Sector Wardens** leave one guaranteed relic before the descent
+
+Rusted Key, Lucky Bolt, Second Opinion and Warm Seat now manipulate secrets,
+pedestal counts, choices and shop prices. Expedition Black Signals appear in
+the arena after each warden and can be declined through a physical exit. A
+completed Expedition normally produces a much smaller, more legible build than
+Last Stand, leaving the rare rule-breaking combinations genuinely exceptional.
+
+## Last Stand world
 
 The arena changes every two minutes:
 
@@ -74,7 +104,7 @@ Every run begins with the blaster. Level-up choices can unlock and improve five 
 - **Grav Mines** — persistent mines
 - **Prism Lance** — piercing beam
 
-The module pool contains 160 upgrades, including 60 authored special modules. Specials now change the rules of a run instead of merely carrying a rarity label: **Last Bulkhead** prevents one lethal hit, **Echo Chamber** repeats every sixth volley, **Prism Mirror** fires beams backwards, and companion modules can fork drone fire, electrify Ember shots, or turn Wisp pulses into gravity anchors.
+The module pool contains 160 upgrades, including 63 authored special modules. Specials now change the rules of a run instead of merely carrying a rarity label: **Last Bulkhead** prevents one lethal hit, **Echo Chamber** repeats every sixth volley, **Prism Mirror** fires beams backwards, and companion modules can fork drone fire, electrify Ember shots, or turn Wisp pulses into gravity anchors.
 
 Ten arena-altering modules push builds into stranger territory. **Constellation
 Engine** constructs damaging star triangles, **Reversal Chamber** returns rounds
@@ -103,7 +133,7 @@ The persistent **Signal Archive** records modules, synergies, bosses, routes and
 
 Completed runs earn ship-and-mode completion marks. The Archive also keeps a compact history of recent runs with their final loadouts, decoded synergies, routes and scores, and the end-of-run debrief highlights discoveries made during that attempt.
 
-Every second defeated boss can intercept the run with a **Black Signal** contract. Accepting its forbidden module requires a permanent sacrifice for the rest of the run—hull, mobility or defenses—while rejecting it leaves the build untouched. Accepted contracts and their costs appear in the final debrief and Archive history.
+In Last Stand, every second defeated boss can intercept the run with a **Black Signal** contract. Expedition instead places the signal physically after every sector warden. Accepting its forbidden module requires a permanent sacrifice for the rest of the run—hull, mobility or defenses—while rejecting it leaves the build untouched. Accepted contracts and their costs appear in the final debrief and Archive history.
 
 ## Enemies
 

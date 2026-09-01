@@ -34,6 +34,8 @@ globalThis.ORBITAL_PRECACHE = Object.freeze([
   "./src/enemy-ai.js",
   "./src/entities.js",
   "./src/events.js",
+  "./src/expedition-render.js",
+  "./src/expedition.js",
   "./src/evolution-guide.js",
   "./src/game.js",
   "./src/hazards.js",

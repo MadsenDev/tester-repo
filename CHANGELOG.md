@@ -2,6 +2,17 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.41.0] - 2026-09-01
+
+- Add Expedition as the new primary room-based mode while preserving the original ten-minute game as Last Stand.
+- Add five sectors of finite combat waves, elite rooms, Module Vaults, Forked Signals, Scrap Exchanges, Quiet Docks and sector bosses.
+- Replace Expedition reward overlays with physical module pedestals and fly-in arena doors.
+- Add optional hidden Null Chambers, scrap currency, shops and persistent room-route records.
+- Place exactly one relic after every Expedition boss and move Black Signal bargains into the arena.
+- Give Rusted Key, Lucky Bolt, Second Opinion and Warm Seat room-economy effects.
+- Record Expedition rooms, secrets and remaining scrap in the final debrief and Archive.
+- Add Expedition rendering and logic to the complete offline PWA shell.
+
 ## [0.40.0] - 2026-09-01
 
 - Keep Black Signal modules out of ordinary Salvage, Companion and Boss Relic transmissions.
