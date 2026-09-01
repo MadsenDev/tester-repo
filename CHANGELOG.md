@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.43.8] - 2026-09-01
+
+- Route Expedition, Last Stand, Endless and Boss Rush boss spawns through the shared controlled-random boss director.
+- Reset director history and adaptive telemetry cleanly for every new run.
+- Measure effective enemy health lost each frame so boss scaling reacts to actual recent damage from the complete player build rather than only paper stats.
+- Apply bounded adaptive boss HP, tempo, projectile speed and phase pressure at the live spawn sites while preserving the ceiling that lets earned god builds remain overpowered.
+
 ## [0.43.7] - 2026-09-01
 
 - Raise Normal and Intense boss baseline pressure so existing encounters survive longer and reach their dangerous phases more reliably.

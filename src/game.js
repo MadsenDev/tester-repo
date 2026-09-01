@@ -11,12 +11,18 @@ import {
 import { createInput } from "./input.js";
 import { moveEnemy } from "./enemy-ai.js";
 import { renderScene } from "./render.js";
-import { spawnBoss, updateBoss } from "./bosses.js";
+import { updateBoss } from "./bosses.js";
 import {
   bossDifficulty,
   prepareBossArena,
   regularEnemiesAllowed,
 } from "./boss-difficulty.js";
+import {
+  captureEnemyHealth,
+  createBossRuntime,
+  recordEnemyHealthDelta,
+  spawnDirectedBoss,
+} from "./boss-runtime.js";
 import { sectorAt } from "./world.js";
 import {
   loadSettings,
@@ -195,6 +201,7 @@ let { w: W, h: H } = viewportSize(),
   particles = [],
   powerups = [],
   expedition = null,
+  bossRuntime = createBossRuntime(),
   hazards = createHazardState(),
   events = createEventState(),
   routes = createRouteState();
@@ -422,6 +429,7 @@ function start() {
     gems = [];
     particles = [];
     powerups = [];
+    bossRuntime = createBossRuntime();
     hazards = createHazardState();
     events = createEventState();
     routes = createRouteState();
@@ -911,12 +919,17 @@ function updateExpedition(dt) {
     expedition.waveDelay -= dt;
     if (expedition.waveDelay > 0) return;
     if (expedition.roomType === "boss" && expedition.wave === 0) {
-      const boss = spawnBoss(
-        W,
-        H,
-        expedition.sector * 120 - 60,
-        settings.difficulty,
-      );
+      const boss = spawnDirectedBoss(bossRuntime, {
+        w: W,
+        h: H,
+        time: expedition.sector * 120 - 60,
+        difficulty: settings.difficulty,
+        mode: "expedition",
+        sector: expedition.sector,
+        bossCount: bossRuntime.totalBosses,
+        player,
+        random: expedition.random,
+      });
       enemies.push(boss);
       noteDiscovery("bosses", boss.kind);
       markExpeditionWaveSpawned(expedition);
@@ -943,6 +956,7 @@ function updateExpedition(dt) {
 }
 function update(dt) {
   if (state !== "playing") return;
+  const damageSnapshot = captureEnemyHealth(enemies);
   time += dt;
   const limit = runLimit(settings.mode);
   if (time >= limit) {
@@ -1043,7 +1057,15 @@ function update(dt) {
         settings.difficulty,
       ));
     }
-    const boss = spawnBoss(W, H, bossTime, settings.difficulty);
+    const boss = spawnDirectedBoss(bossRuntime, {
+      w: W,
+      h: H,
+      time: bossTime,
+      difficulty: settings.difficulty,
+      mode: settings.mode,
+      bossCount,
+      player,
+    });
     enemies.push(boss);
     noteDiscovery("bosses", boss.kind);
     nextBoss =
@@ -1145,6 +1167,7 @@ function update(dt) {
     W,
     H,
   });
+  recordEnemyHealthDelta(bossRuntime, damageSnapshot, time);
   for (let i = enemies.length - 1; i >= 0; i--)
     if (enemies[i].hp <= 0) {
       awardKill(enemies[i], mods);

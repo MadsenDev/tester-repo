@@ -20,6 +20,8 @@ The director assigns an encounter tier, builds an eligible pool and avoids recen
 
 `src/boss-runtime.js` owns per-run director state and rolling combat telemetry. `spawnDirectedBoss()` is the integration boundary for every real mode: it selects a catalog entry, delegates construction to the existing boss factory, then applies bounded adaptive tuning. This keeps selection policy out of the already-large attack loop and gives all modes the same machinery.
 
+Every new run creates a fresh runtime. Expedition boss rooms and timed survival/Boss Rush spawns now use the same directed spawn path, so recent-boss history and adaptive scaling cannot silently diverge by mode.
+
 The first implementation uses three broad tiers. This is intentionally coarse while the roster is still only ten bosses. Once the roster grows, pools can become authored per-sector/per-depth groups with overlap rather than rigid tiers.
 
 ## Adaptive build pressure
@@ -35,6 +37,8 @@ Boss scaling considers:
 - run depth
 
 The runtime keeps an eight-second rolling damage window. Damage older than the window is discarded, so one ancient burst does not convince the director that the player is still producing absurd damage several rooms later. Effective DPS is deliberately weighted more heavily than static build score.
+
+Live combat measures effective enemy health lost between frame snapshots. That means blaster fire, secondary weapons, companions, manifestations, orbitals and other authored player damage systems contribute without each system needing its own telemetry hook. Overkill is capped at the health the target actually had, and a new run starts with an empty window.
 
 The current director caps adaptive scaling at approximately:
 
@@ -127,7 +131,7 @@ Boss Rush should have the widest encounter variety. Early picks remain approacha
 
 1. Shared boss director, depth pools and bounded build-pressure model. **Done.**
 2. Add the shared per-run runtime and rolling effective-DPS telemetry. **Done.**
-3. Route all four real mode spawn sites through `spawnDirectedBoss()` and feed actual player damage into the runtime.
+3. Route all four real mode spawn sites through `spawnDirectedBoss()` and feed actual player damage into the runtime. **Done.**
 4. Expand the roster in small groups, starting with segmented, paired and burrow archetypes.
 5. Add authored third phases/desperation states to selected existing bosses.
 6. Add boss variants only after base encounters are distinct enough to justify them.
