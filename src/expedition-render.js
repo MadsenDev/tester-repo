@@ -1,41 +1,386 @@
 import { EXPEDITION_ROOM_TYPES } from "./expedition.js";
 
-const MAP_SYMBOLS = Object.freeze({ item: "M", choice: "◇", shop: "$", repair: "+", elite: "!", boss: "B", secret: "?", black: "×" });
+const MAP_SYMBOLS = Object.freeze({
+  item: "M",
+  choice: "◇",
+  shop: "$",
+  repair: "+",
+  elite: "!",
+  boss: "B",
+  secret: "?",
+  black: "×",
+});
 const PICKUP_ENTRY_LOCK_MS = 700;
 
-export function expeditionArenaBounds(W,H){const top=Math.max(182,Math.min(250,H*.18));return{left:18,right:W-18,top,bottom:H-42}}
-export function expeditionRoomEntryPosition(direction,W,H,radius=12){const b=expeditionArenaBounds(W,H),i=Math.max(48,radius+36);return{x:direction==="e"?b.left+i:direction==="w"?b.right-i:W/2,y:direction==="s"?b.top+i:direction==="n"?b.bottom-i:(b.top+b.bottom)/2}}
-function roundRect(ctx,x,y,w,h,r=12){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
-function moduleFromPedestal(p){return p.module||p.offer?.module}
-function wrapPickup(p,state){if(p._pickupToastWrapped||!p.module?.apply)return;const apply=p.module.apply,module=p.module,color=p.color||"#8dffcf";p.module.apply=(player)=>{const result=apply(player);state.pickupNotice={name:module.name||"UNKNOWN MODULE",desc:module.desc||"Module integrated.",color,expiresAt:Date.now()+2400};return result};p._pickupToastWrapped=true}
-function armPickupGate(p,state,now,roomChanged){
-  if(!state.currentId)return;
-  if(roomChanged||p._pickupGateRoomId!==state.currentId){
-    p._pickupGateRoomId=state.currentId;
-    p.pickupGateUntil=now+PICKUP_ENTRY_LOCK_MS;
-    p.pickupNeedsExit=false;
+export function expeditionArenaBounds(W, H) {
+  const top = Math.max(182, Math.min(250, H * 0.18));
+  return { left: 18, right: W - 18, top, bottom: H - 42 };
+}
+export function expeditionRoomEntryPosition(direction, W, H, radius = 12) {
+  const b = expeditionArenaBounds(W, H),
+    i = Math.max(48, radius + 36);
+  return {
+    x: direction === "e" ? b.left + i : direction === "w" ? b.right - i : W / 2,
+    y:
+      direction === "s"
+        ? b.top + i
+        : direction === "n"
+          ? b.bottom - i
+          : (b.top + b.bottom) / 2,
+  };
+}
+function roundRect(ctx, x, y, w, h, r = 12) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+}
+function moduleFromPedestal(p) {
+  return p.module || p.offer?.module;
+}
+function wrapPickup(p, state) {
+  if (p._pickupToastWrapped || !p.module?.apply) return;
+  const apply = p.module.apply,
+    module = p.module,
+    color = p.color || "#8dffcf";
+  p.module.apply = (player) => {
+    const result = apply(player);
+    state.pickupNotice = {
+      name: module.name || "UNKNOWN MODULE",
+      desc: module.desc || "Module integrated.",
+      color,
+      expiresAt: Date.now() + 2400,
+    };
+    return result;
+  };
+  p._pickupToastWrapped = true;
+}
+function armPickupGate(p, state, now, roomChanged) {
+  if (!state.currentId) return;
+  if (roomChanged || p._pickupGateRoomId !== state.currentId) {
+    p._pickupGateRoomId = state.currentId;
+    p.pickupGateUntil = now + PICKUP_ENTRY_LOCK_MS;
+    p.pickupNeedsExit = false;
   }
 }
 
-export function layoutExpeditionObjects(state,W,H){
-  const b=expeditionArenaBounds(W,H),middleY=(b.top+b.bottom)/2;
-  for(const door of state.doors){if(door.direction==="n"||door.direction==="s"){door.x=W/2;door.y=door.direction==="n"?b.top:b.bottom;door.w=92;door.h=34}else{door.x=door.direction==="w"?b.left:b.right;door.y=middleY;door.w=34;door.h=92}}
-  const now=performance.now(),roomChanged=state._pickupGateRoomId!==state.currentId;
-  if(roomChanged)state._pickupGateRoomId=state.currentId;
-  const count=state.pedestals.length;if(!count)return;
-  const compact=W<620,gap=compact?8:14,labelWidth=compact?(count>=3?72:count===2?88:104):Math.min(118,Math.max(96,(W-140-(count-1)*gap)/count)),total=count*labelWidth+(count-1)*gap,startX=W/2-total/2+labelWidth/2;
-  state.pedestals.forEach((p,index)=>{p.x=startX+index*(labelWidth+gap);p.y=middleY;p.w=labelWidth;p.h=compact?60:70;p.r=compact?12:15;armPickupGate(p,state,now,roomChanged);wrapPickup(p,state)})
+export function layoutExpeditionObjects(state, W, H) {
+  const b = expeditionArenaBounds(W, H),
+    middleY = (b.top + b.bottom) / 2;
+  for (const door of state.doors) {
+    if (door.direction === "n" || door.direction === "s") {
+      door.x = W / 2;
+      door.y = door.direction === "n" ? b.top : b.bottom;
+      door.w = 92;
+      door.h = 34;
+    } else {
+      door.x = door.direction === "w" ? b.left : b.right;
+      door.y = middleY;
+      door.w = 34;
+      door.h = 92;
+    }
+  }
+  const now = performance.now(),
+    roomChanged = state._pickupGateRoomId !== state.currentId;
+  if (roomChanged) state._pickupGateRoomId = state.currentId;
+  const count = state.pedestals.length;
+  if (!count) return;
+  const compact = W < 620,
+    gap = compact ? 8 : 14,
+    labelWidth = compact
+      ? count >= 3
+        ? 72
+        : count === 2
+          ? 88
+          : 104
+      : Math.min(118, Math.max(96, (W - 140 - (count - 1) * gap) / count)),
+    total = count * labelWidth + (count - 1) * gap,
+    startX = W / 2 - total / 2 + labelWidth / 2;
+  state.pedestals.forEach((p, index) => {
+    p.x = startX + index * (labelWidth + gap);
+    p.y = middleY;
+    p.w = labelWidth;
+    p.h = compact ? 60 : 70;
+    p.r = compact ? 12 : 15;
+    armPickupGate(p, state, now, roomChanged);
+    wrapPickup(p, state);
+  });
 }
 
-function drawRoomFrame(ctx,state,W,H,time){const meta=EXPEDITION_ROOM_TYPES[state.roomType],b=expeditionArenaBounds(W,H);ctx.save();ctx.strokeStyle=meta.color;ctx.globalAlpha=.12;ctx.lineWidth=1.5;ctx.setLineDash([10,15]);ctx.strokeRect(b.left,b.top,b.right-b.left,b.bottom-b.top);ctx.setLineDash([]);ctx.globalAlpha=.055+Math.sin(time*2)*.018;ctx.fillStyle=meta.color;ctx.fillRect(b.left,b.top,b.right-b.left,3);ctx.fillRect(b.left,b.bottom-3,b.right-b.left,3);ctx.restore()}
-function drawChevron(ctx,d,size=8){ctx.beginPath();if(d==="n"){ctx.moveTo(-size,size/2);ctx.lineTo(0,-size/2);ctx.lineTo(size,size/2)}else if(d==="s"){ctx.moveTo(-size,-size/2);ctx.lineTo(0,size/2);ctx.lineTo(size,-size/2)}else if(d==="w"){ctx.moveTo(size/2,-size);ctx.lineTo(-size/2,0);ctx.lineTo(size/2,size)}else{ctx.moveTo(-size/2,-size);ctx.lineTo(size/2,0);ctx.lineTo(-size/2,size)}ctx.stroke()}
-export function expeditionDoorLabelOffset(direction){if(direction==="n")return{x:0,y:22};if(direction==="s")return{x:0,y:-42};return{x:direction==="w"?28:-28,y:0}}
-function drawDoor(ctx,door,time){const horizontal=door.direction==="n"||door.direction==="s",pulse=.58+Math.sin(time*3.5+door.x+door.y)*.12;ctx.save();ctx.translate(door.x,door.y);ctx.globalAlpha=door.hidden?.12+pulse*.13:door.backtrack?.42:.62+pulse*.18;ctx.strokeStyle=door.color;ctx.fillStyle=door.color;ctx.shadowBlur=door.hidden?4:12;ctx.shadowColor=door.color;ctx.lineWidth=door.hidden?1:2;ctx.setLineDash(door.hidden?[3,6]:[]);ctx.beginPath();if(horizontal){ctx.moveTo(-door.w/2,0);ctx.lineTo(-17,0);ctx.moveTo(17,0);ctx.lineTo(door.w/2,0)}else{ctx.moveTo(0,-door.h/2);ctx.lineTo(0,-17);ctx.moveTo(0,17);ctx.lineTo(0,door.h/2)}ctx.stroke();ctx.setLineDash([]);drawChevron(ctx,door.direction,door.hidden?5:7);if(door.label){ctx.globalAlpha=door.backtrack?.55:.86;ctx.shadowBlur=0;ctx.font="600 8px IBM Plex Mono, monospace";ctx.textAlign="center";ctx.textBaseline="middle";const o=expeditionDoorLabelOffset(door.direction),labelWidth=ctx.measureText(door.label).width+12;ctx.save();ctx.translate(o.x,o.y);if(!horizontal)ctx.rotate(-Math.PI/2);ctx.fillStyle="rgba(2,7,13,.72)";ctx.fillRect(-labelWidth/2,-7,labelWidth,14);ctx.fillStyle=door.color;ctx.fillText(door.label,0,0);ctx.restore()}ctx.restore()}
-function visibleMapNodes(state){return state.map.nodes.filter(n=>n.id===state.currentId||n.visited||(n.discovered&&(!n.hidden||n.visited)))}
-function drawMinimap(ctx,state,W,H){const nodes=visibleMapNodes(state);if(!nodes.length)return;const scale=14,minX=Math.min(...nodes.map(n=>n.x)),maxX=Math.max(...nodes.map(n=>n.x)),minY=Math.min(...nodes.map(n=>n.y)),maxY=Math.max(...nodes.map(n=>n.y)),mapW=(maxX-minX)*scale+12,mapH=(maxY-minY)*scale+10,originX=W-28-mapW,originY=expeditionArenaBounds(W,H).top+28,byId=new Map(nodes.map(n=>[n.id,n])),point=n=>({x:originX+(n.x-minX)*scale+6,y:originY+(n.y-minY)*scale+5});ctx.save();ctx.fillStyle="rgba(2,7,13,.5)";roundRect(ctx,originX-7,originY-7,mapW+14,mapH+14,7);ctx.fill();ctx.strokeStyle="rgba(150,210,226,.2)";ctx.lineWidth=1;for(const n of nodes){const from=point(n);for(const id of Object.values(n.links)){const target=byId.get(id);if(!target)continue;const to=point(target);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke()}}for(const n of nodes){const p=point(n),meta=EXPEDITION_ROOM_TYPES[n.type],current=n.id===state.currentId;ctx.fillStyle=current?"#ecfff9":n.visited?"rgba(113,239,217,.42)":"rgba(100,126,151,.25)";ctx.strokeStyle=meta.color;ctx.globalAlpha=current?1:.72;ctx.lineWidth=current?2:1;ctx.fillRect(p.x-5,p.y-4,10,8);ctx.strokeRect(p.x-5,p.y-4,10,8);if(MAP_SYMBOLS[n.type]){ctx.fillStyle=current?"#061019":meta.color;ctx.font="700 6px IBM Plex Mono, monospace";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(MAP_SYMBOLS[n.type],p.x,p.y+.5)}}ctx.restore()}
-function wrap(ctx,text,x,y,width,lineHeight,maxLines=2){const words=String(text||"").split(/\s+/),lines=[];let line="";for(const word of words){const test=line?`${line} ${word}`:word;if(ctx.measureText(test).width>width&&line){lines.push(line);line=word;if(lines.length>=maxLines)break}else line=test}if(lines.length<maxLines&&line)lines.push(line);lines.forEach((value,index)=>ctx.fillText(value,x,y+index*lineHeight))}
-function drawHex(ctx,r,time,color){ctx.save();ctx.strokeStyle=color;ctx.shadowColor=color;ctx.shadowBlur=14;ctx.lineWidth=2;ctx.rotate(time*.7);ctx.beginPath();for(let i=0;i<6;i++){const a=i*Math.PI*2/6,x=Math.cos(a)*r,y=Math.sin(a)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.closePath();ctx.stroke();ctx.restore()}
-function drawPedestal(ctx,p,time,credits){const module=moduleFromPedestal(p),name=module?.name||p.name||"UNKNOWN MODULE",affordable=!p.cost||credits>=p.cost,color=p.color||"#8dffcf";ctx.save();ctx.globalAlpha=affordable?1:.38;ctx.translate(p.x,p.y);drawHex(ctx,p.w<=76?15:17,time,color);ctx.fillStyle="#f3f7ff";ctx.shadowBlur=0;ctx.textAlign="center";ctx.textBaseline="top";ctx.font=`700 ${p.w<=76?9:10}px Chakra Petch, sans-serif`;wrap(ctx,name,0,24,p.w+14,10,2);if(p.cost){ctx.fillStyle=affordable?"#ffe27b":"#ff6688";ctx.font="700 7px IBM Plex Mono, monospace";ctx.fillText(`${p.cost} SCRAP`,0,47)}else if(p.kind==="black"){ctx.fillStyle="#ff74ad";ctx.font="700 7px IBM Plex Mono, monospace";ctx.fillText("PERMANENT COST",0,47)}ctx.restore()}
-function drawPickupNotice(ctx,state,W,H){const notice=state.pickupNotice;if(!notice)return;if(Date.now()>=notice.expiresAt){state.pickupNotice=null;return}const remaining=(notice.expiresAt-Date.now())/2400,alpha=Math.min(1,remaining*4),width=Math.min(300,W-48),height=92,b=expeditionArenaBounds(W,H),x=W/2-width/2,y=Math.min(b.top+116,H-height-120);ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle="rgba(3,9,16,.94)";ctx.strokeStyle=notice.color||"#8dffcf";ctx.lineWidth=1;roundRect(ctx,x,y,width,height,8);ctx.fill();ctx.stroke();ctx.textAlign="center";ctx.textBaseline="top";ctx.fillStyle=notice.color||"#8dffcf";ctx.font="700 8px IBM Plex Mono, monospace";ctx.fillText("MODULE ACQUIRED",W/2,y+12);ctx.fillStyle="#f3f7ff";ctx.font="700 15px Chakra Petch, sans-serif";ctx.fillText(notice.name,W/2,y+29,width-24);ctx.fillStyle="#91a0b8";ctx.font="500 9px IBM Plex Mono, monospace";wrap(ctx,notice.desc,W/2,y+54,width-28,11,2);ctx.restore()}
+function drawRoomFrame(ctx, state, W, H, time) {
+  const meta = EXPEDITION_ROOM_TYPES[state.roomType],
+    b = expeditionArenaBounds(W, H);
+  ctx.save();
+  ctx.strokeStyle = meta.color;
+  ctx.globalAlpha = 0.12;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([10, 15]);
+  ctx.strokeRect(b.left, b.top, b.right - b.left, b.bottom - b.top);
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 0.055 + Math.sin(time * 2) * 0.018;
+  ctx.fillStyle = meta.color;
+  ctx.fillRect(b.left, b.top, b.right - b.left, 3);
+  ctx.fillRect(b.left, b.bottom - 3, b.right - b.left, 3);
+  ctx.restore();
+}
+function drawChevron(ctx, d, size = 8) {
+  ctx.beginPath();
+  if (d === "n") {
+    ctx.moveTo(-size, size / 2);
+    ctx.lineTo(0, -size / 2);
+    ctx.lineTo(size, size / 2);
+  } else if (d === "s") {
+    ctx.moveTo(-size, -size / 2);
+    ctx.lineTo(0, size / 2);
+    ctx.lineTo(size, -size / 2);
+  } else if (d === "w") {
+    ctx.moveTo(size / 2, -size);
+    ctx.lineTo(-size / 2, 0);
+    ctx.lineTo(size / 2, size);
+  } else {
+    ctx.moveTo(-size / 2, -size);
+    ctx.lineTo(size / 2, 0);
+    ctx.lineTo(-size / 2, size);
+  }
+  ctx.stroke();
+}
+export function expeditionDoorLabelOffset(direction) {
+  if (direction === "n") return { x: 0, y: 22 };
+  if (direction === "s") return { x: 0, y: -42 };
+  return { x: direction === "w" ? 28 : -28, y: 0 };
+}
+function drawDoor(ctx, door, time) {
+  const horizontal = door.direction === "n" || door.direction === "s",
+    pulse = 0.58 + Math.sin(time * 3.5 + door.x + door.y) * 0.12;
+  ctx.save();
+  ctx.translate(door.x, door.y);
+  ctx.globalAlpha = door.hidden
+    ? 0.12 + pulse * 0.13
+    : door.backtrack
+      ? 0.42
+      : 0.62 + pulse * 0.18;
+  ctx.strokeStyle = door.color;
+  ctx.fillStyle = door.color;
+  ctx.shadowBlur = door.hidden ? 4 : 12;
+  ctx.shadowColor = door.color;
+  ctx.lineWidth = door.hidden ? 1 : 2;
+  ctx.setLineDash(door.hidden ? [3, 6] : []);
+  ctx.beginPath();
+  if (horizontal) {
+    ctx.moveTo(-door.w / 2, 0);
+    ctx.lineTo(-17, 0);
+    ctx.moveTo(17, 0);
+    ctx.lineTo(door.w / 2, 0);
+  } else {
+    ctx.moveTo(0, -door.h / 2);
+    ctx.lineTo(0, -17);
+    ctx.moveTo(0, 17);
+    ctx.lineTo(0, door.h / 2);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  drawChevron(ctx, door.direction, door.hidden ? 5 : 7);
+  if (door.label) {
+    ctx.globalAlpha = door.backtrack ? 0.55 : 0.86;
+    ctx.shadowBlur = 0;
+    ctx.font = "600 8px IBM Plex Mono, monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const o = expeditionDoorLabelOffset(door.direction),
+      labelWidth = ctx.measureText(door.label).width + 12;
+    ctx.save();
+    ctx.translate(o.x, o.y);
+    if (!horizontal) ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = "rgba(2,7,13,.72)";
+    ctx.fillRect(-labelWidth / 2, -7, labelWidth, 14);
+    ctx.fillStyle = door.color;
+    ctx.fillText(door.label, 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function visibleMapNodes(state) {
+  return state.map.nodes.filter(
+    (n) =>
+      n.id === state.currentId ||
+      n.visited ||
+      (n.discovered && (!n.hidden || n.visited)),
+  );
+}
+function drawMinimap(ctx, state, W, H) {
+  const nodes = visibleMapNodes(state);
+  if (!nodes.length) return;
+  const scale = 14,
+    minX = Math.min(...nodes.map((n) => n.x)),
+    maxX = Math.max(...nodes.map((n) => n.x)),
+    minY = Math.min(...nodes.map((n) => n.y)),
+    maxY = Math.max(...nodes.map((n) => n.y)),
+    mapW = (maxX - minX) * scale + 12,
+    mapH = (maxY - minY) * scale + 10,
+    originX = W - 28 - mapW,
+    originY = expeditionArenaBounds(W, H).top + 28,
+    byId = new Map(nodes.map((n) => [n.id, n])),
+    point = (n) => ({
+      x: originX + (n.x - minX) * scale + 6,
+      y: originY + (n.y - minY) * scale + 5,
+    });
+  ctx.save();
+  ctx.fillStyle = "rgba(2,7,13,.5)";
+  roundRect(ctx, originX - 7, originY - 7, mapW + 14, mapH + 14, 7);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(150,210,226,.2)";
+  ctx.lineWidth = 1;
+  for (const n of nodes) {
+    const from = point(n);
+    for (const id of Object.values(n.links)) {
+      const target = byId.get(id);
+      if (!target) continue;
+      const to = point(target);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+    }
+  }
+  for (const n of nodes) {
+    const p = point(n),
+      meta = EXPEDITION_ROOM_TYPES[n.type],
+      current = n.id === state.currentId;
+    ctx.fillStyle = current
+      ? "#ecfff9"
+      : n.visited
+        ? "rgba(113,239,217,.42)"
+        : "rgba(100,126,151,.25)";
+    ctx.strokeStyle = meta.color;
+    ctx.globalAlpha = current ? 1 : 0.72;
+    ctx.lineWidth = current ? 2 : 1;
+    ctx.fillRect(p.x - 5, p.y - 4, 10, 8);
+    ctx.strokeRect(p.x - 5, p.y - 4, 10, 8);
+    if (MAP_SYMBOLS[n.type]) {
+      ctx.fillStyle = current ? "#061019" : meta.color;
+      ctx.font = "700 6px IBM Plex Mono, monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(MAP_SYMBOLS[n.type], p.x, p.y + 0.5);
+    }
+  }
+  ctx.restore();
+}
+function wrap(ctx, text, x, y, width, lineHeight, maxLines = 2) {
+  const words = String(text || "").split(/\s+/),
+    lines = [];
+  let line = "";
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > width && line) {
+      lines.push(line);
+      line = word;
+      if (lines.length >= maxLines) break;
+    } else line = test;
+  }
+  if (lines.length < maxLines && line) lines.push(line);
+  lines.forEach((value, index) =>
+    ctx.fillText(value, x, y + index * lineHeight),
+  );
+}
+function drawHex(ctx, r, time, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 14;
+  ctx.lineWidth = 2;
+  ctx.rotate(time * 0.7);
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI * 2) / 6,
+      x = Math.cos(a) * r,
+      y = Math.sin(a) * r;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+}
+function drawPedestal(ctx, p, time, credits) {
+  const module = moduleFromPedestal(p),
+    name = module?.name || p.name || "UNKNOWN MODULE",
+    affordable = !p.cost || credits >= p.cost,
+    color = p.color || "#8dffcf";
+  ctx.save();
+  ctx.globalAlpha = affordable ? 1 : 0.38;
+  ctx.translate(p.x, p.y);
+  drawHex(ctx, p.w <= 76 ? 15 : 17, time, color);
+  ctx.fillStyle = "#f3f7ff";
+  ctx.shadowBlur = 0;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.font = `700 ${p.w <= 76 ? 9 : 10}px Chakra Petch, sans-serif`;
+  wrap(ctx, name, 0, 24, p.w + 14, 10, 2);
+  if (p.cost) {
+    ctx.fillStyle = affordable ? "#ffe27b" : "#ff6688";
+    ctx.font = "700 7px IBM Plex Mono, monospace";
+    ctx.fillText(`${p.cost} SCRAP`, 0, 47);
+  } else if (p.kind === "black") {
+    ctx.fillStyle = "#ff74ad";
+    ctx.font = "700 7px IBM Plex Mono, monospace";
+    ctx.fillText("PERMANENT COST", 0, 47);
+  }
+  ctx.restore();
+}
+function drawPickupNotice(ctx, state, W, H) {
+  const notice = state.pickupNotice;
+  if (!notice) return;
+  if (Date.now() >= notice.expiresAt) {
+    state.pickupNotice = null;
+    return;
+  }
+  const remaining = (notice.expiresAt - Date.now()) / 2400,
+    alpha = Math.min(1, remaining * 4),
+    width = Math.min(300, W - 48),
+    height = 92,
+    b = expeditionArenaBounds(W, H),
+    x = W / 2 - width / 2,
+    y = Math.min(b.top + 116, H - height - 120);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = "rgba(3,9,16,.94)";
+  ctx.strokeStyle = notice.color || "#8dffcf";
+  ctx.lineWidth = 1;
+  roundRect(ctx, x, y, width, height, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = notice.color || "#8dffcf";
+  ctx.font = "700 8px IBM Plex Mono, monospace";
+  ctx.fillText("MODULE ACQUIRED", W / 2, y + 12);
+  ctx.fillStyle = "#f3f7ff";
+  ctx.font = "700 15px Chakra Petch, sans-serif";
+  ctx.fillText(notice.name, W / 2, y + 29, width - 24);
+  ctx.fillStyle = "#91a0b8";
+  ctx.font = "500 9px IBM Plex Mono, monospace";
+  wrap(ctx, notice.desc, W / 2, y + 54, width - 28, 11, 2);
+  ctx.restore();
+}
 
-export function drawExpedition(ctx,state,time,W,H){if(!state?.active)return;layoutExpeditionObjects(state,W,H);drawRoomFrame(ctx,state,W,H,time);drawMinimap(ctx,state,W,H);for(const door of state.doors)drawDoor(ctx,door,time);for(const p of state.pedestals)drawPedestal(ctx,p,time,state.credits);if(state.messageTime>0&&!state.pickupNotice){const meta=EXPEDITION_ROOM_TYPES[state.roomType],y=expeditionArenaBounds(W,H).top+76;ctx.save();ctx.globalAlpha=Math.min(1,state.messageTime);ctx.fillStyle="rgba(2,7,13,.68)";ctx.fillRect(0,y-24,W,48);ctx.fillStyle=meta.color;ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="700 11px IBM Plex Mono, monospace";ctx.fillText(state.message,W/2,y);ctx.restore()}drawPickupNotice(ctx,state,W,H)}
+export function drawExpedition(ctx, state, time, W, H) {
+  if (!state?.active) return;
+  layoutExpeditionObjects(state, W, H);
+  drawRoomFrame(ctx, state, W, H, time);
+  drawMinimap(ctx, state, W, H);
+  for (const door of state.doors) drawDoor(ctx, door, time);
+  for (const p of state.pedestals) drawPedestal(ctx, p, time, state.credits);
+  if (state.messageTime > 0 && !state.pickupNotice) {
+    const meta = EXPEDITION_ROOM_TYPES[state.roomType],
+      y = expeditionArenaBounds(W, H).top + 76;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, state.messageTime);
+    ctx.fillStyle = "rgba(2,7,13,.68)";
+    ctx.fillRect(0, y - 24, W, 48);
+    ctx.fillStyle = meta.color;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "700 11px IBM Plex Mono, monospace";
+    ctx.fillText(state.message, W / 2, y);
+    ctx.restore();
+  }
+  drawPickupNotice(ctx, state, W, H);
+}
