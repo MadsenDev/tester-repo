@@ -27,9 +27,12 @@ test("the active chassis keeps its animated force shield", () => {
   const html = read("index.html");
   const css = read("mobile-design.css");
   assert.match(html, /class="shield-field"/);
-  assert.equal((html.match(/shield-field-(?:plane|edge|core)/g) || []).length, 3);
+  assert.equal(
+    (html.match(/shield-field-(?:plane|edge|core)/g) || []).length,
+    3,
+  );
   assert.match(css, /@keyframes shield-spin/);
-  assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(css, /@media\s*\(\s*prefers-reduced-motion:\s*reduce\s*\)/);
 });
 
 test("secondary destinations live in the More directory", () => {
@@ -43,6 +46,9 @@ test("secondary destinations live in the More directory", () => {
 
 test("launch reads the latest shell selection", () => {
   const game = read("src/game.js");
-  const start = game.slice(game.indexOf("function start()"), game.indexOf("function finish"));
+  const start = game.slice(
+    game.indexOf("function start()"),
+    game.indexOf("function finish"),
+  );
   assert.match(start, /settings = loadSettings\(\)/);
 });
