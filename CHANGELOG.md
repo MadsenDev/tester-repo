@@ -2,6 +2,14 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.44.3] - 2026-09-02
+
+- Split the browser bootstrap, frame runtime, Expedition room lifecycle, menu/HUD controller, enemy renderer and boss arena attacks into focused modules.
+- Keep gameplay formulas and encounter behavior unchanged while bringing every runtime JavaScript file below the 600-line maintenance ceiling.
+- Add automated source-size checks with warnings above 400 lines and CI failures above 600 lines.
+- Strengthen Expedition layout validation with connectivity, reciprocal-link, critical-path, required-room, secret and Black Signal invariants.
+- Reformat the compressed stylesheets for reviewable diffs and advance the offline application version and game cache key.
+
 ## [0.44.1] - 2026-09-02
 
 - Rework Expedition generation around explicit critical-path and optional-branch topology rules.

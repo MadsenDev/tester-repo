@@ -9,6 +9,14 @@ import {
   beginBossPhaseGate,
   updateBossCounterplay,
 } from "./boss-counterplay.js";
+import {
+  fireSideVolley,
+  publishBossArena,
+  queueBlastZones,
+  queueRail,
+  updateBlastZones,
+  updateRails,
+} from "./boss-arena-attacks.js";
 
 export const BOSSES = [
   {
@@ -160,112 +168,6 @@ export function spawnBoss(w, h, time, difficulty = "normal") {
     },
     difficulty,
   );
-}
-function updateBlastZones(e, dt, enemyBullets, particles, onShake) {
-  for (const z of e.blastZones) {
-    z.warn -= dt;
-    if (z.warn <= 0 && !z.detonated) {
-      z.detonated = true;
-      z.life = 0.28;
-      enemyBullets.push({
-        ...spawnEnemyProjectile(z.x, z.y, 0, 0, z.damage, z.r, 0.14),
-        kind: "blast",
-      });
-      for (let i = 0; i < 18; i++) particles.push(particle(z.x, z.y, "boss"));
-      onShake(7);
-    }
-    if (z.detonated) z.life -= dt;
-  }
-  e.blastZones = e.blastZones.filter((z) => !z.detonated || z.life > 0);
-}
-function queueBlastZones(e, player, rage) {
-  const count = rage ? 3 : 2,
-    base = Math.atan2(player.y - e.y, player.x - e.x),
-    lead = rage ? 62 : 48;
-  for (let i = 0; i < count; i++) {
-    const spread = (i - (count - 1) / 2) * (rage ? 1.0 : 1.2),
-      distance = i === 0 ? 0 : lead,
-      x = player.x + Math.cos(base + spread) * distance,
-      y = player.y + Math.sin(base + spread) * distance;
-    e.blastZones.push({
-      x,
-      y,
-      r: rage ? 58 : 52,
-      warn: rage ? 1.0 : 1.2,
-      life: 0,
-      detonated: false,
-      damage: rage ? 26 : 22,
-    });
-  }
-}
-function queueRail(e, player, rage) {
-  const count = rage ? 2 : 1;
-  for (let i = 0; i < count; i++) {
-    const side = i % 2 === 0 ? e.sideFlip : -e.sideFlip,
-      offset = count === 1 ? 0 : i === 0 ? -46 : 46,
-      y = Math.max(120, Math.min(e.arenaH - 36, player.y + offset));
-    e.sideWarnings.push({ side, y, warn: rage ? 0.68 : 0.86, fired: false });
-  }
-  e.sideFlip *= -1;
-}
-function updateRails(e, dt, enemyBullets, onShake) {
-  for (const w of e.sideWarnings) {
-    w.warn -= dt;
-    if (w.warn <= 0 && !w.fired) {
-      w.fired = true;
-      const fromLeft = w.side < 0,
-        x = fromLeft ? -34 : e.arenaW + 34,
-        a = fromLeft ? 0 : Math.PI;
-      enemyBullets.push({
-        ...spawnEnemyProjectile(
-          x,
-          w.y,
-          a,
-          e.bossPhase === 2 ? 760 : 680,
-          e.bossPhase === 2 ? 25 : 21,
-          10,
-          2.2,
-        ),
-        kind: "rail",
-        side: w.side,
-      });
-      onShake(6);
-    }
-  }
-  e.sideWarnings = e.sideWarnings.filter((w) => !w.fired);
-}
-function fireSideVolley(e, player, enemyBullets, rage) {
-  const fromLeft = e.sideFlip < 0,
-    x = fromLeft ? -28 : e.arenaW + 28,
-    dir = fromLeft ? 1 : -1,
-    count = rage ? 4 : 3;
-  for (let i = 0; i < count; i++) {
-    const y = Math.max(
-        120,
-        Math.min(e.arenaH - 30, player.y + (i - (count - 1) / 2) * 58),
-      ),
-      b = spawnEnemyProjectile(
-        x,
-        y,
-        fromLeft ? 0 : Math.PI,
-        rage ? 235 : 195,
-        rage ? 14 : 12,
-        6,
-        4,
-      );
-    enemyBullets.push({ ...b, kind: "sidebolt", vx: Math.abs(b.vx) * dir });
-  }
-  e.sideFlip *= -1;
-}
-function publishBossArena(e) {
-  const tuning = e.bossTuning || bossDifficulty(e.bossDifficulty);
-  globalThis.__orbitalBossArena = {
-    at: performance.now(),
-    suppressRegulars: !tuning.regularsDuringBoss,
-    summoner: tuning.regularsDuringBoss && e.kind === "brood",
-    burst: tuning.regularsDuringBoss && e.kind === "brood" && e.summonBurst > 0,
-    hpRatio: e.hp / e.hpMax,
-  };
 }
 export function updateBoss(
   e,

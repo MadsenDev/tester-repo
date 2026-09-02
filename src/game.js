@@ -1,171 +1,47 @@
 import { AudioSystem } from "./audio.js";
-import { clamp, dist2, spawnEnemy, particle } from "./entities.js";
+import { clamp } from "./entities.js";
 import { randomChoices } from "./upgrades.js";
 import { MODULE_POOLS, modulePoolForLevel } from "./module-catalog.js";
-import {
-  initWeapons,
-  updateWeapons,
-  updateWeaponProjectiles,
-  weaponLabel,
-} from "./weapons.js";
+import { initWeapons } from "./weapons.js";
 import { createInput } from "./input.js";
-import { moveEnemy } from "./enemy-ai.js";
 import { renderScene } from "./render.js";
-import { updateBoss } from "./bosses.js";
+import { createBossRuntime } from "./boss-runtime.js";
+import { loadSettings, saveSettings, loadStats, recordRun } from "./meta.js";
+import { createHazardState } from "./hazards.js";
+import { createEventState } from "./events.js";
+import { applyShip } from "./ships.js";
+import { bossInterval, preparePlayerForMode } from "./modes.js";
 import {
-  bossDifficulty,
-  prepareBossArena,
-  regularEnemiesAllowed,
-} from "./boss-difficulty.js";
-import {
-  captureEnemyHealth,
-  createBossRuntime,
-  recordEnemyHealthDelta,
-  spawnDirectedBoss,
-} from "./boss-runtime.js";
-import { sectorAt } from "./world.js";
-import {
-  loadSettings,
-  saveSettings,
-  loadStats,
-  recordRun,
-  resetStats,
-  difficultyConfig,
-} from "./meta.js";
-import { createHazardState, updateHazards } from "./hazards.js";
-import { onCompanionProjectileHit } from "./companions.js";
-import { createEventState, updateEvents, eventModifiers } from "./events.js";
-import {
-  SHIPS,
-  unlockedShips,
-  shipById,
-  applyShip,
-  updateShipHeading,
-} from "./ships.js";
-import {
-  MODES,
-  unlockedModes,
-  modeById,
-  objectiveFor,
-  runLimit,
-  allowsRegularEnemies,
-  bossInterval,
-  preparePlayerForMode,
-  spawnPressure,
-} from "./modes.js";
-import {
-  combineModifiers,
   createRouteState,
   createRouteUI,
   renderRouteChoice,
   routeChoices,
-  routeDue,
   routeLeg,
-  routeModifiers,
   selectRoute,
   updateRouteBadge,
 } from "./sector-routes.js";
-import {
-  afterSpecialDamage,
-  echoSpecialVolley,
-  onSpecialKill,
-  onSpecialLevelUp,
-  resolveSpecialDamage,
-  specialChoiceCount,
-  specialDamageMultiplier,
-  specialGemMultiplier,
-  updateSpecialModules,
-} from "./special-modules.js";
+import { onSpecialLevelUp, specialChoiceCount } from "./special-modules.js";
 import {
   acceptBlackSignal,
   blackSignalOffers,
   createBlackSignalUI,
   renderBlackSignal,
-  shouldOfferBlackSignal,
 } from "./black-signal.js";
 import { discover, recordArchiveRun } from "./discovery.js";
 import { activeSynergies } from "./synergy-catalog.js";
-import { attractPowerup, rollPowerupDrop } from "./drop-economy.js";
-import { regulateProjectilePressure } from "./projectile-pressure.js";
-import {
-  applyFriendlyVisualBudget,
-  compressSalvage,
-} from "./combat-readability.js";
-import { bossDamageMultiplier } from "./boss-counterplay.js";
-import { compactArsenalLabel } from "./hud-summary.js";
-import {
-  createExpeditionState,
-  currentExpeditionNode,
-  expeditionDoorChoices,
-  expeditionObjective,
-  expeditionPedestalSpec,
-  expeditionRoomReward,
-  expeditionShopCost,
-  expeditionWavePlan,
-  markExpeditionRoomCleared,
-  markExpeditionWaveSpawned,
-  persistExpeditionRoom,
-  takeExpeditionDoor,
-} from "./expedition.js";
-import { expeditionRoomEntryPosition } from "./expedition-render.js";
-import {
-  createExpeditionEncounterRuntime,
-  damageExpeditionEnemy,
-  expeditionEnemyKind,
-  updateExpeditionEncounter,
-} from "./expedition-encounters.js";
-import {
-  syncManifestations,
-  updateManifestations,
-} from "./manifestations.js";
-import {
-  onArenaEnemyKilled,
-  updateArenaModules,
-} from "./arena-modules.js";
+import { attractPowerup } from "./drop-economy.js";
+import { createExpeditionState } from "./expedition.js";
+import { createExpeditionEncounterRuntime } from "./expedition-encounters.js";
+import { updateGame } from "./game-runtime.js";
+import { createExpeditionController } from "./expedition-runtime.js";
+import { collectGameUi, createMenuController, updateHud } from "./game-ui.js";
+import { createFreshPlayer } from "./player-state.js";
+import { createCombatActions } from "./combat-actions.js";
 const routeUi = createRouteUI();
 const blackSignalUi = createBlackSignalUI();
 const canvas = document.querySelector("#game"),
   ctx = canvas.getContext("2d");
-const ui = {
-  overlay: document.querySelector("#overlay"),
-  menu: document.querySelector("#menu"),
-  settings: document.querySelector("#settings"),
-  stats: document.querySelector("#stats"),
-  levelup: document.querySelector("#levelup"),
-  route: routeUi.panel,
-  blackSignal: blackSignalUi.panel,
-  gameover: document.querySelector("#gameover"),
-  victory: document.querySelector("#victory"),
-  fatal: document.querySelector("#fatal"),
-  fatalMessage: document.querySelector("#fatalMessage"),
-  choices: document.querySelector("#choices"),
-  hp: document.querySelector("#hp"),
-  level: document.querySelector("#level"),
-  time: document.querySelector("#time"),
-  score: document.querySelector("#score"),
-  hpBar: document.querySelector("#hpBar"),
-  xpBar: document.querySelector("#xpBar"),
-  combo: document.querySelector("#combo"),
-  arsenal: document.querySelector("#arsenal"),
-  sector: document.querySelector("#sector"),
-  objective: document.querySelector("#objective"),
-  bossName: document.querySelector("#bossName"),
-  best: document.querySelector("#best"),
-  finalScore: document.querySelector("#finalScore"),
-  victoryScore: document.querySelector("#victoryScore"),
-  difficulty: document.querySelector("#difficultySetting"),
-  shake: document.querySelector("#shakeSetting"),
-  sound: document.querySelector("#soundSetting"),
-  statRuns: document.querySelector("#statRuns"),
-  statWins: document.querySelector("#statWins"),
-  statKills: document.querySelector("#statKills"),
-  statBest: document.querySelector("#statBest"),
-  shipSelect: document.querySelector("#shipSelect"),
-  shipDesc: document.querySelector("#shipHeroDesc"),
-  modeSelect: document.querySelector("#modeSelect"),
-  modeDesc: document.querySelector("#modeDesc"),
-  nextUnlock: document.querySelector("#nextUnlock"),
-};
+const ui = collectGameUi(routeUi.panel, blackSignalUi.panel);
 const audio = new AudioSystem();
 let settings = loadSettings(),
   stats = loadStats();
@@ -238,19 +114,6 @@ addEventListener("resize", resize);
 globalThis.visualViewport?.addEventListener("resize", resize);
 addEventListener("orientationchange", resize);
 resize();
-function allPanels() {
-  return [
-    ui.menu,
-    ui.settings,
-    ui.stats,
-    ui.levelup,
-    ui.route,
-    ui.blackSignal,
-    ui.gameover,
-    ui.victory,
-    ui.fatal,
-  ];
-}
 function noteDiscovery(kind, id) {
   if (discover(kind, id)) runDiscoveries.push({ kind, id });
 }
@@ -258,160 +121,12 @@ function syncSynergyDiscoveries() {
   for (const synergy of activeSynergies(player))
     noteDiscovery("synergies", synergy.id);
 }
-function hidePanels() {
-  for (const p of allPanels()) p?.classList.add("hidden");
-}
-function showPanel(panel) {
-  hidePanels();
-  panel.classList.remove("hidden");
-  ui.overlay.classList.add("show");
-}
-function showMenu() {
-  showPanel(ui.menu);
-  refreshStats();
-  refreshSettings();
-  refreshShip();
-  refreshMode();
-}
-function refreshSettings() {
-  ui.difficulty.querySelector("b").textContent =
-    settings.difficulty.toUpperCase();
-  ui.shake.querySelector("b").textContent = settings.shake ? "ON" : "OFF";
-  ui.sound.querySelector("b").textContent = settings.sound ? "ON" : "OFF";
-}
-function refreshStats() {
-  stats = loadStats();
-  ui.best.textContent = Math.max(
-    stats.best,
-    Number(localStorage.getItem("orbital-best") || 0),
-  );
-  ui.statRuns.textContent = stats.runs;
-  ui.statWins.textContent = stats.wins;
-  ui.statKills.textContent = stats.kills;
-  ui.statBest.textContent = stats.best;
-  const lockedShips = SHIPS.filter(
-      (s) => !unlockedShips(stats).some((u) => u.id === s.id),
-    ),
-    lockedModes = MODES.filter(
-      (m) => !unlockedModes(stats).some((u) => u.id === m.id),
-    );
-  const notes = [];
-  if (lockedShips.length)
-    notes.push(
-      "Next chassis: " + lockedShips[0].name + " — " + lockedShips[0].unlock,
-    );
-  if (lockedModes.length)
-    notes.push(
-      "Next mode: " + lockedModes[0].name + " — " + lockedModes[0].unlock,
-    );
-  ui.nextUnlock.textContent = notes.length
-    ? notes.join(" · ")
-    : "All current chassis and modes unlocked.";
-}
-function refreshShip() {
-  const available = unlockedShips(stats);
-  if (!available.some((s) => s.id === settings.ship)) {
-    settings.ship = "strider";
-    saveSettings(settings);
-  }
-  const ship = shipById(settings.ship);
-  ui.shipSelect.querySelector("[data-ship-name]").textContent = ship.name;
-  ui.shipDesc.textContent = ship.desc;
-}
-function refreshMode() {
-  const available = unlockedModes(stats);
-  if (!available.some((m) => m.id === settings.mode)) {
-    settings.mode = "expedition";
-    saveSettings(settings);
-  }
-  const mode = modeById(settings.mode);
-  ui.modeSelect.querySelector("b").textContent = mode.name;
-  ui.modeDesc.textContent = mode.desc;
-  ui.objective.textContent = objectiveFor(mode.id);
-}
-refreshStats();
-refreshSettings();
-refreshShip();
-refreshMode();
-document.querySelector("#start").onclick = () => start();
-document.querySelector("#restart").onclick = () => start();
-document.querySelector("#victoryRestart").onclick = () => start();
-document
-  .querySelector("#fatalRestart")
-  ?.addEventListener("click", () => location.reload());
-ui.difficulty.onclick = () => {
-  settings.difficulty =
-    settings.difficulty === "normal"
-      ? "intense"
-      : settings.difficulty === "intense"
-        ? "chill"
-        : "normal";
-  saveSettings(settings);
-  refreshSettings();
-};
-ui.shake.onclick = () => {
-  settings.shake = !settings.shake;
-  saveSettings(settings);
-  refreshSettings();
-};
-ui.sound.onclick = () => {
-  settings.sound = !settings.sound;
-  audio.muted = !settings.sound;
-  saveSettings(settings);
-  refreshSettings();
-};
-ui.modeSelect.onclick = () => {
-  const available = unlockedModes(stats),
-    i = Math.max(
-      0,
-      available.findIndex((m) => m.id === settings.mode),
-    );
-  settings.mode = available[(i + 1) % available.length].id;
-  saveSettings(settings);
-  refreshMode();
-};
-document.querySelector("#resetStats").onclick = () => {
-  stats = resetStats();
-  settings.ship = "strider";
-  settings.mode = "expedition";
-  saveSettings(settings);
-  refreshStats();
-  refreshShip();
-  refreshMode();
-};
-function freshPlayer() {
-  return {
-    x: W / 2,
-    y: H / 2,
-    r: 11,
-    hp: 100,
-    maxHp: 100,
-    speed: 245,
-    fireRate: 0.42,
-    fireCd: 0,
-    damage: 18,
-    shots: 1,
-    pierce: 0,
-    bulletSpeed: 520,
-    bulletSize: 4,
-    magnet: 110,
-    regen: 0,
-    crit: 0.05,
-    armor: 0,
-    dashBoost: 0,
-    xpGain: 1,
-    orbitals: 0,
-    invuln: 0,
-    boost: 0,
-    level: 1,
-    xp: 0,
-    nextXp: 35,
-    overdrive: 0,
-    nullified: false,
-    shipSides: 3,
-    shipColor: "#78ebff",
-  };
-}
+const hidePanels = () => menuController.hidePanels();
+const showPanel = (panel) => menuController.showPanel(panel);
+const refreshSettings = () => menuController.refreshSettings();
+const refreshStats = () => menuController.refreshStats();
+const refreshShip = () => menuController.refreshShip();
+const refreshMode = () => menuController.refreshMode();
 function start() {
   try {
     settings = loadSettings();
@@ -420,7 +135,7 @@ function start() {
     } catch (err) {
       console.warn("Audio unavailable", err);
     }
-    player = applyShip(freshPlayer(), settings.ship);
+    player = applyShip(createFreshPlayer(W, H), settings.ship);
     initWeapons(player);
     preparePlayerForMode(player, settings.mode);
     enemies = [];
@@ -603,687 +318,193 @@ function chooseBlackSignal() {
   });
   showPanel(ui.blackSignal);
 }
-function nearest() {
-  let best = null,
-    bd = Infinity;
-  for (const e of enemies) {
-    const d = dist2(player, e);
-    if (d < bd) {
-      bd = d;
-      best = e;
-    }
-  }
-  return best;
-}
-function shoot() {
-  const t = nearest();
-  if (!t) return;
-  const base = Math.atan2(t.y - player.y, t.x - player.x),
-    startIndex = bullets.length,
-    damageMultiplier = specialDamageMultiplier(player);
-  for (let i = 0; i < player.shots; i++) {
-    const spread = (i - (player.shots - 1) / 2) * 0.14,
-      a = base + spread;
-    bullets.push({
-      kind: "blaster",
-      x: player.x,
-      y: player.y,
-      vx: Math.cos(a) * player.bulletSpeed,
-      vy: Math.sin(a) * player.bulletSpeed,
-      r: player.bulletSize,
-      life: 1.8,
-      pierce: player.pierce,
-      damage:
-        player.damage *
-        damageMultiplier *
-        (Math.random() < player.crit ? 2 : 1),
-    });
-  }
-  echoSpecialVolley(player, bullets, startIndex);
-  audio.shot();
-}
-function hurt(amount) {
-  if (player.invuln > 0 || state !== "playing") return;
-  const diff = difficultyConfig(settings.difficulty),
-    mods = combineModifiers(
-      settings.mode === "bossrush" ? {} : eventModifiers(events),
-      routeModifiers(routes),
-    );
-  const result = resolveSpecialDamage(
-    player,
-    amount *
-      (1 - player.armor) *
-      diff.damage *
-      mods.damageTaken *
-      (player.contractDamageTaken || 1),
-    Math.random,
-  );
-  if (result.evaded) {
-    for (let i = 0; i < 6; i++)
-      particles.push(particle(player.x, player.y, "spark"));
-    return;
-  }
-  player.hp -= result.damage;
-  player.invuln = 0.22;
-  player.boost = 0.65;
-  shake = 8;
-  combo = comboTimer = 0;
-  audio.hurt();
-  for (let i = 0; i < 10; i++)
-    particles.push(particle(player.x, player.y, "hurt"));
-  afterSpecialDamage(player, result);
-  if (player.hp <= 0) finish(false);
-}
-function awardKill(e, mods) {
-  const diff = difficultyConfig(settings.difficulty);
-  kills++;
-  killsSinceRepair++;
-  onSpecialKill(player, e);
-  onArenaEnemyKilled(player, e);
-  if (e.boss) {
-    defeatedBosses.push(e.kind);
-    noteDiscovery("bosses", e.kind);
-    if (!expedition && shouldOfferBlackSignal(defeatedBosses.length))
-      pendingBlackSignal = true;
-  }
-  combo = comboTimer > 0 ? combo + 1 : 1;
-  comboTimer = 2.8;
-  score +=
-    (e.boss ? 700 : 20 + e.v) *
-    (1 + Math.min(combo, 30) * 0.03) *
-    diff.score *
-    mods.score;
-  const n = expedition ? 0 : e.boss ? 16 : 1;
-  for (let j = 0; j < n; j++)
-    gems.push({
-      x: e.x + (Math.random() - 0.5) * 24,
-      y: e.y + (Math.random() - 0.5) * 24,
-      v: e.boss ? 24 : e.v,
-      r: e.boss ? 5 : 4,
-    });
-  for (let j = 0; j < (e.boss ? 36 : e.elite ? 16 : 9); j++)
-    particles.push(particle(e.x, e.y, e.boss ? "boss" : "spark"));
-  const drop = rollPowerupDrop(
-    e,
-    settings.difficulty,
-    player,
-    killsSinceRepair,
-  );
-  if (drop) {
-    powerups.push({
-      x: e.x,
-      y: e.y,
-      ...drop,
-      r: 9,
-      phase: Math.random() * 6.28,
-    });
-    if (drop.kind === "repair") killsSinceRepair = 0;
-  }
-  if (e.boss && settings.mode === "bossrush") nextBoss = time + 8;
-}
-function collectPowerup(p) {
-  if (p.kind === "repair")
-    player.hp = Math.min(player.maxHp, player.hp + (p.value || 32));
-  else if (p.kind === "pulse") {
-    enemyBullets = [];
-    for (const e of enemies) e.hp -= Math.max(80, player.damage * 4);
-    shake = 14;
-    for (let i = 0; i < 30; i++)
-      particles.push(particle(player.x, player.y, "boss"));
-  } else if (p.kind === "overdrive")
-    player.overdrive = Math.max(player.overdrive, 8);
-  audio.level();
-}
+const shoot = () => combatActions.shoot();
+const hurt = (amount) => combatActions.hurt(amount);
+const awardKill = (enemy, mods) => combatActions.awardKill(enemy, mods);
+const collectPowerup = (powerup) => combatActions.collectPowerup(powerup);
+const runtime = {
+  get state() {
+    return state;
+  },
+  get time() {
+    return time;
+  },
+  set time(value) {
+    time = value;
+  },
+  get score() {
+    return score;
+  },
+  set score(value) {
+    score = value;
+  },
+  get kills() {
+    return kills;
+  },
+  set kills(value) {
+    kills = value;
+  },
+  get killsSinceRepair() {
+    return killsSinceRepair;
+  },
+  set killsSinceRepair(value) {
+    killsSinceRepair = value;
+  },
+  get defeatedBosses() {
+    return defeatedBosses;
+  },
+  get settings() {
+    return settings;
+  },
+  get stats() {
+    return stats;
+  },
+  set stats(value) {
+    stats = value;
+  },
+  get routes() {
+    return routes;
+  },
+  get events() {
+    return events;
+  },
+  get encounteredEvents() {
+    return encounteredEvents;
+  },
+  get player() {
+    return player;
+  },
+  get input() {
+    return input;
+  },
+  get enemies() {
+    return enemies;
+  },
+  set enemies(value) {
+    enemies = value;
+  },
+  get bullets() {
+    return bullets;
+  },
+  set bullets(value) {
+    bullets = value;
+  },
+  get enemyBullets() {
+    return enemyBullets;
+  },
+  set enemyBullets(value) {
+    enemyBullets = value;
+  },
+  get particles() {
+    return particles;
+  },
+  set particles(value) {
+    particles = value;
+  },
+  get gems() {
+    return gems;
+  },
+  set gems(value) {
+    gems = value;
+  },
+  get powerups() {
+    return powerups;
+  },
+  get expedition() {
+    return expedition;
+  },
+  get bossRuntime() {
+    return bossRuntime;
+  },
+  get hazards() {
+    return hazards;
+  },
+  set hazards(value) {
+    hazards = value;
+  },
+  get contractHistory() {
+    return contractHistory;
+  },
+  get width() {
+    return W;
+  },
+  get height() {
+    return H;
+  },
+  get spawnTimer() {
+    return spawnTimer;
+  },
+  set spawnTimer(value) {
+    spawnTimer = value;
+  },
+  get nextBoss() {
+    return nextBoss;
+  },
+  set nextBoss(value) {
+    nextBoss = value;
+  },
+  get bossCount() {
+    return bossCount;
+  },
+  set bossCount(value) {
+    bossCount = value;
+  },
+  get combo() {
+    return combo;
+  },
+  set combo(value) {
+    combo = value;
+  },
+  get comboTimer() {
+    return comboTimer;
+  },
+  set comboTimer(value) {
+    comboTimer = value;
+  },
+  get shake() {
+    return shake;
+  },
+  set shake(value) {
+    shake = value;
+  },
+  get pendingBlackSignal() {
+    return pendingBlackSignal;
+  },
+  set pendingBlackSignal(value) {
+    pendingBlackSignal = value;
+  },
+  ui,
+  audio,
+  start,
+  routesEnabled,
+  chooseSectorRoute,
+  noteDiscovery,
+  syncSynergyDiscoveries,
+  shoot,
+  updateExpedition: (dt) => expeditionController.update(dt),
+  hurt,
+  awardKill,
+  chooseBlackSignal,
+  levelUp,
+  collectPowerup,
+  attractPowerup,
+  finish,
+  updateUI,
+};
+const combatActions = createCombatActions(runtime);
+const expeditionController = createExpeditionController(runtime);
+const menuController = createMenuController(runtime);
+menuController.bind();
+refreshStats();
+refreshSettings();
+refreshShip();
+refreshMode();
 
-function grantExpeditionRoomReward() {
-  if (!expedition || expedition.rewardGranted) return;
-  expedition.credits += expeditionRoomReward(expedition);
-  expedition.rewardGranted = true;
-  persistExpeditionRoom(expedition);
-}
-
-function positionPlayerForRoom(entryDirection) {
-  const position = expeditionRoomEntryPosition(entryDirection, W, H, player.r);
-  player.x = position.x;
-  player.y = position.y;
-  player.vx = player.vy = 0;
-}
-
-function clearExpeditionArena(entryDirection) {
-  enemies = [];
-  bullets = [];
-  enemyBullets = [];
-  gems = [];
-  powerups = [];
-  hazards = createHazardState();
-  positionPlayerForRoom(entryDirection);
-}
-
-function openExpeditionDoors() {
-  grantExpeditionRoomReward();
-  expeditionDoorChoices(expedition, player);
-}
-
-function createExpeditionPedestals() {
-  if (expedition.pedestalsInitialized) return true;
-  const spec = expeditionPedestalSpec(expedition, player);
-  if (!spec) return false;
-  const offers = randomChoices(player, spec.count, spec.pool);
-  const baseCost = expeditionShopCost(spec.cost + expedition.sector * 2, player);
-  expedition.pedestals = offers.map((module) => ({
-    module,
-    kind: expedition.roomType,
-    color:
-      expedition.roomType === "boss"
-        ? "#ffe27b"
-        : expedition.roomType === "secret"
-          ? "#ff74ad"
-          : expedition.roomType === "choice"
-            ? "#c994ff"
-            : "#8dffcf",
-    cost: expedition.roomType === "shop" ? baseCost : 0,
-    exclusive: spec.exclusive,
-  }));
-  expedition.pedestalsInitialized = true;
-  expedition.phase = "reward";
-  persistExpeditionRoom(expedition);
-  return true;
-}
-
-function createBlackSignalPedestals() {
-  if (expedition.pedestalsInitialized) return;
-  const offers = blackSignalOffers(player);
-  expedition.pedestals = offers.map((offer) => ({
-    offer,
-    module: {
-      ...offer.module,
-      desc: `${offer.terms.price} ${offer.terms.boon}`,
-    },
-    kind: "black",
-    color: "#ff74ad",
-    cost: 0,
-    exclusive: true,
-  }));
-  expedition.pedestalsInitialized = true;
-  expedition.phase = "reward";
-  expedition.message = "BLACK SIGNAL // THE PRICE IS PERMANENT";
-  expedition.messageTime = 2.4;
-  persistExpeditionRoom(expedition);
-}
-
-function completeExpeditionRoom() {
-  if (!expedition || expedition.phase !== "combat") return;
-  enemyBullets = [];
-  bullets = [];
-  if (expedition.encounterRuntime) {
-    expedition.encounterRuntime.active = false;
-    expedition.encounterRuntime.beam = null;
-  }
-  markExpeditionRoomCleared(expedition);
-  grantExpeditionRoomReward();
-  if (expedition.roomType === "boss") {
-    createExpeditionPedestals();
-    openExpeditionDoors();
-    expedition.message = "WARDEN DESTROYED // RELIC MAY BE LEFT BEHIND";
-    expedition.messageTime = 2.5;
-    return;
-  }
-  openExpeditionDoors();
-  expedition.message = `ROOM CLEAR // ${expedition.credits} SCRAP`;
-  expedition.messageTime = 1.8;
-}
-
-function prepareExpeditionRoom(entryDirection) {
-  clearExpeditionArena(entryDirection);
-  expedition.encounterRuntime = createExpeditionEncounterRuntime(
-    expedition.encounterId,
-    W,
-    H,
-    expedition.random,
-  );
-  if (expedition.phase === "combat") return;
-  expedition.encounterRuntime.active = false;
-  const node = currentExpeditionNode(expedition);
-  if (!node.cleared) markExpeditionRoomCleared(expedition);
-  if (expedition.roomType === "repair" && !expedition.rewardGranted) {
-    const ratio = 0.32 + (player.expeditionRepairBonus || 0);
-    player.hp = Math.min(player.maxHp, player.hp + player.maxHp * ratio);
-    expedition.message = "QUIET DOCK // HULL RESTORED";
-    expedition.messageTime = 2.2;
-  } else if (expedition.roomType === "black") {
-    createBlackSignalPedestals();
-  } else if (["item", "choice", "shop", "secret"].includes(expedition.roomType)) {
-    createExpeditionPedestals();
-  }
-  openExpeditionDoors();
-}
-
-function enterExpeditionDoor(door) {
-  if (door.type === "victory") {
-    finish(true);
-    return;
-  }
-  takeExpeditionDoor(expedition, door, settings.difficulty);
-  prepareExpeditionRoom(door.direction);
-  audio.level();
-}
-
-function collectExpeditionPedestal(pedestal) {
-  if (pedestal.cost && expedition.credits < pedestal.cost) {
-    expedition.message = `INSUFFICIENT SCRAP // NEED ${pedestal.cost}`;
-    expedition.messageTime = 1.2;
-    return;
-  }
-  if (pedestal.cost) expedition.credits -= pedestal.cost;
-  if (pedestal.kind === "black") {
-    const accepted = acceptBlackSignal(player, pedestal.offer);
-    contractHistory.push(accepted);
-    noteDiscovery("modules", accepted.module);
-  } else {
-    pedestal.module.apply(player);
-    noteDiscovery("modules", pedestal.module.id);
-  }
-  player.level++;
-  syncSynergyDiscoveries();
-  audio.level();
-  shake = Math.max(shake, 10);
-  if (pedestal.exclusive) expedition.pedestals = [];
-  else expedition.pedestals = expedition.pedestals.filter((p) => p !== pedestal);
-  persistExpeditionRoom(expedition);
-  expeditionDoorChoices(expedition, player);
-  updateUI();
-}
-
-function spawnExpeditionWave() {
-  const plan = expeditionWavePlan(expedition, settings.difficulty);
-  for (let i = 0; i < plan.count; i++)
-    enemies.push(
-      spawnEnemy(
-        W,
-        H,
-        plan.syntheticTime,
-        plan.eliteBonus,
-        expedition.roomType === "elite" && i === 0,
-        expeditionEnemyKind(expedition, i, expedition.random),
-      ),
-    );
-  markExpeditionWaveSpawned(expedition);
-  expedition.message = `WAVE ${expedition.wave}/${expedition.waves}`;
-  expedition.messageTime = 1.1;
-}
-
-function updateExpedition(dt) {
-  if (!expedition) return;
-  expedition.messageTime = Math.max(0, expedition.messageTime - dt);
-  if (expedition.phase === "combat" && enemies.length === 0) {
-    expedition.waveDelay -= dt;
-    if (expedition.waveDelay > 0) return;
-    if (expedition.roomType === "boss" && expedition.wave === 0) {
-      const boss = spawnDirectedBoss(bossRuntime, {
-        w: W,
-        h: H,
-        time: expedition.sector * 120 - 60,
-        difficulty: settings.difficulty,
-        mode: "expedition",
-        sector: expedition.sector,
-        bossCount: bossRuntime.totalBosses,
-        player,
-        random: expedition.random,
-      });
-      enemies.push(boss);
-      noteDiscovery("bosses", boss.kind);
-      markExpeditionWaveSpawned(expedition);
-      audio.boss();
-      shake = 12;
-    } else if (expedition.wave < expedition.waves) spawnExpeditionWave();
-    else completeExpeditionRoom();
-  }
-  for (const pedestal of [...expedition.pedestals]) {
-    if (!Number.isFinite(pedestal.x)) continue;
-    if (dist2(player, pedestal) < (player.r + (pedestal.r || 24)) ** 2)
-      collectExpeditionPedestal(pedestal);
-  }
-  for (const door of [...expedition.doors]) {
-    if (!Number.isFinite(door.x)) continue;
-    if (
-      Math.abs(player.x - door.x) < door.w / 2 + player.r &&
-      Math.abs(player.y - door.y) < door.h / 2 + player.r
-    ) {
-      enterExpeditionDoor(door);
-      break;
-    }
-  }
-}
 function update(dt) {
-  if (state !== "playing") return;
-  const damageSnapshot = captureEnemyHealth(enemies);
-  time += dt;
-  const limit = runLimit(settings.mode);
-  if (time >= limit) {
-    time = limit;
-    updateUI();
-    finish(true);
-    return;
-  }
-  if (routesEnabled() && routeDue(routes, time)) {
-    chooseSectorRoute();
-    return;
-  }
-  if (settings.mode !== "bossrush" && settings.mode !== "expedition") {
-    updateEvents(events, dt, time);
-    if (events.current && !encounteredEvents.includes(events.current.id)) {
-      encounteredEvents.push(events.current.id);
-      noteDiscovery("events", events.current.id);
-    }
-  }
-  const eventMods =
-      settings.mode === "bossrush" || settings.mode === "expedition"
-        ? { fire: 1, enemySpeed: 1, magnet: 1, elite: 0, score: 1 }
-        : eventModifiers(events),
-    mods = combineModifiers(eventMods, routeModifiers(routes)),
-    diff = difficultyConfig(settings.difficulty),
-    sector = sectorAt(time);
-  score += dt * 10 * diff.score * mods.score;
-  comboTimer = Math.max(0, comboTimer - dt);
-  if (comboTimer === 0) combo = 0;
-  player.invuln = Math.max(0, player.invuln - dt);
-  player.boost = Math.max(0, player.boost - dt);
-  player.overdrive = Math.max(0, player.overdrive - dt);
-  player.hp = Math.min(player.maxHp, player.hp + player.regen * dt);
-  const { dx, dy } = input.movement(),
-    sp = player.speed * (player.boost > 0 ? 1 + player.dashBoost : 1),
-    margin = player.r + 4;
-  player.vx = dx * sp;
-  player.vy = dy * sp;
-  updateShipHeading(player, dx, dy, dt);
-  player.x = clamp(player.x + dx * sp * dt, margin, W - margin);
-  player.y = clamp(player.y + dy * sp * dt, margin, H - margin);
-  player.fireCd -= dt;
-  if (player.fireCd <= 0 && !player.nullified) {
-    shoot();
-    player.fireCd =
-      player.fireRate * (player.overdrive > 0 ? 0.55 : 1) * mods.fire;
-  }
-  if (!player.nullified)
-    updateWeapons(
-      player,
-      dt,
-      enemies,
-      bullets,
-      enemyBullets,
-      particles,
-      time,
-    );
-  updateSpecialModules(player, dt, {
-    enemies,
-    enemyBullets,
-    particles,
-    time,
-  });
-  const newManifestations = syncManifestations(player);
-  if (newManifestations.length) {
-    const latest = newManifestations[newManifestations.length - 1];
-    audio.manifestation(latest.tone);
-    shake = Math.max(shake, 16);
-  }
-  updateManifestations(player, dt, { enemies, enemyBullets });
-  updateWeaponProjectiles(bullets, enemies, dt);
-  updateExpedition(dt);
-  const bossAlive = enemies.some((e) => e.boss);
-  const bossRules = bossDifficulty(settings.difficulty);
-  if (
-    allowsRegularEnemies(settings.mode) &&
-    regularEnemiesAllowed(settings.difficulty, bossAlive)
-  ) {
-    const rate =
-      Math.max(0.085, 0.7 - time * 0.00092) /
-      (diff.spawn *
-        sector.pressure *
-        spawnPressure(settings.mode, time) *
-        mods.spawn);
-    spawnTimer -= dt;
-    while (spawnTimer <= 0) {
-      enemies.push(spawnEnemy(W, H, time, mods.elite));
-      spawnTimer += rate;
-    }
-  }
-  if (time >= nextBoss && !bossAlive) {
-    bossCount++;
-    const bossTime = settings.mode === "bossrush" ? bossCount * 60 : time;
-    if (bossRules.clearArena) {
-      ({ enemies, enemyBullets } = prepareBossArena(
-        enemies,
-        enemyBullets,
-        settings.difficulty,
-      ));
-    }
-    const boss = spawnDirectedBoss(bossRuntime, {
-      w: W,
-      h: H,
-      time: bossTime,
-      difficulty: settings.difficulty,
-      mode: settings.mode,
-      bossCount,
-      player,
-    });
-    enemies.push(boss);
-    noteDiscovery("bosses", boss.kind);
-    nextBoss =
-      settings.mode === "bossrush"
-        ? Infinity
-        : nextBoss + bossInterval(settings.mode);
-    audio.boss();
-    shake = 12;
-  }
-  for (const e of enemies) {
-    e.flash = Math.max(0, e.flash - dt);
-    e.phase += dt;
-    e.px = e.x;
-    e.py = e.y;
-    if (e.boss)
-      updateBoss(e, dt, {
-        player,
-        enemyBullets,
-        particles,
-        time,
-        onHazard: hurt,
-        onShake: (v) => (shake = Math.max(shake, v)),
-      });
-    else {
-      const old = e.s;
-      e.s *= mods.enemySpeed;
-      moveEnemy(e, dt, { player, enemyBullets, particles, time });
-      e.s = old;
-    }
-    player.x = clamp(player.x, margin, W - margin);
-    player.y = clamp(player.y, margin, H - margin);
-    if (dist2(player, e) < (player.r + e.r) ** 2) hurt(e.d);
-  }
-  if (expedition)
-    updateExpeditionEncounter(expedition.encounterRuntime, dt, {
-      player,
-      bullets,
-      enemyBullets,
-      enemies,
-      hurt,
-      W,
-      H,
-    });
-  if (settings.mode !== "bossrush" && settings.mode !== "expedition")
-    updateHazards(hazards, dt, {
-      time,
-      W,
-      H,
-      player,
-      bullets,
-      enemyBullets,
-      enemies,
-      particles,
-      hurt,
-    });
-  for (const b of bullets) {
-    b.x += b.vx * dt;
-    b.y += b.vy * dt;
-    b.life -= dt;
-    b.hit ??= new Set();
-    for (const e of enemies) {
-      if (e.hp <= 0 || b.hit.has(e)) continue;
-      if (dist2(b, e) < (b.r + e.r) ** 2) {
-        b.hit.add(e);
-        const damage = b.damage * bossDamageMultiplier(e);
-        if (expedition) damageExpeditionEnemy(e, damage, enemies);
-        else e.hp -= damage;
-        e.flash = 0.06;
-        onCompanionProjectileHit(b, e, enemies, player.weaponFx);
-        b.pierce--;
-        if (b.phaseMemory && b.pierce >= 0) b.damage *= 1.12;
-        audio.hit();
-        for (let i = 0; i < (b.kind === "missile" ? 8 : 3); i++)
-          particles.push(
-            particle(b.x, b.y, b.kind === "missile" ? "boss" : "spark"),
-          );
-        if (b.pierce < 0) {
-          b.life = 0;
-          break;
-        }
-      }
-    }
-  }
-  for (const b of enemyBullets) {
-    if (b.life <= 0) continue;
-    b.x += b.vx * dt;
-    b.y += b.vy * dt;
-    b.life -= dt;
-    if (dist2(player, b) < (player.r + b.r) ** 2) {
-      b.life = 0;
-      hurt(b.damage);
-    }
-  }
-  updateArenaModules(player, dt, {
-    enemies,
-    bullets,
-    enemyBullets,
-    time,
-    W,
-    H,
-  });
-  recordEnemyHealthDelta(bossRuntime, damageSnapshot, time);
-  for (let i = enemies.length - 1; i >= 0; i--)
-    if (enemies[i].hp <= 0) {
-      awardKill(enemies[i], mods);
-      enemies.splice(i, 1);
-    }
-  if (pendingBlackSignal && !expedition) {
-    chooseBlackSignal();
-    return;
-  }
-  bullets = bullets.filter(
-    (b) => b.life > 0 && b.x > -50 && b.y > -50 && b.x < W + 50 && b.y < H + 50,
-  );
-  enemyBullets = enemyBullets.filter(
-    (b) => b.life > 0 && b.x > -70 && b.y > -70 && b.x < W + 70 && b.y < H + 70,
-  );
-  enemyBullets = regulateProjectilePressure(enemyBullets, {
-    difficulty: settings.difficulty,
-    time,
-    width: W,
-    height: H,
-    player,
-  });
-  applyFriendlyVisualBudget(bullets, { width: W, height: H, player });
-  gems = compressSalvage(gems, { width: W, height: H });
-  const magnet = player.magnet * mods.magnet;
-  for (let i = gems.length - 1; i >= 0; i--) {
-    const g = gems[i],
-      d = Math.sqrt(dist2(player, g));
-    if (d < magnet) {
-      const k = Math.max(0.1, 1 - d / magnet),
-        a = Math.atan2(player.y - g.y, player.x - g.x);
-      g.x += Math.cos(a) * (140 + 420 * k) * dt;
-      g.y += Math.sin(a) * (140 + 420 * k) * dt;
-    }
-    if (d < player.r + 8) {
-      player.xp += g.v * player.xpGain * mods.xp * specialGemMultiplier(player);
-      audio.xp();
-      gems.splice(i, 1);
-      if (player.xp >= player.nextXp) {
-        player.xp -= player.nextXp;
-        player.level++;
-        player.nextXp = Math.floor(player.nextXp * 1.28 + 8);
-        levelUp();
-        break;
-      }
-    }
-  }
-  for (let i = powerups.length - 1; i >= 0; i--) {
-    const p = powerups[i];
-    p.life -= dt;
-    p.phase += dt * 2;
-    attractPowerup(p, player, dt);
-    if (dist2(player, p) < (player.r + p.r + 8) ** 2) {
-      collectPowerup(p);
-      powerups.splice(i, 1);
-    } else if (p.life <= 0) powerups.splice(i, 1);
-  }
-  for (let o = 0; o < player.orbitals; o++) {
-    const a = time * 2.1 + (o * Math.PI * 2) / player.orbitals,
-      ox = player.x + Math.cos(a) * 42,
-      oy = player.y + Math.sin(a) * 42;
-    for (const e of enemies)
-      if (dist2({ x: ox, y: oy }, e) < (8 + e.r) ** 2) e.hp -= 28 * dt;
-  }
-  for (const p of particles) {
-    p.x += p.vx * dt;
-    p.y += p.vy * dt;
-    p.vx *= 0.96;
-    p.vy *= 0.96;
-    p.life -= dt;
-  }
-  particles = particles.filter((p) => p.life > 0);
-  shake = Math.max(0, shake - 30 * dt);
-  updateUI();
+  updateGame(runtime, dt);
 }
 function updateUI() {
-  if (!player) return;
-  ui.hp.textContent = Math.max(0, Math.ceil(player.hp));
-  ui.level.textContent = player.level;
-  ui.time.textContent =
-    String(Math.floor(time / 60)).padStart(2, "0") +
-    ":" +
-    String(Math.floor(time % 60)).padStart(2, "0");
-  ui.score.textContent = Math.floor(score);
-  ui.hpBar.style.width = (player.hp / player.maxHp) * 100 + "%";
-  ui.xpBar.style.width = expedition
-    ? `${
-        expedition.phase === "combat"
-          ? Math.min(100, (expedition.wave / Math.max(1, expedition.waves)) * 100)
-          : 100
-      }%`
-    : (player.xp / player.nextXp) * 100 + "%";
-  const mult = 1 + Math.min(combo, 30) * 0.03;
-  ui.combo.textContent = "COMBO x" + mult.toFixed(2);
-  ui.combo.classList.toggle("hot", combo >= 3);
-  ui.arsenal.textContent = compactArsenalLabel(
-    player,
-    activeSynergies(player),
-    weaponLabel(player),
-  );
-  ui.sector.textContent =
-    settings.mode === "bossrush"
-      ? "BOSS CIRCUIT"
-      : expedition
-        ? `SECTOR ${expedition.sector} · ROOM ${expedition.room} · ${expedition.credits} SCRAP`
-        : sectorAt(time).name;
-  ui.objective.textContent =
-    expedition
-      ? expeditionObjective(expedition)
-      : settings.mode === "bossrush"
-      ? "BOSS " + (bossCount + 1) + " INBOUND"
-      : objectiveFor(settings.mode);
-  const boss = enemies.find((e) => e.boss);
-  ui.bossName.textContent = boss
-    ? boss.bossName + (boss.bossPhase === 2 ? " // PHASE II" : "")
-    : "";
+  updateHud(ui, runtime);
 }
 function render() {
   renderScene(

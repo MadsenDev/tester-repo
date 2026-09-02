@@ -1,19 +1,70 @@
-import { assignExpeditionEncounters, encounterById } from "./expedition-encounters.js";
+import {
+  assignExpeditionEncounters,
+  encounterById,
+} from "./expedition-encounters.js";
+import { validateExpeditionLayout } from "./expedition-validation.js";
+
+export { validateExpeditionLayout } from "./expedition-validation.js";
 
 export const EXPEDITION_SECTORS = 5;
 export const EXPEDITION_ROOMS = 9;
 export const EXPEDITION_REST_CHANCE = 0.12;
 
 export const EXPEDITION_ROOM_TYPES = Object.freeze({
-  combat: { name: "HOSTILE GRID", short: "", color: "#78ebff", danger: "COMBAT" },
-  elite: { name: "ELITE INTERCEPT", short: "ELITE", color: "#ff8b69", danger: "DANGEROUS" },
-  item: { name: "MODULE VAULT", short: "MODULE", color: "#8dffcf", danger: "REWARD" },
-  choice: { name: "FORKED SIGNAL", short: "CHOICE", color: "#c994ff", danger: "CHOICE" },
-  shop: { name: "SCRAP EXCHANGE", short: "SHOP", color: "#ffe27b", danger: "SHOP" },
-  repair: { name: "REST BAY", short: "REST", color: "#79ffb2", danger: "RECOVERY" },
-  secret: { name: "NULL CHAMBER", short: "SECRET", color: "#ff74ad", danger: "SECRET" },
-  black: { name: "BLACK SIGNAL", short: "BLACK", color: "#ff5c93", danger: "CONTRACT" },
-  boss: { name: "SECTOR WARDEN", short: "BOSS", color: "#ff665f", danger: "BOSS" },
+  combat: {
+    name: "HOSTILE GRID",
+    short: "",
+    color: "#78ebff",
+    danger: "COMBAT",
+  },
+  elite: {
+    name: "ELITE INTERCEPT",
+    short: "ELITE",
+    color: "#ff8b69",
+    danger: "DANGEROUS",
+  },
+  item: {
+    name: "MODULE VAULT",
+    short: "MODULE",
+    color: "#8dffcf",
+    danger: "REWARD",
+  },
+  choice: {
+    name: "FORKED SIGNAL",
+    short: "CHOICE",
+    color: "#c994ff",
+    danger: "CHOICE",
+  },
+  shop: {
+    name: "SCRAP EXCHANGE",
+    short: "SHOP",
+    color: "#ffe27b",
+    danger: "SHOP",
+  },
+  repair: {
+    name: "REST BAY",
+    short: "REST",
+    color: "#79ffb2",
+    danger: "RECOVERY",
+  },
+  secret: {
+    name: "NULL CHAMBER",
+    short: "SECRET",
+    color: "#ff74ad",
+    danger: "SECRET",
+  },
+  black: {
+    name: "BLACK SIGNAL",
+    short: "BLACK",
+    color: "#ff5c93",
+    danger: "CONTRACT",
+  },
+  boss: {
+    name: "SECTOR WARDEN",
+    short: "BOSS",
+    color: "#ff665f",
+    danger: "BOSS",
+  },
 });
 
 export const EXPEDITION_DIRECTIONS = Object.freeze({
@@ -38,10 +89,12 @@ function connect(a, b, direction) {
 }
 
 function freeDirections(node, occupied, random) {
-  return shuffled(Object.keys(EXPEDITION_DIRECTIONS), random).filter((direction) => {
-    const dir = EXPEDITION_DIRECTIONS[direction];
-    return !occupied.has(key(node.x + dir.dx, node.y + dir.dy));
-  });
+  return shuffled(Object.keys(EXPEDITION_DIRECTIONS), random).filter(
+    (direction) => {
+      const dir = EXPEDITION_DIRECTIONS[direction];
+      return !occupied.has(key(node.x + dir.dx, node.y + dir.dy));
+    },
+  );
 }
 
 function growConnectedMap(count, random) {
@@ -69,7 +122,13 @@ function growConnectedMap(count, random) {
   }
   while (nodes.length < count) {
     const parent = nodes[nodes.length - 1],
-      node = { id: `r${nodes.length}`, x: parent.x + 1, y: parent.y, type: "combat", links: {} };
+      node = {
+        id: `r${nodes.length}`,
+        x: parent.x + 1,
+        y: parent.y,
+        type: "combat",
+        links: {},
+      };
     nodes.push(node);
     occupied.set(key(node.x, node.y), node);
     connect(parent, node, "e");
@@ -82,7 +141,8 @@ function distancesFromStart(nodes) {
     distance = new Map([["r0", 0]]),
     queue = ["r0"];
   while (queue.length) {
-    const id = queue.shift(), node = byId.get(id);
+    const id = queue.shift(),
+      node = byId.get(id);
     for (const next of Object.values(node.links)) {
       if (!distance.has(next)) {
         distance.set(next, distance.get(id) + 1);
@@ -112,7 +172,9 @@ function pathTo(nodes, targetId) {
 }
 
 function leaves(nodes) {
-  return nodes.filter((node) => node.id !== "r0" && Object.keys(node.links).length === 1);
+  return nodes.filter(
+    (node) => node.id !== "r0" && Object.keys(node.links).length === 1,
+  );
 }
 
 function attachLeaf(nodes, occupied, anchor, type, id, random) {
@@ -143,46 +205,39 @@ function growLayout(random) {
   return result;
 }
 
-export function validateExpeditionLayout(map) {
-  const byId = new Map(map.nodes.map((node) => [node.id, node])),
-    critical = new Set(map.criticalPath || []),
-    errors = [];
-  for (const type of ["item", "choice", "shop", "repair"]) {
-    for (const node of map.nodes.filter((candidate) => candidate.type === type)) {
-      if (Object.keys(node.links).length !== 1) errors.push(`${type} must be terminal`);
-      if (critical.has(node.id)) errors.push(`${type} cannot be on critical path`);
-    }
-  }
-  for (const node of map.nodes.filter((candidate) => candidate.type === "elite")) {
-    if (critical.has(node.id)) errors.push("elite cannot be on critical path");
-  }
-  const boss = byId.get(map.bossId);
-  if (!boss) errors.push("missing boss");
-  for (const id of map.criticalPath || []) {
-    const type = byId.get(id)?.type;
-    if (id !== map.bossId && type !== "combat") errors.push(`${type} cannot gate boss`);
-  }
-  return errors;
-}
-
-export function generateExpeditionMap(sector = 1, random = Math.random, player = {}) {
-  const { nodes, occupied } = growLayout(random), distance = distancesFromStart(nodes);
-  const terminal = leaves(nodes).sort((a, b) => distance.get(b.id) - distance.get(a.id));
+export function generateExpeditionMap(
+  sector = 1,
+  random = Math.random,
+  player = {},
+) {
+  const { nodes, occupied } = growLayout(random),
+    distance = distancesFromStart(nodes);
+  const terminal = leaves(nodes).sort(
+    (a, b) => distance.get(b.id) - distance.get(a.id),
+  );
   const boss = terminal.shift();
   boss.type = "boss";
-  const criticalPath = pathTo(nodes, boss.id), critical = new Set(criticalPath);
+  const criticalPath = pathTo(nodes, boss.id),
+    critical = new Set(criticalPath);
   const specialLeaves = shuffled(terminal, random);
-  const item = specialLeaves.shift(), shop = specialLeaves.shift(), choice = specialLeaves.shift();
+  const item = specialLeaves.shift(),
+    shop = specialLeaves.shift(),
+    choice = specialLeaves.shift();
   if (item) item.type = "item";
   if (shop) shop.type = "shop";
   if (choice) choice.type = "choice";
   const restCandidate = specialLeaves.shift();
-  const rest = restCandidate && random() < EXPEDITION_REST_CHANCE ? restCandidate : null;
+  const rest =
+    restCandidate && random() < EXPEDITION_REST_CHANCE ? restCandidate : null;
   if (rest) rest.type = "repair";
 
   const eliteCandidates = shuffled(
     nodes.filter(
-      (node) => node.id !== "r0" && node !== boss && !critical.has(node.id) && node.type === "combat",
+      (node) =>
+        node.id !== "r0" &&
+        node !== boss &&
+        !critical.has(node.id) &&
+        node.type === "combat",
     ),
     random,
   );
@@ -212,7 +267,9 @@ export function generateExpeditionMap(sector = 1, random = Math.random, player =
     ? attachLeaf(nodes, occupied, secretAnchors[0], "secret", "secret", random)
     : null;
   const secondAnchor = secretAnchors.find(
-    (node) => node !== secretAnchors[0] && freeDirections(node, occupied, random).length,
+    (node) =>
+      node !== secretAnchors[0] &&
+      freeDirections(node, occupied, random).length,
   );
   const secondSecret =
     secondAnchor && random() < (player.expeditionSecretChance || 0)
@@ -241,7 +298,8 @@ export function generateExpeditionMap(sector = 1, random = Math.random, player =
     eliteId: elite?.id,
   };
   const errors = validateExpeditionLayout(map);
-  if (errors.length) throw new Error(`Invalid Expedition layout: ${errors.join(", ")}`);
+  if (errors.length)
+    throw new Error(`Invalid Expedition layout: ${errors.join(", ")}`);
   return map;
 }
 
@@ -250,7 +308,8 @@ export function currentExpeditionNode(state) {
 }
 
 function initializeNode(state, node, difficulty) {
-  const scale = difficultyScale(difficulty), type = node.type;
+  const scale = difficultyScale(difficulty),
+    type = node.type;
   node.wave = 0;
   node.waveDelay = 0.35;
   node.waves =
@@ -268,7 +327,8 @@ function initializeNode(state, node, difficulty) {
 function discoverNeighbors(state, node) {
   for (const id of Object.values(node.links)) {
     const neighbor = state.map.nodes.find((candidate) => candidate.id === id);
-    if (neighbor && !neighbor.hidden && !neighbor.locked) neighbor.discovered = true;
+    if (neighbor && !neighbor.hidden && !neighbor.locked)
+      neighbor.discovered = true;
   }
 }
 
@@ -280,7 +340,9 @@ function loadNode(state, node, difficulty, firstVisit = false) {
   state.currentId = node.id;
   state.roomType = node.type;
   state.encounterId = node.encounterId;
-  state.encounterName = node.encounterId ? encounterById(node.encounterId).name : "";
+  state.encounterName = node.encounterId
+    ? encounterById(node.encounterId).name
+    : "";
   state.phase = node.phase;
   state.wave = node.wave;
   state.waves = node.waves;
@@ -310,7 +372,11 @@ export function persistExpeditionRoom(state) {
   return state;
 }
 
-export function createExpeditionState(difficulty = "normal", player = {}, random = Math.random) {
+export function createExpeditionState(
+  difficulty = "normal",
+  player = {},
+  random = Math.random,
+) {
   const map = generateExpeditionMap(1, random, player),
     state = {
       active: true,
@@ -348,9 +414,13 @@ export function expeditionDepth(state) {
 export function expeditionWavePlan(state, difficulty = "normal") {
   const depth = expeditionDepth(state),
     base = 3 + state.sector + Math.floor(depth / 5),
-    difficultyBonus = difficulty === "intense" ? 2 : difficulty === "chill" ? -1 : 0;
+    difficultyBonus =
+      difficulty === "intense" ? 2 : difficulty === "chill" ? -1 : 0;
   return {
-    count: Math.max(2, base + difficultyBonus + (state.roomType === "elite" ? 2 : 0)),
+    count: Math.max(
+      2,
+      base + difficultyBonus + (state.roomType === "elite" ? 2 : 0),
+    ),
     eliteBonus: state.roomType === "elite" ? 0.72 : state.sector * 0.025,
     syntheticTime: 25 + depth * 28,
   };
@@ -363,13 +433,15 @@ export function markExpeditionWaveSpawned(state) {
 }
 
 function doorLabel(node, player) {
-  if (node.hidden && !node.visited && !player.revealExpeditionSecrets) return "";
+  if (node.hidden && !node.visited && !player.revealExpeditionSecrets)
+    return "";
   return EXPEDITION_ROOM_TYPES[node.type].short;
 }
 
 export function expeditionDoorChoices(state, player = {}) {
   persistExpeditionRoom(state);
-  const node = currentExpeditionNode(state), doors = [];
+  const node = currentExpeditionNode(state),
+    doors = [];
   for (const [direction, id] of Object.entries(node.links)) {
     const target = state.map.nodes.find((candidate) => candidate.id === id);
     if (!target || target.locked) continue;
@@ -379,12 +451,14 @@ export function expeditionDoorChoices(state, player = {}) {
       direction,
       label: doorLabel(target, player),
       color: EXPEDITION_ROOM_TYPES[target.type].color,
-      hidden: target.hidden && !target.visited && !player.revealExpeditionSecrets,
+      hidden:
+        target.hidden && !target.visited && !player.revealExpeditionSecrets,
       backtrack: target.visited,
     });
   }
   if (node.type === "boss" && node.cleared) {
-    const exitDirection = ["s", "e", "w", "n"].find((direction) => !node.links[direction]) || "s";
+    const exitDirection =
+      ["s", "e", "w", "n"].find((direction) => !node.links[direction]) || "s";
     doors.push({
       type: state.sector >= EXPEDITION_SECTORS ? "victory" : "descend",
       direction: exitDirection,
@@ -393,9 +467,10 @@ export function expeditionDoorChoices(state, player = {}) {
     });
   }
   state.doors = doors;
-  state.phase = node.cleared || !["combat", "elite", "boss"].includes(node.type)
-    ? "choice"
-    : state.phase;
+  state.phase =
+    node.cleared || !["combat", "elite", "boss"].includes(node.type)
+      ? "choice"
+      : state.phase;
   return doors;
 }
 
@@ -417,7 +492,8 @@ export function markExpeditionRoomCleared(state) {
 }
 
 export function takeExpeditionDoor(state, door, difficulty = "normal") {
-  if (typeof door === "string") door = state.doors.find((candidate) => candidate.type === door);
+  if (typeof door === "string")
+    door = state.doors.find((candidate) => candidate.type === door);
   if (!door) return state;
   persistExpeditionRoom(state);
   if (door.type === "descend") {
@@ -426,18 +502,29 @@ export function takeExpeditionDoor(state, door, difficulty = "normal") {
     return loadNode(state, state.map.nodes[0], difficulty, true);
   }
   if (door.type !== "room") return state;
-  const target = state.map.nodes.find((node) => node.id === door.nodeId), firstVisit = !target.visited;
+  const target = state.map.nodes.find((node) => node.id === door.nodeId),
+    firstVisit = !target.visited;
   if (target.type === "secret" && firstVisit) state.secretsFound++;
   return loadNode(state, target, difficulty, firstVisit);
 }
 
 export function expeditionPedestalSpec(state, player = {}) {
   const bonus = Math.max(0, player.expeditionChoiceBonus || 0);
-  if (state.roomType === "item") return { count: 1 + bonus, pool: "salvage", cost: 0, exclusive: true };
-  if (state.roomType === "choice") return { count: 2 + bonus, pool: "companion", cost: 0, exclusive: true };
-  if (state.roomType === "shop") return { count: 3, pool: "salvage", cost: 5, exclusive: false };
-  if (state.roomType === "secret") return { count: 1 + Math.min(1, bonus), pool: "boss", cost: 0, exclusive: true };
-  if (state.roomType === "boss") return { count: 1, pool: "boss", cost: 0, exclusive: true };
+  if (state.roomType === "item")
+    return { count: 1 + bonus, pool: "salvage", cost: 0, exclusive: true };
+  if (state.roomType === "choice")
+    return { count: 2 + bonus, pool: "companion", cost: 0, exclusive: true };
+  if (state.roomType === "shop")
+    return { count: 3, pool: "salvage", cost: 5, exclusive: false };
+  if (state.roomType === "secret")
+    return {
+      count: 1 + Math.min(1, bonus),
+      pool: "boss",
+      cost: 0,
+      exclusive: true,
+    };
+  if (state.roomType === "boss")
+    return { count: 1, pool: "boss", cost: 0, exclusive: true };
   return null;
 }
 
@@ -461,7 +548,10 @@ export function expeditionOffersBlackSignal(state) {
 }
 
 export function expeditionShopCost(base, player = {}) {
-  return Math.max(1, Math.ceil(base * (1 - (player.expeditionShopDiscount || 0))));
+  return Math.max(
+    1,
+    Math.ceil(base * (1 - (player.expeditionShopDiscount || 0))),
+  );
 }
 
 export function expeditionObjective(state) {
