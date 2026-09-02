@@ -410,6 +410,9 @@ const runtime = {
   get powerups() {
     return powerups;
   },
+  set powerups(value) {
+    powerups = value;
+  },
   get expedition() {
     return expedition;
   },
