@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.44.4] - 2026-09-02
+
+- Fix Expedition room transitions crashing when the room controller clears the powerup collection through the runtime bridge.
+- Add a runtime-bridge contract test requiring setters for every collection or value replaced by extracted systems.
+- Advance the offline application version and game cache key so installed copies receive the transition fix.
+
 ## [0.44.3] - 2026-09-02
 
 - Split the browser bootstrap, frame runtime, Expedition room lifecycle, menu/HUD controller, enemy renderer and boss arena attacks into focused modules.
